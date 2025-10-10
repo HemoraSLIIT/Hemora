@@ -1,0 +1,14 @@
+# Raw Data Directory
+Place your raw blood smear images here.
+
+## Directory Structure
+- `sickle_cell/` - Sickle cell disease images
+- `malaria/` - Malaria parasite images  
+- `normal/` - Normal blood cell images
+- `other_diseases/` - Other blood disorder images
+
+## File Naming Convention
+Use the following naming pattern:
+`{disease_type}_{patient_id}_{image_id}.{extension}`
+
+Example: `sickle_cell_001_01.jpg`
