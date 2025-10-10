@@ -1,0 +1,40 @@
+{
+  "name": "Hemora Development",
+  "version": "0.1.0",
+  "description": "Blood disease detection system using AI",
+  "main": "backend/manage.py",
+  "directories": {
+    "backend": "./backend",
+    "frontend": "./frontend", 
+    "ml_models": "./ml_models",
+    "data": "./data",
+    "docs": "./docs",
+    "scripts": "./scripts"
+  },
+  "python": {
+    "version": ">=3.9",
+    "virtual_env": "./venv",
+    "requirements": "./requirements.txt"
+  },
+  "database": {
+    "engine": "postgresql",
+    "name": "hemora_db",
+    "default_port": 5432
+  },
+  "services": {
+    "django": {
+      "port": 8000,
+      "command": "python manage.py runserver"
+    },
+    "react": {
+      "port": 3000,
+      "command": "npm start"
+    }
+  },
+  "development": {
+    "setup_script": "./scripts/setup_dev_env.py",
+    "test_command": "pytest",
+    "lint_command": "flake8",
+    "format_command": "black ."
+  }
+}
