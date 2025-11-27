@@ -7,13 +7,19 @@ class UserAdmin(BaseUserAdmin):
     """Custom admin interface for User model."""
     
     # Fields to display in user list
-    list_display = ['username', 'email', 'get_full_name', 'role', 'is_verified', 'is_active', 'created_at']
+    list_display = ['username', 'email', 'display_full_name', 'role', 'is_verified', 'is_active', 'created_at']
     
     # Filters in sidebar
     list_filter = ['role', 'is_verified', 'is_active', 'is_staff', 'created_at']
     
     # Search functionality
     search_fields = ['username', 'email', 'first_name', 'last_name', 'medical_license_number']
+    
+    # Custom method for displaying full name
+    def display_full_name(self, obj):
+        """Display user's full name in admin list."""
+        return obj.get_full_name()
+    display_full_name.short_description = 'Full Name'  # Column header
     
     # Fields to show when editing a user
     fieldsets = (
