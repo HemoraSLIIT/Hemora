@@ -3,8 +3,8 @@ from django.db import models
 
 class User(AbstractUser):
     """
-    Custom User model for Hemora system
-    Extends Django's default User with addtional dields.
+    Custom User model for Hemora system.
+    Extends Django's default User with additional fields.
     """
 
     # User Role Choices
@@ -85,4 +85,9 @@ class User(AbstractUser):
     def is_researcher(self):
         """Check if user is a researcher."""
         return self.role == self.Role.RESEARCHER
+    
+    @property
+    def is_admin(self):
+        """Check if user is an administrator."""
+        return self.role == self.Role.ADMIN
 
