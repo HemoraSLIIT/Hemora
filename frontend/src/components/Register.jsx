@@ -1,126 +1,218 @@
-import React, { useState } from 'react';
-import axios from 'axios';
-import BgImg from "../images/loginwallpaper.png";
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import { VscEyeClosed, VscEye } from "react-icons/vsc";
+import toast, { Toaster } from "react-hot-toast";
+import LoginBgImg from "/assets/hemlog7.png";
+import Loading from "./Loading";
+import Footer from "./Footer";
+import Header from "./Header";
 
 export default function Register() {
-    const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
+  const [SignupData, setSignupData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
+  const [passwordMatch, setPasswordMatch] = useState(false); // State to track if passwords match
 
-    const [registerData, setRegisterData] = useState({
-        // profilePicture: '',
-        userName: '',
-        password: '',
-        email: ''
+  const handleLoginChange = (l) => {
+    const { name, value } = l.target;
+    setSignupData((SignupData) => {
+      const updatedData = { ...SignupData, [name]: value };
+
+      // Check if passwords match when confirmPassword is updated
+      if (name === "confirmPassword" || name === "password") {
+        setPasswordMatch(updatedData.password === updatedData.confirmPassword);
+      }
+
+      return updatedData;
     });
+  };
 
-    const [isValid, setIsValid] = useState({
-        length: false,
-        number: false,
-        symbol: false,
-    });
+  const SubmitRegistation = async (e) => {
+    e.preventDefault();
 
-    const validatePassword = (pwd) => {
-        const lengthValid = pwd.length >= 8;
-        const numberValid = /\d/.test(pwd);
-        const symbolValid = /[!@#$%^&*(),.?":{}|<>]/.test(pwd);
+    //Ensure the loading function happens while the registration happens
+    setLoading(true);
 
-        setIsValid({
-            length: lengthValid,
-            number: numberValid,
-            symbol: symbolValid,
-        });
+    // Check if passwords match
+    if (!passwordMatch) {
+      toast.error("Passwords do not match!");
+      return;
+    }
 
-        return lengthValid && numberValid && symbolValid;
-    };
-
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setRegisterData(prevState => ({
-            ...prevState,
-            [name]: value,
-        }));
-
-        if (name === 'password') {
-            validatePassword(value);
+    try {
+      const response = await axios.post(
+        "http://localhost:4800/api/auth/register",
+        {
+          name: SignupData.name,
+          email: SignupData.email,
+          password: SignupData.password,
         }
-    };
+      );
 
-    const registerUser = async (e) => {
-        e.preventDefault();
-        if (!validatePassword(registerData.password)) {
-            alert('Password does not meet the requirements.');
-            return;
-        }
+      const { token, user } = response.data;
 
-        try {
-            await axios.post("http://localhost:8000/register", registerData);
-            alert("Successfully Registered!");
-            navigate('/login');
-        } catch (error) {
-            console.error("Registration failed:", error);
-            alert("Registration failed. Please try again.");
-        }
-    };
+      // Store the token and role in localStorage
+      localStorage.setItem("token", token);
+      localStorage.setItem("role", user.role);
+      localStorage.setItem("name", user.name);
+      localStorage.setItem("email", user.email);
 
-    return (
-        <div className="bg-cover bg-center min-h-screen flex items-center justify-center" style={{ backgroundImage: `url(${BgImg})` }}>
-            <div className="bg-white w-full max-w-md rounded-lg shadow-lg p-8">
-                <form onSubmit={registerUser} className="space-y-6">
-                    {/* <div>
-                        <input
-                            type="text"
-                            name="profilePicture"
-                            placeholder="Enter profile picture URL"
-                            onChange={handleChange}
-                            className="block w-full rounded-md h-10 outline-0 ps-3 mb-5 bg-gray-200" />
-                    </div> */}
-                    <div>
-                        <input
-                            type="text"
-                            name="userName"
-                            placeholder="Enter username"
-                            onChange={handleChange}
-                            className="block w-full rounded-md h-10 outline-0 ps-3 mb-5 bg-gray-200" />
-                    </div>
-                    <div>
-                        <input
-                            type="password"
-                            name="password"
-                            placeholder="Enter password"
-                            onChange={handleChange}
-                            className="block w-full rounded-md h-10 outline-0 ps-3 mb-5 bg-gray-200" />
-                    </div>
-                    <center>
-                        <div className="w-full mt-6 space-y-3 text-sm text-slate-500">
-                            <p className={`flex items-center ${isValid.length ? "text-green-600" : "text-red-600"} transition-colors duration-300`}>
-                                <span className={`w-5 h-5 mr-3 ${isValid.length ? "text-green-600" : "text-red-600"}`}>{isValid.length ? "✔️" : "❌"}</span>
-                                Minimum 8 characters
-                            </p>
-                            <p className={`flex items-center ${isValid.number ? "text-green-600" : "text-red-600"} transition-colors duration-300`}>
-                                <span className={`w-5 h-5 mr-3 ${isValid.number ? "text-green-600" : "text-red-600"}`}>{isValid.number ? "✔️" : "❌"}</span>
-                                At least one number
-                            </p>
-                            <p className={`flex items-center ${isValid.symbol ? "text-green-600" : "text-red-600"} transition-colors duration-300`}>
-                                <span className={`w-5 h-5 mr-3 ${isValid.symbol ? "text-green-600" : "text-red-600"}`}>{isValid.symbol ? "✔️" : "❌"}</span>
-                                At least one symbol
-                            </p>
-                        </div>
-                    </center>
-                    {/* <div>
-                        <input
-                            type="email"
-                            name="email"
-                            placeholder="Enter email"
-                            onChange={handleChange}
-                            className="block w-full rounded-md h-10 outline-0 ps-3 mb-5 bg-gray-200" />
-                    </div> */}
-                    <button
-                        type="submit"
-                        className="w-full h-12 font-semibold text-lg px-5 py-2 rounded-md bg-gray-800 text-white hover:bg-gray-600 transition-all">
-                        Register
-                    </button>
-                </form>
-            </div>
+      setTimeout(() => {
+        //display the successfull message for account creation, as a toast message
+        toast.success("Your account created successfully!");
+
+        // Redirect based on the role
+        setTimeout(() => {
+          // switch (user.role) {
+          //   case "admin":
+          //     navigate("/admin-dashboard");
+          //     break;
+          //   case "customer":
+          //     navigate("/user-content");
+          //     break;
+          //   default:
+          //     break;
+          // }
+          navigate("/login"); // Redirect to login page after successful signup
+        }, 2000);
+      }, 1000);
+    } catch (error) {
+      if (
+        error.response &&
+        error.response.data &&
+        error.response.data.message
+      ) {
+        toast.error(error.response.data.message); // Show backend error message
+      } else {
+        toast.error("Signup Failed. Please try again.");
+      }
+      console.error(error);
+    }
+  };
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
+  return (
+    <>
+      <div className="container mx-auto px-4 py-4">
+        <Header />
+      </div>
+      <Toaster />
+      <div className="flex justify-between container mx-auto px-4 py-0">
+        {/* Background Image */}
+        <div>
+          <img
+            src={LoginBgImg}
+            alt="Background"
+            width={600}
+            height={600}
+            className=""
+          />
         </div>
-    );
+        {/* Login Form */}
+        <div className="w-2/5 my-auto">
+          <div className="bg-white bg-opacity-30 border-2 border-gray-500 my-auto rounded-3xl p-5">
+            <form className="p-10 font-bold" onSubmit={SubmitRegistation}>
+              {/* <h1 className="flex justify-center -mt-8 mb-5 text-3xl text-center font-serif">
+                Create Account
+              </h1> */}
+              <div className="my-10">
+                <input
+                  type="text"
+                  name="name"
+                  id="name"
+                  placeholder="Name"
+                  onChange={handleLoginChange}
+                  className="block w-full mx-auto mt-2 h-12 outline-none border-2 border-gray-500 focus:border-[3px] focus:border-[#45607A] rounded-lg ps-5 text-bl2ck font-normal"
+                />
+              </div>
+              <div className="my-8">
+                <input
+                  type="text"
+                  name="email"
+                  id="email"
+                  placeholder="Email"
+                  onChange={handleLoginChange}
+                  className="block w-full mx-auto mt-2 h-12 outline-none border-2 border-gray-500 focus:border-[3px] focus:border-[#45607A] rounded-lg ps-5 text-bl2ck font-normal"
+                />
+              </div>
+              <div className="mb-5 relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  id="password"
+                  placeholder="Password"
+                  onChange={handleLoginChange}
+                  className="block w-full mx-auto mt-2 h-12 outline-none border-2 border-gray-500 focus:border-[3px] focus:border-[#45607A] rounded-lg ps-5 text-bl2ck font-normal"
+                />
+                <button
+                  type="button"
+                  onClick={togglePasswordVisibility}
+                  className="absolute inset-y-0 right-5 flex items-center text-[#45607A] hover:text-[#2b3d4e] focus:outline-none"
+                >
+                  {showPassword ? (
+                    <VscEyeClosed size={25} />
+                  ) : (
+                    <VscEye size={25} />
+                  )}
+                </button>
+              </div>
+              <div className="mb-5 relative">
+                <input
+                  type="password"
+                  name="confirmPassword"
+                  id="confirmPassword"
+                  placeholder="Confirm Password"
+                  onChange={handleLoginChange}
+                  className={`block w-full mx-auto mt-2 h-12 outline-none border-2 ${
+                    passwordMatch
+                      ? "border-green-500 focus:border-green-500"
+                      : "border-gray-500 focus:border-red-500"
+                  } focus:border-[3px] rounded-lg ps-5 text-bl2ck font-normal`}
+                />
+                {passwordMatch && (
+                  <p className="text-green-500 text-sm mt-1">
+                    Passwords match!
+                  </p>
+                )}
+              </div>
+              <div className="flex justify-center">
+                <button className="w-full h-12 text-xl mt-5 py-2 px-10 rounded-lg text-white duration-300 bg-[#45607A] hover:ring-1 hover:bg-[#2b3d4e] ring-[#45607A]">
+                  {loading ? (
+                    <div className="flex justify-center items-center">
+                      <Loading />
+                    </div>
+                  ) : (
+                    "Sign Up"
+                  )}
+                </button>
+              </div>
+              <p className="font-normal text-gray-600 flex justify-center items-center mt-2">
+                Already have an Account?
+                <a
+                  href="/login"
+                  className="text-[#2b3d4e] font-semibold ml-1 hover:text-[#2b3d4e]"
+                >
+                  Log In
+                </a>
+              </p>
+            </form>
+          </div>
+        </div>
+        {/* <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex flex-col items-center text-gray-500">
+                    <p>[2025/FEB] Y3S2 - Application Frameworks module project. </p>
+                </div> */}
+      </div>
+      <Footer />
+    </>
+  );
 }
