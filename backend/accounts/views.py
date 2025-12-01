@@ -5,7 +5,9 @@ Handles CRUD operations for User model.
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
+from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
 
 from .models import User
@@ -231,3 +233,48 @@ class UserViewSet(viewsets.ModelViewSet):
         """
         serializer = UserSerializer(request.user)
         return Response(serializer.data)
+
+
+class RegisterView(APIView):
+    """
+    User registration endpoint that returns JWT tokens.
+    POST /api/auth/register/
+    """
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        """
+        Register a new user and return JWT tokens.
+        
+        Required fields:
+        - username
+        - email
+        - password
+        - password_confirm
+        
+        Optional fields:
+        - first_name
+        - last_name
+        - role (defaults to RESEARCHER)
+        - phone_number
+        - medical_license_number
+        - specialization
+        - hospital_affiliation
+        """
+        serializer = UserCreateSerializer(data=request.data)
+        
+        if serializer.is_valid():
+            user = serializer.save()
+            
+            # Generate JWT tokens
+            refresh = RefreshToken.for_user(user)
+            
+            return Response({
+                'user': UserSerializer(user).data,
+                'tokens': {
+                    'refresh': str(refresh),
+                    'access': str(refresh.access_token),
+                }
+            }, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
