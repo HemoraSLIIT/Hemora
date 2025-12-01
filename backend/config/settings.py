@@ -49,10 +49,7 @@ INSTALLED_APPS = [
     
     # Local apps
     'accounts',
-    'patients',
-    'images',
     'analysis',
-    'api',
 ]
 
 MIDDLEWARE = [
@@ -65,7 +62,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'hemora_backend.urls'
+ROOT_URLCONF = 'config.urls'
 
 TEMPLATES = [
     {
@@ -83,7 +80,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'hemora_backend.wsgi.application'
+WSGI_APPLICATION = 'config.wsgi.application'
 
 
 # Database
@@ -142,6 +139,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # REST Framework configuration
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.BasicAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
@@ -153,3 +151,7 @@ REST_FRAMEWORK = {
 
 # Custom User Model
 AUTH_USER_MODEL = 'accounts.User'
+
+# Redirect URLs after login/logout
+LOGIN_REDIRECT_URL = '/api/users/'
+LOGOUT_REDIRECT_URL = '/api-auth/login/'
