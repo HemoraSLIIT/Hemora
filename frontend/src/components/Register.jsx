@@ -51,20 +51,26 @@ export default function Register() {
 
     try {
       // Register with Django JWT
-      const response = await authAPI.register(SignupData);
+      await authAPI.register(SignupData);
 
       toast.success("Your account created successfully!");
+      setLoading(false);
 
       setTimeout(() => {
         navigate("/dashboard");
       }, 1000);
     } catch (error) {
       setLoading(false);
-      if (error.response?.data) {
+      if (error.response?.data && typeof error.response.data === 'object') {
         const errors = error.response.data;
         // Display first error message
-        const firstError = Object.values(errors)[0];
-        toast.error(Array.isArray(firstError) ? firstError[0] : firstError);
+        const errorValues = Object.values(errors);
+        if (errorValues.length > 0) {
+          const firstError = errorValues[0];
+          toast.error(Array.isArray(firstError) ? firstError[0] : firstError);
+        } else {
+          toast.error("Registration Failed. Please try again.");
+        }
       } else {
         toast.error("Registration Failed. Please try again.");
       }

@@ -35,6 +35,7 @@ export default function Login() {
       await authAPI.login(logindata.username, logindata.password);
 
       toast.success("Login Successful!");
+      setLoading(false);
 
       setTimeout(() => {
         navigate("/dashboard");

@@ -9,8 +9,8 @@ from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
+from django.db.models import Q
 
-from .models import User
 from .serializers import (
     UserSerializer,
     UserCreateSerializer,
@@ -88,13 +88,10 @@ class UserViewSet(viewsets.ModelViewSet):
         search = request.query_params.get('search')
         if search:
             queryset = queryset.filter(
-                username__icontains=search
-            ) | queryset.filter(
-                email__icontains=search
-            ) | queryset.filter(
-                first_name__icontains=search
-            ) | queryset.filter(
-                last_name__icontains=search
+                Q(username__icontains=search) |
+                Q(email__icontains=search) |
+                Q(first_name__icontains=search) |
+                Q(last_name__icontains=search)
             )
         
         page = self.paginate_queryset(queryset)
