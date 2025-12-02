@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { VscEyeClosed, VscEye } from "react-icons/vsc";
 import toast, { Toaster } from "react-hot-toast";
@@ -7,27 +6,31 @@ import LoginBgImg from "/assets/hemlog7.png";
 import Loading from "./Loading";
 import Footer from "./Footer";
 import Header from "./Header";
+import { authAPI } from "../services/api";
 
 export default function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const [SignupData, setSignupData] = useState({
-    name: "",
+    username: "",
     email: "",
+    first_name: "",
+    last_name: "",
     password: "",
-    confirmPassword: "",
+    password_confirm: "",
+    role: "RESEARCHER", // Default role
   });
-  const [passwordMatch, setPasswordMatch] = useState(false); // State to track if passwords match
+  const [passwordMatch, setPasswordMatch] = useState(false);
 
   const handleLoginChange = (l) => {
     const { name, value } = l.target;
     setSignupData((SignupData) => {
       const updatedData = { ...SignupData, [name]: value };
 
-      // Check if passwords match when confirmPassword is updated
-      if (name === "confirmPassword" || name === "password") {
-        setPasswordMatch(updatedData.password === updatedData.confirmPassword);
+      // Check if passwords match
+      if (name === "password_confirm" || name === "password") {
+        setPasswordMatch(updatedData.password === updatedData.password_confirm);
       }
 
       return updatedData;
@@ -37,61 +40,33 @@ export default function Register() {
   const SubmitRegistation = async (e) => {
     e.preventDefault();
 
-    //Ensure the loading function happens while the registration happens
     setLoading(true);
 
     // Check if passwords match
     if (!passwordMatch) {
+      setLoading(false);
       toast.error("Passwords do not match!");
       return;
     }
 
     try {
-      const response = await axios.post(
-        "http://localhost:4800/api/auth/register",
-        {
-          name: SignupData.name,
-          email: SignupData.email,
-          password: SignupData.password,
-        }
-      );
+      // Register with Django JWT
+      const response = await authAPI.register(SignupData);
 
-      const { token, user } = response.data;
-
-      // Store the token and role in localStorage
-      localStorage.setItem("token", token);
-      localStorage.setItem("role", user.role);
-      localStorage.setItem("name", user.name);
-      localStorage.setItem("email", user.email);
+      toast.success("Your account created successfully!");
 
       setTimeout(() => {
-        //display the successfull message for account creation, as a toast message
-        toast.success("Your account created successfully!");
-
-        // Redirect based on the role
-        setTimeout(() => {
-          // switch (user.role) {
-          //   case "admin":
-          //     navigate("/admin-dashboard");
-          //     break;
-          //   case "customer":
-          //     navigate("/user-content");
-          //     break;
-          //   default:
-          //     break;
-          // }
-          navigate("/login"); // Redirect to login page after successful signup
-        }, 2000);
+        navigate("/dashboard");
       }, 1000);
     } catch (error) {
-      if (
-        error.response &&
-        error.response.data &&
-        error.response.data.message
-      ) {
-        toast.error(error.response.data.message); // Show backend error message
+      setLoading(false);
+      if (error.response?.data) {
+        const errors = error.response.data;
+        // Display first error message
+        const firstError = Object.values(errors)[0];
+        toast.error(Array.isArray(firstError) ? firstError[0] : firstError);
       } else {
-        toast.error("Signup Failed. Please try again.");
+        toast.error("Registration Failed. Please try again.");
       }
       console.error(error);
     }
@@ -128,10 +103,11 @@ export default function Register() {
               <div className="my-10">
                 <input
                   type="text"
-                  name="name"
-                  id="name"
-                  placeholder="Name"
+                  name="username"
+                  id="username"
+                  placeholder="Username"
                   onChange={handleLoginChange}
+                  required
                   className="block w-full mx-auto mt-2 h-12 outline-none border-2 border-gray-500 focus:border-[3px] focus:border-[#45607A] rounded-lg ps-5 text-bl2ck font-normal"
                 />
               </div>
@@ -142,7 +118,26 @@ export default function Register() {
                   id="email"
                   placeholder="Email"
                   onChange={handleLoginChange}
+                  required
                   className="block w-full mx-auto mt-2 h-12 outline-none border-2 border-gray-500 focus:border-[3px] focus:border-[#45607A] rounded-lg ps-5 text-bl2ck font-normal"
+                />
+              </div>
+              <div className="my-8 flex gap-4">
+                <input
+                  type="text"
+                  name="first_name"
+                  id="first_name"
+                  placeholder="First Name"
+                  onChange={handleLoginChange}
+                  className="block w-1/2 mx-auto mt-2 h-12 outline-none border-2 border-gray-500 focus:border-[3px] focus:border-[#45607A] rounded-lg ps-5 text-bl2ck font-normal"
+                />
+                <input
+                  type="text"
+                  name="last_name"
+                  id="last_name"
+                  placeholder="Last Name"
+                  onChange={handleLoginChange}
+                  className="block w-1/2 mx-auto mt-2 h-12 outline-none border-2 border-gray-500 focus:border-[3px] focus:border-[#45607A] rounded-lg ps-5 text-bl2ck font-normal"
                 />
               </div>
               <div className="mb-5 relative">
@@ -169,10 +164,11 @@ export default function Register() {
               <div className="mb-5 relative">
                 <input
                   type="password"
-                  name="confirmPassword"
-                  id="confirmPassword"
+                  name="password_confirm"
+                  id="password_confirm"
                   placeholder="Confirm Password"
                   onChange={handleLoginChange}
+                  required
                   className={`block w-full mx-auto mt-2 h-12 outline-none border-2 ${
                     passwordMatch
                       ? "border-green-500 focus:border-green-500"

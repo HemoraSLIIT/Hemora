@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { VscEyeClosed, VscEye } from "react-icons/vsc";
 import toast, { Toaster } from "react-hot-toast";
@@ -7,13 +6,14 @@ import LoginBgImg from "/assets/hemlog7.png";
 import Loading from "./Loading";
 import Footer from "./Footer";
 import Header from "./Header";
+import { authAPI } from "../services/api";
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const [logindata, setlogindata] = useState({
-    email: "",
+    username: "",
     password: "",
   });
 
@@ -31,44 +31,21 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const response = await axios.post(
-        "http://localhost:4800/api/auth/login",
-        logindata
-      );
-
-      const { token, user } = response.data;
-
-      console.log("The JWT token is: ", token);
-      console.log("The user data is: ", user);
-
-      localStorage.setItem("token", token);
-      localStorage.setItem("role", user.role);
-      localStorage.setItem("email", user.email);
-      localStorage.setItem("id", user.id);
+      // Login with Django JWT
+      await authAPI.login(logindata.username, logindata.password);
 
       toast.success("Login Successful!");
 
       setTimeout(() => {
-        switch (user.role) {
-          case "admin":
-            navigate("/admin-dashboard");
-            break;
-          case "customer":
-            navigate("/customer-dashboard");
-            break;
-          case "restaurant":
-            navigate("/restaurant-admin-dashboard");
-            break;
-          case "delivery":
-            navigate("/delivery-personnel-dashboard");
-            break;
-          default:
-            toast.error("Unauthorized role!");
-            break;
-        }
-      }, 2000);
+        navigate("/dashboard");
+      }, 1000);
     } catch (error) {
-      toast.error("Login Failed. Invalid credentials!");
+      setLoading(false);
+      if (error.response?.data) {
+        toast.error(error.response.data.detail || "Login Failed. Invalid credentials!");
+      } else {
+        toast.error("Login Failed. Please check your connection!");
+      }
       console.error(error);
     }
   };
@@ -100,9 +77,9 @@ export default function Login() {
               <div className="my-10">
                 <input
                   type="text"
-                  name="email"
-                  id="email"
-                  placeholder="Email"
+                  name="username"
+                  id="username"
+                  placeholder="Username"
                   onChange={handleLoginChange}
                   className="block w-full mx-auto mt-2 h-12 outline-none border-2 border-gray-500 focus:border-[3px] focus:border-[#45607A] rounded-lg  ps-5 text-bl2ck font-normal"
                 />
