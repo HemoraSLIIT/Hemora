@@ -1,0 +1,58 @@
+# Core Python Dependencies for Hemora Blood Disease Detection System
+
+# Web Framework - Django Backend
+Django==5.2.7
+djangorestframework==3.16.1
+django-cors-headers==4.6.0
+django-environ==0.11.2
+
+# Database
+psycopg2-binary==2.9.10
+
+# Deep Learning - PyTorch (updated for Python 3.13 compatibility)
+torch==2.6.0
+torchvision==0.21.0
+torchaudio==2.6.0
+
+# Image Processing
+opencv-python==4.10.0.84
+scikit-image==0.24.0
+Pillow==11.0.0
+albumentations==1.4.21
+
+# Data Science & ML
+numpy==2.2.1
+pandas==2.2.3
+scikit-learn==1.6.0
+matplotlib==3.10.0
+seaborn==0.13.2
+
+# Medical Imaging
+pydicom==3.0.1
+
+# Development Tools
+jupyter==1.1.1
+ipython==8.31.0
+
+# API Documentation
+drf-yasg==1.21.8
+
+# File Upload & Storage
+django-storages==1.14.4
+
+# Authentication & Security
+djangorestframework-simplejwt==5.5.1
+
+# Testing
+pytest==8.3.4
+pytest-django==4.9.0
+
+# Code Quality
+flake8==7.1.1
+black==24.10.0
+
+# Environment Management
+python-dotenv==1.0.1
+
+# Additional dependencies
+django-filter==24.3
