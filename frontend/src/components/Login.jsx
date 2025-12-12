@@ -2,11 +2,10 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { VscEyeClosed, VscEye } from "react-icons/vsc";
 import toast, { Toaster } from "react-hot-toast";
-import LoginBgImg from "/assets/hemlog7.png";
+import LoginBgImg from "/assets/loginleftimage3.png";
 import Loading from "./Loading";
-import Footer from "./Footer";
-import Header from "./Header";
 import { authAPI } from "../services/api";
+import HemNewLogo from "/assets/loginhemoranew2.svg";
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
@@ -17,10 +16,10 @@ export default function Login() {
     password: "",
   });
 
-  const handleLoginChange = (l) => {
-    const { name, value } = l.target;
-    setlogindata((logindata) => ({
-      ...logindata,
+  const handleLoginChange = (e) => {
+    const { name, value } = e.target;
+    setlogindata((prev) => ({
+      ...prev,
       [name]: value,
     }));
   };
@@ -31,106 +30,108 @@ export default function Login() {
     setLoading(true);
 
     try {
-      // Login with Django JWT
       await authAPI.login(logindata.username, logindata.password);
 
       toast.success("Login Successful!");
       setLoading(false);
 
-      setTimeout(() => {
-        navigate("/dashboard");
-      }, 1000);
+      setTimeout(() => navigate("/dashboard"), 1000);
     } catch (error) {
       setLoading(false);
       if (error.response?.data) {
-        toast.error(error.response.data.detail || "Login Failed. Invalid credentials!");
+        toast.error(error.response.data.detail || "Invalid credentials!");
       } else {
-        toast.error("Login Failed. Please check your connection!");
+        toast.error("Login Failed. Check your connection!");
       }
-      console.error(error);
     }
   };
 
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
-
   return (
-    <>
-      <div className="container mx-auto px-4 py-4">
-        <Header />
-      </div>
+    <div className="min-h-screen w-full bg-[#0a0e3f] flex justify-center items-center">
       <Toaster />
 
-      <div className="flex justify-between container mx-auto px-4 py-0">
-        <div>
+      <div className="bg-white w-full min-h-screen flex overflow-hidden">
+        {/* LEFT IMAGE */}
+        <div className="w-1/2">
           <img
             src={LoginBgImg}
-            alt="Background"
-            width={600}
-            height={600}
-            className=""
+            alt="lab"
+            className="h-screen w-full object-cover"
           />
         </div>
-        <div className="w-2/5 my-auto">
-          <div className="bg-white bg-opacity-30 border-2 border-gray-500 my-auto rounded-3xl p-5">
-            <form className="p-10 font-bold" onSubmit={SubmitLogin}>
-              <div className="my-10">
-                <input
-                  type="text"
-                  name="username"
-                  id="username"
-                  placeholder="Username"
-                  onChange={handleLoginChange}
-                  className="block w-full mx-auto mt-2 h-12 outline-none border-2 border-gray-500 focus:border-[3px] focus:border-[#45607A] rounded-lg  ps-5 text-bl2ck font-normal"
-                />
-              </div>
-              <div className="mb-5 relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  id="password"
-                  placeholder="Password"
-                  onChange={handleLoginChange}
-                  className="block w-full mx-auto mt-2 h-12 outline-none border-2 border-gray-500 focus:border-[3px] focus:border-[#45607A] rounded-lg  ps-5 text-bl2ck font-normal"
-                />
-                <button
-                  type="button"
-                  onClick={togglePasswordVisibility}
-                  className="absolute inset-y-0 right-5 flex items-center text-[#45607A] hover:text-[#2b3d4e] focus:outline-none"
-                >
-                  {showPassword ? (
-                    <VscEyeClosed size={25} />
-                  ) : (
-                    <VscEye size={25} />
-                  )}
-                </button>
-              </div>
-              <div className="flex justify-center">
-                <button className="w-full h-12 text-xl mt-5 py-2 px-10 rounded-lg text-white duration-300 bg-[#45607A] hover:ring-1 hover:bg-[#2b3d4e] ring-[#45607A]">
-                  {loading ? (
-                    <div className="flex justify-center items-center">
-                      <Loading />
-                    </div>
-                  ) : (
-                    "Log In"
-                  )}
-                </button>
-              </div>
-              <p className="font-normal text-gray-600 flex justify-center items-center mt-2">
-                Don't have an account yet?
-                <a
-                  href="/"
-                  className="text-[#2b3d4e] font-semibold ml-1 hover:text-[#2b3d4e]"
-                >
-                  Create Account
-                </a>
-              </p>
-            </form>
+
+        {/* RIGHT FORM */}
+        <div className="w-1/2 flex flex-col justify-center px-40">
+          <div className="text-center mb-6">
+            <div className="mx-auto w-fit mb-6">
+              <img
+                src={HemNewLogo}
+                alt="Logo"
+                width={200}
+                height={200}
+                className=""
+              />
+            </div>
+            <h2 className="text-3xl font-bold text-[#0a0e3f] mb-3">
+              Welcome to Hemo Diagnosis
+            </h2>
           </div>
+
+          <form onSubmit={SubmitLogin}>
+            {/* USERNAME */}
+            <div className="mb-5 text-center">
+              <input
+                type="text"
+                name="username"
+                placeholder="Username"
+                onChange={handleLoginChange}
+                className="w-full h-12 px-5 border rounded-4xl outline-none focus:ring-1 focus:ring-[#0a0e3f]"
+              />
+            </div>
+
+            {/* PASSWORD */}
+            <div className="mb-5 relative text-center">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                placeholder="Password"
+                onChange={handleLoginChange}
+                className="w-full h-12 px-5 border rounded-4xl outline-none focus:ring-1 focus:ring-[#0a0e3f]"
+              />
+
+              {/* <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-3 text-gray-600 cursor-pointer"
+              >
+                {showPassword ? (
+                  <VscEyeClosed size={22} />
+                ) : (
+                  <VscEye size={22} />
+                )}
+              </button> */}
+            </div>
+
+            {/* LOGIN BUTTON */}
+            <button className="w-full h-12 bg-[#0a0e3f] text-white rounded-4xl text-lg hover:opacity-90 transition cursor-pointer flex items-center justify-center">
+              {loading ? <Loading /> : "Login"}
+            </button>
+
+            {/* FORGOT PASSWORD */}
+            <p className="text-right text-sm mt-3 text-[#0a0e3f] cursor-pointer mb-25">
+              Forgot password ?
+            </p>
+
+            {/* SIGN UP LINK */}
+            <p className="text-center text-gray-700">
+              New user?
+              <a href="/" className="text-[#0a0e3f] font-semibold ml-1">
+                create a account
+              </a>
+            </p>
+          </form>
         </div>
       </div>
-      <Footer />
-    </>
+    </div>
   );
 }
