@@ -449,9 +449,9 @@ const Patients = () => {
                       <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
                         Age / Gender
                       </th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                      {/* <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
                         Blood Group
-                      </th>
+                      </th> */}
                       <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
                         Disease
                       </th>
@@ -465,7 +465,7 @@ const Patients = () => {
                         Actions
                       </th>
                       <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
-                        Diagnosis
+                        Comments
                       </th>
                     </tr>
                   </thead>
@@ -484,11 +484,11 @@ const Patients = () => {
                         <td className="px-6 py-4 text-sm text-gray-600">
                           {patient.age} / {patient.gender}
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-700">
+                        {/* <td className="px-6 py-4 text-sm text-gray-700">
                           <span className="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-medium">
                             {patient.bloodGroup}
                           </span>
-                        </td>
+                        </td> */}
                         <td className="px-6 py-4 text-sm">
                           <span
                             className={`px-3 py-1 rounded-full text-xs font-medium ${getDiseaseColor(
@@ -535,13 +535,26 @@ const Patients = () => {
                             </button>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-center">
+                        {/* Lab Tech */}
+                        {/* <td className="px-6 py-4 text-center">
                           <button
-                            onClick={() => handleDiagnose(patient.id)}
+                            // onClick={() => handleDiagnose(patient.id)}
                             className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:opacity-90 transition-colors text-sm font-medium cursor-pointer"
                           >
-                            Diagnose
+                            View Comment
                           </button>
+                        </td> */}
+                        {/* Doctor */}
+                        <td className="px-6 py-4 text-center">
+                          <div className="flex justify-center gap-3">
+                            <button className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:opacity-90 transition-colors text-sm font-medium cursor-pointer whitespace-nowrap">
+                              Add Comment
+                            </button>
+
+                            <button className="px-4 py-2 bg-[#32C527] text-white rounded-lg hover:opacity-90 transition-colors text-sm font-medium cursor-pointer">
+                              Approve
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
