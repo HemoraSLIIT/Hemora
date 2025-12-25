@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { VscEyeClosed, VscEye } from "react-icons/vsc";
 import toast, { Toaster } from "react-hot-toast";
 import LoginBgImg from "/assets/registerleftimage.png";
-import Loading from "./Loading";
+import Loading from "../components/Loading";
 import { authAPI } from "../services/api";
 import HemNewLogo from "/assets/loginhemoranew2.svg";
 

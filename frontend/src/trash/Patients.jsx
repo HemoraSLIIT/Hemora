@@ -17,8 +17,9 @@ import {
 import { authAPI, userAPI } from "../services/api";
 import HemNewLogo from "/assets/hemnewlogo3.svg";
 import toast, { Toaster } from "react-hot-toast";
+import SideBar from "../components/SideBar";
 
-const Patients = () => {
+export default function Patients() {
   const [user, setUser] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -293,30 +294,7 @@ const Patients = () => {
       <Toaster position="top-right" />
 
       {/* Sidebar */}
-      <div className="w-22 bg-[#0a0e3f] flex flex-col items-center py-6 space-y-0 rounded-tr-4xl rounded-br-4xl">
-        <div className="">
-          <img
-            src={HemNewLogo}
-            alt="Logo"
-            width={60}
-            height={60}
-            className=""
-          />
-        </div>
-        <div className="flex flex-col items-center justify-center flex-1 space-y-8">
-          <Home
-            className="text-white w-6 h-6 cursor-pointer hover:scale-110 transition-transform"
-            onClick={() => navigate("/dashboard")}
-          />
-          <Bell className="text-white w-6 h-6 cursor-pointer hover:scale-110 transition-transform" />
-          <Users
-            className="text-white w-6 h-6 cursor-pointer hover:scale-110 transition-transform"
-            onClick={() => navigate("/patients")}
-          />
-          <Calendar className="text-white w-6 h-6 cursor-pointer hover:scale-110 transition-transform" />
-          <Settings className="text-white w-6 h-6 cursor-pointer hover:scale-110 transition-transform" />
-        </div>
-      </div>
+      <SideBar />
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
@@ -575,6 +553,4 @@ const Patients = () => {
       </div>
     </div>
   );
-};
-
-export default Patients;
+}
