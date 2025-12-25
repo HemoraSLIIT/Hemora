@@ -22,7 +22,7 @@ import {
 import toast, { Toaster } from "react-hot-toast";
 import HemNewLogo from "/assets/hemnewlogo3.svg";
 
-const AddPatient = () => {
+export default function AddPatient() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [currentStage, setCurrentStage] = useState(1);
@@ -958,6 +958,4 @@ const AddPatient = () => {
       </div>
     </div>
   );
-};
-
-export default AddPatient;
+}

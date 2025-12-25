@@ -123,12 +123,12 @@ const ResearcherDashboard = () => {
         <div className="flex flex-col items-center justify-center flex-1 space-y-8">
           <Home
             className="text-white w-6 h-6 cursor-pointer hover:scale-110"
-            onClick={() => handleNavigate("/dashboard")}
+            // onClick={() => handleNavigate("/dashboard")}
           />
           <Bell className="text-white w-6 h-6 cursor-pointer hover:scale-110" />
           <Users
             className="text-white w-6 h-6 cursor-pointer hover:scale-110"
-            onClick={() => handleNavigate("/patients")}
+            // onClick={() => handleNavigate("/patients")}
           />
           <Calendar className="text-white w-6 h-6 cursor-pointer hover:scale-110" />
           <Settings className="text-white w-6 h-6 cursor-pointer hover:scale-110" />
@@ -140,19 +140,52 @@ const ResearcherDashboard = () => {
         {/* Header */}
         <div className="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Researcher</h1>
+            {/* <h1 className="text-2xl font-bold text-gray-800">Blood Disease Diagnosis System</h1> */}
+            {/* <p className="text-sm text-gray-500">Laboratory Management Dashboard</p> */}
           </div>
           <div className="flex items-center space-x-4">
+            {/* <div className="relative">
+              <Search className="absolute left-3 top-2.5 text-gray-400 w-5 h-5" />
+              <input
+                type="text"
+                placeholder="Search patients..."
+                className="pl-10 pr-4 py-2 bg-gray-100 text-gray-700 rounded-lg placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-600"
+              />
+            </div> */}
+            {/* <Bell className="text-gray-600 w-6 h-6 cursor-pointer hover:text-blue-600" /> */}
             <div className="relative">
-              <div className="w-12 h-12 bg-[#0a0e3f] rounded-full flex items-center justify-center text-white font-bold text-lg">
-                ND
-              </div>
+              <img
+                src={`https://ui-avatars.com/api/?name=${user?.first_name}+${user?.last_name}&background=0a0e3f&color=fff`}
+                alt="Profile"
+                className="w-10 h-10 rounded-full cursor-pointer"
+              />
             </div>
           </div>
         </div>
 
         {/* Dashboard Content */}
         <div className="p-8">
+          {/* User Welcome Section */}
+          {user && (
+            <div className="mb-6 bg-gradient-to-r from-blue-900 to-[#0a0e3f] rounded-2xl p-6 text-white shadow-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold">
+                    Welcome back, {user.first_name}!
+                  </h2>
+                  <p className="text-blue-100 mt-1">
+                    {user.role} • {user.email}
+                  </p>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="px-6 pt-2 pb-3 bg-white font-bold text-[#0a0e3f] rounded-lg transition duration-300 cursor-pointer hover:scale-105"
+                >
+                  Logout
+                </button>
+              </div>
+            </div>
+          )}
           {/* Top Row - F1 Score and Precision vs Recall */}
           <div className="grid grid-cols-2 gap-6 mb-6">
             {/* F1 Score Comparison */}

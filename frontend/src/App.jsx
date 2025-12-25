@@ -1,10 +1,9 @@
-import Login from "./components/Login";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Register from "./components/Register";
-import Dashboard from "./components/Dashboard";
-import AddPatient from "./components/AddPatient";
-import Patients from "./components/Patients";
-import ResearcherDashboard from "./components/ResearcherDashboard";
+import Register from "./pages/Register";
+import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
+import AddPatient from "./pages/AddPatient";
+import Patients from "./pages/Patients";
 
 function App() {
   return (
@@ -16,7 +15,6 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/addpatient" element={<AddPatient />} />
           <Route path="/patients" element={<Patients />} />
-          <Route path="/researcher-dashboard" element={<ResearcherDashboard/>} />
         </Routes>
       </BrowserRouter>
     </>
