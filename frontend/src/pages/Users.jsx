@@ -1,18 +1,17 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { authAPI, userAPI } from "../services/api";
+import { Toaster } from "react-hot-toast";
 import SideBar from "../components/SideBar";
-import Header from "../trash/Header";
-import UserWelcomeSection from "../components/UserWelcomeSection";
-import LabTechDashBody from "../components/LabTechDashBody";
-import DocDashBody from "../components/DocDashBody";
-import ResearcherDashBody from "../components/ResearcherDashBody";
-import AdminDashBody from "../components/AdminDashBody";
+import LabTechPatientsView from "../components/LabTechPatientsView";
+import DocPatientsView from "../components/DocPatientsView";
+import UserView from "../components/Userview";
 
-export default function Dashboard() {
+export default function Patients() {
   const [user, setUser] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -73,26 +72,16 @@ export default function Dashboard() {
 
   return (
     <div className="flex h-screen bg-gray-50">
+      <Toaster position="top-right" />
+
       {/* Sidebar */}
       <SideBar />
 
       {/* Main Content */}
-      <div className="flex-1 overflow-auto">
-        {/* Header */}
-        <Header />
+        {/* For Admin */}
+        <UserView />
 
-        {/* Dashboard Content */}
-        <div className="p-8">
-          {/* User Welcome Section */}
-          <UserWelcomeSection />
-
-          {/* Disease Distribution & Quick Actions */}
-          <LabTechDashBody />
-          {/* <DocDashBody /> */}
-          {/* <ResearcherDashBody /> */}
-          {/* <AdminDashBody/> */}
-        </div>
-      </div>
+      
     </div>
   );
 }
