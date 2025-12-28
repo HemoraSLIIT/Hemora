@@ -2,13 +2,9 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Users,
-  Search,
-  Plus,
   Eye,
   Edit,
   Trash2,
-  Filter,
-  Download,
 } from "lucide-react";
 import { authAPI, userAPI } from "../services/api";
 import toast from "react-hot-toast";
@@ -84,9 +80,6 @@ export default function AdminDashBody() {
     },
   ]);
 
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterRole, setFilterRole] = useState("All");
-  const [filteredUsers, setFilteredUsers] = useState(users);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -118,31 +111,6 @@ export default function AdminDashBody() {
     fetchUserData();
   }, [navigate]);
 
-  useEffect(() => {
-    // Filter users based on search and role filter
-    let filtered = users;
-
-    if (searchTerm) {
-      filtered = filtered.filter(
-        (user) =>
-          user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user.phone.includes(searchTerm)
-      );
-    }
-
-    if (filterRole !== "All") {
-      filtered = filtered.filter((user) => user.role === filterRole);
-    }
-
-    setFilteredUsers(filtered);
-  }, [searchTerm, filterRole, users]);
-
-  const handleAddUser = () => {
-    navigate("/adduser");
-  };
-
   const handleViewUser = (userId) => {
     toast.success(`Viewing user ${userId}`);
     // Navigate to user detail view when implemented
@@ -156,26 +124,6 @@ export default function AdminDashBody() {
   const handleDeleteUser = (userId) => {
     setUsers((prev) => prev.filter((u) => u.id !== userId));
     toast.success("User deleted successfully");
-  };
-
-  const handleExportData = () => {
-    // Convert users data to CSV
-    const headers = ["ID", "Name", "Email", "Role", "Phone", "Date Added"];
-    const csvContent = [
-      headers.join(","),
-      ...filteredUsers.map((u) =>
-        [u.id, u.name, u.email, u.role, u.phone, u.dateAdded].join(",")
-      ),
-    ].join("\n");
-
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "users_export.csv";
-    a.click();
-    window.URL.revokeObjectURL(url);
-    toast.success("Data exported successfully");
   };
 
   const getRoleColor = (role) => {
@@ -244,28 +192,11 @@ export default function AdminDashBody() {
               <div className="w-12 h-12 bg-red-100 rounded-lg"></div>
             </div>
           </div>
-
-          {/* <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm">Others</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">
-                  {
-                    users.filter(
-                      (u) =>
-                        !["Doctor", "Lab Technician", "Admin"].includes(u.role)
-                    ).length
-                  }
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-green-100 rounded-lg"></div>
-            </div>
-          </div> */}
         </div>
 
         {/* Users Table */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-          {filteredUsers.length > 0 ? (
+          {users.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -288,7 +219,7 @@ export default function AdminDashBody() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredUsers.map((user) => (
+                  {users.map((user) => (
                     <tr
                       key={user.id}
                       className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
@@ -345,9 +276,6 @@ export default function AdminDashBody() {
             <div className="flex flex-col items-center justify-center py-12">
               <Users className="w-12 h-12 text-gray-300 mb-4" />
               <p className="text-gray-500 text-lg">No users found</p>
-              <p className="text-gray-400 text-sm">
-                Try adjusting your search or filters
-              </p>
             </div>
           )}
         </div>
