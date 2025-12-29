@@ -216,10 +216,10 @@ export default function AdminDashBody() {
 
         <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
           <p className="text-gray-600 text-sm mb-2">System Status</p>
-          {/* <p className="text-2xl font-bold text-green-600">Operational</p>
-          <p className="text-xs text-gray-500 mt-2">All systems running</p> */}
-          <p className="text-2xl font-bold text-red-600">Offline</p>
-          <p className="text-xs text-gray-500 mt-2">All systems down</p>
+          <p className="text-2xl font-bold text-green-600">Operational</p>
+          <p className="text-xs text-gray-500 mt-2">All systems running</p>
+          {/* <p className="text-2xl font-bold text-red-600">Offline</p>
+          <p className="text-xs text-gray-500 mt-2">All systems down</p> */}
         </div>
       </div>
     </div>
