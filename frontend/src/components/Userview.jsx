@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { authAPI, userAPI } from "../services/api";
 import toast from "react-hot-toast";
+import AddUser from "../components/AddUser";
 
 export default function UserView() {
   const [user, setUser] = useState(null);
@@ -139,10 +140,6 @@ export default function UserView() {
     setFilteredUsers(filtered);
   }, [searchTerm, filterRole, users]);
 
-  const handleAddUser = () => {
-    navigate("/adduser");
-  };
-
   const handleViewUser = (userId) => {
     toast.success(`Viewing user ${userId}`);
     // Navigate to user detail view when implemented
@@ -191,6 +188,8 @@ export default function UserView() {
     }
   };
 
+  const [isAddUserOpen, setIsAddUserOpen] = useState(false);
+
   return (
     <div className="flex-1 overflow-auto">
       {/* Header */}
@@ -203,12 +202,13 @@ export default function UserView() {
             </p>
           </div>
           <button
-            onClick={handleAddUser}
+            onClick={() => setIsAddUserOpen(true)}
             className="flex items-center space-x-2 px-4 py-2 bg-[#0a0e3f] text-white rounded-lg hover:opacity-90 transition-colors cursor-pointer"
           >
             <Plus className="w-5 h-5" />
             <span>Add User</span>
           </button>
+          <AddUser isOpen={isAddUserOpen} onClose={() => setIsAddUserOpen(false)} />
         </div>
       </div>
 
@@ -256,7 +256,7 @@ export default function UserView() {
         </div>
 
         {/* Stats Section */}
-         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -304,23 +304,6 @@ export default function UserView() {
               <div className="w-12 h-12 bg-red-100 rounded-lg"></div>
             </div>
           </div>
-
-          {/* <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm">Others</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">
-                  {
-                    users.filter(
-                      (u) =>
-                        !["Doctor", "Lab Technician", "Admin"].includes(u.role)
-                    ).length
-                  }
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-green-100 rounded-lg"></div>
-            </div>
-          </div> */}
         </div>
 
         {/* Users Table */}

@@ -1,13 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  Users,
-  Eye,
-  Edit,
-  Trash2,
-} from "lucide-react";
+import { Plus, Users, Activity, Database, ClipboardMinus } from "lucide-react";
 import { authAPI, userAPI } from "../services/api";
-import toast from "react-hot-toast";
+import AddUser from "../components/AddUser";
 
 export default function AdminDashBody() {
   const [user, setUser] = useState(null);
@@ -111,40 +106,22 @@ export default function AdminDashBody() {
     fetchUserData();
   }, [navigate]);
 
-  const handleViewUser = (userId) => {
-    toast.success(`Viewing user ${userId}`);
-    // Navigate to user detail view when implemented
+  const handleAddUsers = () => {
+    navigate("/adduser");
   };
 
-  const handleEditUser = (userId) => {
-    toast.success(`Editing user ${userId}`);
-    // Navigate to edit user when implemented
+  const handleViewUsers = () => {
+    navigate("/users");
   };
 
-  const handleDeleteUser = (userId) => {
-    setUsers((prev) => prev.filter((u) => u.id !== userId));
-    toast.success("User deleted successfully");
-  };
-
-  const getRoleColor = (role) => {
-    switch (role) {
-      case "Doctor":
-        return "bg-blue-100 text-blue-800";
-      case "Lab Technician":
-        return "bg-purple-100 text-purple-800";
-      case "Admin":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
+  const [isAddUserOpen, setIsAddUserOpen] = useState(false);
 
   return (
-    <div className="flex-1 overflow-auto">
+    <div>
       {/* Content */}
-      <div className="p-8">   
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         {/* Stats Section */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
             <div className="flex items-center justify-between">
               <div>
@@ -194,90 +171,55 @@ export default function AdminDashBody() {
           </div>
         </div>
 
-        {/* Users Table */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-          {users.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-gray-50 border-b border-gray-200">
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                      ID
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                      Name
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                      Email
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                      Role
-                    </th>
-                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.map((user) => (
-                    <tr
-                      key={user.id}
-                      className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
-                    >
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                        {user.id}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-700">
-                        {user.name}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {user.email}
-                      </td>
-                      <td className="px-6 py-4 text-sm">
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${getRoleColor(
-                            user.role
-                          )}`}
-                        >
-                          {user.role}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <div className="flex items-center justify-center space-x-2">
-                          <button
-                            onClick={() => handleViewUser(user.id)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                            title="View"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleEditUser(user.id)}
-                            className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                            title="Edit"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteUser(user.id)}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Delete"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-12">
-              <Users className="w-12 h-12 text-gray-300 mb-4" />
-              <p className="text-gray-500 text-lg">No users found</p>
-            </div>
-          )}
+        {/* Quick Actions */}
+        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 h-fit">
+          <h3 className="text-lg font-bold text-gray-800 mb-4">
+            Quick Actions
+          </h3>
+          <div className="space-y-3">
+            <button
+              onClick={() => setIsAddUserOpen(true)}
+              className="cursor-pointer w-full py-3 bg-[#0a0e3f] text-white rounded-lg hover:opacity-90 transition duration-300 flex items-center justify-center space-x-2"
+            >
+              <Plus className="w-5 h-5" />
+              <span>Add New User</span>
+            </button>
+            <AddUser isOpen={isAddUserOpen} onClose={() => setIsAddUserOpen(false)} />
+            <button
+              onClick={handleViewUsers}
+              className="cursor-pointer w-full py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition duration-300 flex items-center justify-center space-x-2"
+            >
+              <Users className="w-5 h-5" />
+              <span>View All Users</span>
+            </button>
+            <button className="cursor-pointer w-full py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition duration-300 flex items-center justify-center space-x-2">
+              <ClipboardMinus className="w-5 h-5" />
+              <span>Generate Reports</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Additional Analytics Section */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+          <p className="text-gray-600 text-sm mb-2">Next Payment Date</p>
+          <p className="text-2xl font-bold text-[#0a0e3f]">2026/02/01</p>
+          <p className="text-xs text-gray-500 mt-2">Payment due in 35 days</p>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+          <p className="text-gray-600 text-sm mb-2">Payment Status</p>
+          <p className="text-2xl font-bold text-yellow-600">Completed</p>
+          <p className="text-xs text-gray-500 mt-2">Last payment on 2025/12/29</p>
+        </div>
+
+        <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+          <p className="text-gray-600 text-sm mb-2">System Status</p>
+          {/* <p className="text-2xl font-bold text-green-600">Operational</p>
+          <p className="text-xs text-gray-500 mt-2">All systems running</p> */}
+          <p className="text-2xl font-bold text-red-600">Offline</p>
+          <p className="text-xs text-gray-500 mt-2">All systems down</p>
         </div>
       </div>
     </div>

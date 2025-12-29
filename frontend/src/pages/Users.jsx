@@ -3,9 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { authAPI, userAPI } from "../services/api";
 import { Toaster } from "react-hot-toast";
 import SideBar from "../components/SideBar";
-import LabTechPatientsView from "../components/LabTechPatientsView";
-import DocPatientsView from "../components/DocPatientsView";
-import UserView from "../components/Userview";
+import UserView from "../components/UserView";
 
 export default function Patients() {
   const [user, setUser] = useState(null);
