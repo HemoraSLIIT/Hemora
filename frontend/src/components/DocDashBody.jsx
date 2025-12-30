@@ -131,15 +131,15 @@ export default function DocDashBody() {
           </div>
           <div className="space-y-3">
             <button
-              onClick={handleAddPatient}
+              // onClick={handleAddPatient}
               className="cursor-pointer w-full h-21 py-3 bg-[#EEEFF1] text-gray-700 rounded-lg hover:opacity-90 transition duration-300 flex items-center justify-center space-x-2"
             ></button>
             <button
-              onClick={handleAddPatient}
+              // onClick={handleAddPatient}
               className="cursor-pointer w-full h-21 py-3 bg-[#EEEFF1] text-gray-700 rounded-lg hover:opacity-90 transition duration-300 flex items-center justify-center space-x-2"
             ></button>
             <button
-              onClick={handleAddPatient}
+              // onClick={handleAddPatient}
               className="cursor-pointer w-full h-21 py-3 bg-[#EEEFF1] text-gray-700 rounded-lg hover:opacity-90 transition duration-300 flex items-center justify-center space-x-2"
             ></button>
           </div>

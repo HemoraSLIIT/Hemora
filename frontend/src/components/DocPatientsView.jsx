@@ -283,7 +283,7 @@ export default function DocPatientsView() {
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0a0e3f] focus:border-transparent"
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0a0e3f] focus:border-transparent cursor-pointer"
               >
                 <option value="All">All Status</option>
                 <option value="Pending">Pending</option>
@@ -295,7 +295,7 @@ export default function DocPatientsView() {
             {/* Export Button */}
             <button
               onClick={handleExportData}
-              className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
             >
               <Download className="w-5 h-5" />
               <span>Export</span>
@@ -420,7 +420,7 @@ export default function DocPatientsView() {
                           >
                             <Eye className="w-4 h-4" />
                           </button>
-                          <button
+                          {/* <button
                             onClick={() => handleEditPatient(patient.id)}
                             className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                             title="Edit"
@@ -433,7 +433,7 @@ export default function DocPatientsView() {
                             title="Delete"
                           >
                             <Trash2 className="w-4 h-4" />
-                          </button>
+                          </button> */}
                         </div>
                       </td>
                       {/* Doctor */}

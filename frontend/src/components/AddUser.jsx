@@ -289,7 +289,7 @@ export default function AddUser({ isOpen, onClose }) {
           {/* Dynamic fields based on role */}
           {renderFormFields()}
 
-          <button type="submit" className="w-full py-3 bg-[#0a0e3f] text-white rounded-lg font-semibold hover:opacity-90 transition duration-300">
+          <button type="submit" className="w-full py-3 bg-[#0a0e3f] text-white rounded-lg font-semibold hover:opacity-90 transition duration-300 cursor-pointer">
             Add
           </button>
         </form>
