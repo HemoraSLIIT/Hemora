@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { authAPI, userAPI } from "../services/api";
 import SideBar from "../components/SideBar";
-import Header from "../trash/Header";
+import Header from "../components/Header";
 import UserWelcomeSection from "../components/UserWelcomeSection";
 import LabTechDashBody from "../components/LabTechDashBody";
 import DocDashBody from "../components/DocDashBody";
@@ -87,10 +87,10 @@ export default function Dashboard() {
           <UserWelcomeSection />
 
           {/* Disease Distribution & Quick Actions */}
-          <LabTechDashBody />
+          {/* <LabTechDashBody /> */}
           {/* <DocDashBody /> */}
           {/* <ResearcherDashBody /> */}
-          {/* <AdminDashBody/> */}
+          <AdminDashBody />
         </div>
       </div>
     </div>
