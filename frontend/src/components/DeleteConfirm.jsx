@@ -13,7 +13,7 @@ export default function DeleteConfirm({
       onClick={onCancel}
     >
       <div
-        className="bg-white rounded-lg shadow-lg min-w-96 overflow-hidden"
+        className="bg-white rounded-lg shadow-2xl min-w-96 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

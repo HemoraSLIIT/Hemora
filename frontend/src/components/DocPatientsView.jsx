@@ -439,13 +439,17 @@ export default function DocPatientsView() {
                       {/* Doctor */}
                       <td className="px-6 py-4 text-center">
                         <div className="flex justify-center gap-3">
-                          <button className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:opacity-90 transition-colors text-sm font-medium cursor-pointer whitespace-nowrap">
+                          {/* <button className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:opacity-90 transition-colors text-sm font-medium cursor-pointer whitespace-nowrap">
                             Add Comment
+                          </button> */}
+
+                          <button className="px-4 py-2 bg-orange-700 text-white rounded-lg hover:opacity-90 transition-colors text-sm font-medium cursor-pointer whitespace-nowrap">
+                            View Results
                           </button>
 
-                          <button className="px-4 py-2 bg-[#32C527] text-white rounded-lg hover:opacity-90 transition-colors text-sm font-medium cursor-pointer">
+                          {/* <button className="px-4 py-2 bg-[#32C527] text-white rounded-lg hover:opacity-90 transition-colors text-sm font-medium cursor-pointer">
                             Approve
-                          </button>
+                          </button> */}
                         </div>
                       </td>
                     </tr>
