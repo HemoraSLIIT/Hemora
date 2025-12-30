@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { authAPI, userAPI } from "../services/api";
 import toast from "react-hot-toast";
+import ViewResults from "./ViewResults";
 
 export default function DocPatientsView() {
   const [user, setUser] = useState(null);
@@ -111,6 +112,8 @@ export default function DocPatientsView() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("All");
   const [filteredPatients, setFilteredPatients] = useState(patients);
+  const [isViewResultsOpen, setIsViewResultsOpen] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -185,6 +188,12 @@ export default function DocPatientsView() {
     toast.success(`Starting diagnosis for patient ${patientId}`);
     // Navigate to diagnosis page when implemented
     // navigate(`/diagnosis/${patientId}`);
+  };
+
+  const handleViewResults = (patientId) => {
+    const patient = patients.find((p) => p.id === patientId);
+    setSelectedPatient(patient);
+    setIsViewResultsOpen(true);
   };
 
   const handleExportData = () => {
@@ -443,7 +452,10 @@ export default function DocPatientsView() {
                             Add Comment
                           </button> */}
 
-                          <button className="px-4 py-2 bg-orange-700 text-white rounded-lg hover:opacity-90 transition-colors text-sm font-medium cursor-pointer whitespace-nowrap">
+                          <button
+                            onClick={() => handleViewResults(patient.id)}
+                            className="px-4 py-2 bg-orange-700 text-white rounded-lg hover:opacity-90 transition-colors text-sm font-medium cursor-pointer whitespace-nowrap"
+                          >
                             View Results
                           </button>
 
@@ -468,6 +480,12 @@ export default function DocPatientsView() {
           )}
         </div>
       </div>
+
+      <ViewResults
+        isOpen={isViewResultsOpen}
+        onClose={() => setIsViewResultsOpen(false)}
+        userRole="Doctor"
+      />
     </div>
   );
 }
