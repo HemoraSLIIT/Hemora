@@ -13,6 +13,7 @@ import {
 import { authAPI, userAPI } from "../services/api";
 import toast from "react-hot-toast";
 import DeleteConfirm from "./DeleteConfirm";
+import ViewResults from "./ViewResults";
 
 export default function LabTechPatientsView() {
   const [user, setUser] = useState(null);
@@ -112,6 +113,8 @@ export default function LabTechPatientsView() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("All");
   const [filteredPatients, setFilteredPatients] = useState(patients);
+  const [isViewResultsOpen, setIsViewResultsOpen] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -186,6 +189,12 @@ export default function LabTechPatientsView() {
     toast.success(`Starting diagnosis for patient ${patientId}`);
     // Navigate to diagnosis page when implemented
     // navigate(`/diagnosis/${patientId}`);
+  };
+
+  const handleViewResults = (patientId) => {
+    const patient = patients.find((p) => p.id === patientId);
+    setSelectedPatient(patient);
+    setIsViewResultsOpen(true);
   };
 
   const handleExportData = () => {
@@ -462,9 +471,12 @@ export default function LabTechPatientsView() {
                       {/* Lab Tech */}
                       <td className="px-6 py-4 text-center">
                         <div className="flex justify-center gap-3">
-                          {/* <button className="px-4 py-2 bg-orange-700 text-white rounded-lg hover:opacity-90 transition-colors text-sm font-medium cursor-pointer whitespace-nowrap">
+                          <button
+                            onClick={() => handleViewResults(patient.id)}
+                            className="px-4 py-2 bg-orange-700 text-white rounded-lg hover:opacity-90 transition-colors text-sm font-medium cursor-pointer whitespace-nowrap"
+                          >
                             View Results
-                          </button> */}
+                          </button>
 
                           <button
                             onClick={() => handleDiagnose(patient.id)}
@@ -497,6 +509,12 @@ export default function LabTechPatientsView() {
         message={`Are you sure you want to delete this patient? This action cannot be undone.`}
         onConfirm={confirmDelete}
         onCancel={cancelDelete}
+      />
+
+      <ViewResults
+        isOpen={isViewResultsOpen}
+        onClose={() => setIsViewResultsOpen(false)}
+        userRole="Lab Technician"
       />
     </div>
   );
