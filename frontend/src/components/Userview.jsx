@@ -13,6 +13,7 @@ import {
 import { authAPI, userAPI } from "../services/api";
 import toast from "react-hot-toast";
 import AddUser from "../components/AddUser";
+import DeleteConfirm from "./DeleteConfirm";
 
 export default function UserView() {
   const [user, setUser] = useState(null);
@@ -189,6 +190,26 @@ export default function UserView() {
   };
 
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [deleteUserId, setDeleteUserId] = useState(null);
+
+  const openDeleteConfirm = (userId) => {
+    setDeleteUserId(userId);
+    setIsDeleteConfirmOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (deleteUserId) {
+      handleDeleteUser(deleteUserId);
+      setIsDeleteConfirmOpen(false);
+      setDeleteUserId(null);
+    }
+  };
+
+  const cancelDelete = () => {
+    setIsDeleteConfirmOpen(false);
+    setDeleteUserId(null);
+  };
 
   return (
     <div className="flex-1 overflow-auto">
@@ -208,7 +229,10 @@ export default function UserView() {
             <Plus className="w-5 h-5" />
             <span>Add User</span>
           </button>
-          <AddUser isOpen={isAddUserOpen} onClose={() => setIsAddUserOpen(false)} />
+          <AddUser
+            isOpen={isAddUserOpen}
+            onClose={() => setIsAddUserOpen(false)}
+          />
         </div>
       </div>
 
@@ -235,7 +259,7 @@ export default function UserView() {
               <select
                 value={filterRole}
                 onChange={(e) => setFilterRole(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0a0e3f] focus:border-transparent"
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0a0e3f] focus:border-transparent cursor-pointer"
               >
                 <option value="All">All Roles</option>
                 <option value="Doctor">Doctor</option>
@@ -247,7 +271,7 @@ export default function UserView() {
             {/* Export Button */}
             <button
               onClick={handleExportData}
-              className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
             >
               <Download className="w-5 h-5" />
               <span>Export</span>
@@ -358,21 +382,21 @@ export default function UserView() {
                         <div className="flex items-center justify-center space-x-2">
                           <button
                             onClick={() => handleViewUser(user.id)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
                             title="View"
                           >
                             <Eye className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => handleEditUser(user.id)}
-                            className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                            className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
                             title="Edit"
                           >
                             <Edit className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => handleDeleteUser(user.id)}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            onClick={() => openDeleteConfirm(user.id)}
+                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
                             title="Delete"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -395,6 +419,14 @@ export default function UserView() {
           )}
         </div>
       </div>
+
+      <DeleteConfirm
+        isOpen={isDeleteConfirmOpen}
+        title="Delete User"
+        message={`Are you sure you want to delete this user? This action cannot be undone.`}
+        onConfirm={confirmDelete}
+        onCancel={cancelDelete}
+      />
     </div>
   );
 }

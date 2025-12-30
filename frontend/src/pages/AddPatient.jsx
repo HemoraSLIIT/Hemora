@@ -592,7 +592,7 @@ export default function AddPatient() {
                 type="button"
                 onClick={handlePreviousStage}
                 disabled={currentStage === 1}
-                className="flex items-center space-x-2 px-6 py-3 bg-gray-200 text-gray-800 rounded-lg font-semibold hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center space-x-2 px-6 py-3 bg-gray-200 text-gray-800 rounded-lg font-semibold hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 <ChevronLeft className="w-5 h-5" />
                 <span>Previous</span>
