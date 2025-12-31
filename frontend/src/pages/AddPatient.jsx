@@ -405,7 +405,7 @@ export default function AddPatient() {
                       value={patientData.phone}
                       onChange={handleInputChange}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0a0e3f] focus:border-transparent"
-                      placeholder="+ 94 71 756 2052"
+                      placeholder="Enter phone number"
                     />
                   </div>
 
@@ -419,7 +419,7 @@ export default function AddPatient() {
                       value={patientData.email}
                       onChange={handleInputChange}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0a0e3f] focus:border-transparent"
-                      placeholder="patient@example.com"
+                      placeholder="Enter email address"
                     />
                   </div>
 
@@ -461,7 +461,7 @@ export default function AddPatient() {
                       value={patientData.emergencyPhone}
                       onChange={handleInputChange}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0a0e3f] focus:border-transparent"
-                      placeholder="+ 94 71 756 2052"
+                      placeholder="Enter emergency phone number"
                     />
                   </div>
                 </div>

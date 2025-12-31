@@ -286,7 +286,7 @@ export default function AddUser({ isOpen, onClose, onUserCreated }) {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
                 type="email"
                 name="email"
-                placeholder="Enter email"
+                placeholder="Enter email address"
                 value={formData.email}
                 onChange={handleChange}
                 required
