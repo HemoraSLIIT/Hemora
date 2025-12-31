@@ -13,6 +13,7 @@ import {
 import { authAPI, userAPI } from "../services/api";
 import toast from "react-hot-toast";
 import ViewResults from "./ViewResults";
+import ViewPatient from "./ViewPatient";
 
 export default function DocPatientsView() {
   const [user, setUser] = useState(null);
@@ -113,6 +114,7 @@ export default function DocPatientsView() {
   const [filterStatus, setFilterStatus] = useState("All");
   const [filteredPatients, setFilteredPatients] = useState(patients);
   const [isViewResultsOpen, setIsViewResultsOpen] = useState(false);
+  const [isViewPatientOpen, setIsViewPatientOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const navigate = useNavigate();
 
@@ -170,8 +172,9 @@ export default function DocPatientsView() {
   };
 
   const handleViewPatient = (patientId) => {
-    toast.success(`Viewing patient ${patientId}`);
-    // Navigate to patient detail view when implemented
+    const patient = patients.find((p) => p.id === patientId);
+    setSelectedPatient(patient);
+    setIsViewPatientOpen(true);
   };
 
   const handleEditPatient = (patientId) => {
@@ -417,7 +420,7 @@ export default function DocPatientsView() {
                         <div className="flex items-center justify-center space-x-2">
                           <button
                             onClick={() => handleViewPatient(patient.id)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
                             title="View"
                           >
                             <Eye className="w-4 h-4" />
@@ -478,6 +481,12 @@ export default function DocPatientsView() {
         isOpen={isViewResultsOpen}
         onClose={() => setIsViewResultsOpen(false)}
         userRole="Doctor"
+      />
+
+      <ViewPatient
+        isOpen={isViewPatientOpen}
+        onClose={() => setIsViewPatientOpen(false)}
+        patient={selectedPatient}
       />
     </div>
   );
