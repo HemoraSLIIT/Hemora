@@ -122,6 +122,12 @@ export const userAPI = {
     return response.data;
   },
 
+  // Create new user (admin only)
+  createUser: async (userData) => {
+    const response = await api.post('/users/', userData);
+    return response.data;
+  },
+
   // Get user by ID
   getUserById: async (id) => {
     const response = await api.get(`/users/${id}/`);
@@ -137,6 +143,30 @@ export const userAPI = {
   // Delete user
   deleteUser: async (id) => {
     const response = await api.delete(`/users/${id}/`);
+    return response.data;
+  },
+
+  // Verify user (admin only)
+  verifyUser: async (id) => {
+    const response = await api.post(`/users/${id}/verify/`);
+    return response.data;
+  },
+
+  // Unverify user (admin only)
+  unverifyUser: async (id) => {
+    const response = await api.post(`/users/${id}/unverify/`);
+    return response.data;
+  },
+
+  // Activate user (admin only)
+  activateUser: async (id) => {
+    const response = await api.post(`/users/${id}/activate/`);
+    return response.data;
+  },
+
+  // Deactivate user (admin only)
+  deactivateUser: async (id) => {
+    const response = await api.post(`/users/${id}/deactivate/`);
     return response.data;
   },
 };
