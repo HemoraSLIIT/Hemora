@@ -14,6 +14,7 @@ import { authAPI, userAPI } from "../services/api";
 import toast from "react-hot-toast";
 import DeleteConfirm from "./DeleteConfirm";
 import ViewResults from "./ViewResults";
+import ViewPatient from "./ViewPatient";
 
 export default function LabTechPatientsView() {
   const [user, setUser] = useState(null);
@@ -114,6 +115,7 @@ export default function LabTechPatientsView() {
   const [filterStatus, setFilterStatus] = useState("All");
   const [filteredPatients, setFilteredPatients] = useState(patients);
   const [isViewResultsOpen, setIsViewResultsOpen] = useState(false);
+  const [isViewPatientOpen, setIsViewPatientOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const navigate = useNavigate();
 
@@ -171,8 +173,9 @@ export default function LabTechPatientsView() {
   };
 
   const handleViewPatient = (patientId) => {
-    toast.success(`Viewing patient ${patientId}`);
-    // Navigate to patient detail view when implemented
+    const patient = patients.find((p) => p.id === patientId);
+    setSelectedPatient(patient);
+    setIsViewPatientOpen(true);
   };
 
   const handleEditPatient = (patientId) => {
@@ -515,6 +518,12 @@ export default function LabTechPatientsView() {
         isOpen={isViewResultsOpen}
         onClose={() => setIsViewResultsOpen(false)}
         userRole="Lab Technician"
+      />
+
+      <ViewPatient
+        isOpen={isViewPatientOpen}
+        onClose={() => setIsViewPatientOpen(false)}
+        patient={selectedPatient}
       />
     </div>
   );
