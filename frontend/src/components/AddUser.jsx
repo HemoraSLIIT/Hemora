@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { UserRoundPlus } from "lucide-react";
 import { userAPI } from "../services/api";
 import toast from "react-hot-toast";
 
@@ -233,8 +234,13 @@ export default function AddUser({ isOpen, onClose, onUserCreated }) {
   return (
     <div className="fixed inset-0 bg-[#000000b4] flex items-center justify-center z-1000 mb-0" onClick={onClose}>
       <div className="bg-white rounded-lg shadow-lg w-4xl h-60vh overflow-y-auto p-8" onClick={(e) => e.stopPropagation()}>
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-semibold text-gray-900">👤 Add New User</h2>
+                <div className="flex justify-between items-center mb-6">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <UserRoundPlus className="text-gray-900 w-6 h-6" />
+              <h2 className="text-2xl font-semibold text-gray-900">Add New User</h2>
+            </div>
+          </div>
           <button className="bg-none border-none text-2xl cursor-pointer text-gray-600 hover:text-gray-900" onClick={onClose}>✕</button>
         </div>
 

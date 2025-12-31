@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { X } from "lucide-react";
+import { X, UserRoundPen } from "lucide-react";
 import { userAPI } from "../services/api";
 import toast from "react-hot-toast";
 
@@ -270,9 +270,12 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h2 className="text-2xl font-semibold text-gray-900">
-              ✏️ Edit User
-            </h2>
+            <div className="flex items-center gap-2 mb-2">
+              <UserRoundPen className="text-gray-900 w-6 h-6" />
+              <h2 className="text-2xl font-semibold text-gray-900">
+                Edit User
+              </h2>
+            </div>
             <p className="text-sm text-gray-500 mt-1">
               Editing: {user.fullName || user.username} ({user.role})
             </p>

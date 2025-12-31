@@ -1,5 +1,5 @@
 import React from "react";
-import { X, User, Mail, Phone, Building, GraduationCap, Award, Stethoscope, Shield, Calendar } from "lucide-react";
+import { X, User, Mail, Phone, Building, GraduationCap, Award, Stethoscope, Shield, Calendar, UserRoundCheck } from "lucide-react";
 
 export default function ViewUser({ isOpen, onClose, user }) {
   if (!isOpen || !user) return null;
@@ -41,7 +41,12 @@ export default function ViewUser({ isOpen, onClose, user }) {
       >
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-semibold text-gray-900">👤 User Details</h2>
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <UserRoundCheck className="text-gray-900 w-6 h-6" />
+              <h2 className="text-2xl font-semibold text-gray-900">User Details</h2>
+            </div>
+          </div>
           <button
             className="bg-none border-none text-2xl cursor-pointer text-gray-600 hover:text-gray-900"
             onClick={onClose}

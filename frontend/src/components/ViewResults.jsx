@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { FileText, TestTubeDiagonal, MessageSquareText, MousePointerClick, Stethoscope } from "lucide-react";
 
 // Mock data for diagnosis results
 const mockDiagnosisData = {
@@ -58,16 +59,19 @@ export default function ViewResults({
         {/* Header */}
         <div className="flex justify-between items-center mb-6 pb-4 border-b border-gray-300">
           <div>
-            <h2 className="text-2xl font-semibold text-gray-900">
-              📋 View Results
-            </h2>
+            <div className="flex items-center gap-2 mb-2">
+              <FileText className="text-gray-900 w-6 h-6" />
+              <h2 className="text-2xl font-semibold text-gray-900">
+                View Results
+              </h2>
+            </div>
             <p className="text-sm text-gray-600 mt-1">
               Patient: {mockDiagnosisData.patientName} (
               {mockDiagnosisData.patientId})
             </p>
           </div>
           <button
-            className="bg-none border-none text-2xl cursor-pointer text-gray-600 hover:text-gray-900 transition"
+            className="bg-none border-none text-2xl cursor-pointer text-gray-600 hover:text-gray-900"
             onClick={onClose}
           >
             ✕
@@ -75,7 +79,7 @@ export default function ViewResults({
         </div>
 
         {/* Test Date */}
-        <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-100">
+        <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
           <p className="text-sm text-gray-700">
             <span className="font-semibold">Test Date:</span>{" "}
             {new Date(mockDiagnosisData.testDate).toLocaleDateString()}
@@ -103,9 +107,10 @@ function LabTechResults({ data, onClose }) {
       <ResultsDisplay results={data.results} />
 
       {/* Doctor Comments Section */}
-      <div className="p-6 bg-yellow-50 border border-yellow-200 rounded-lg">
+      <div className="p-6 bg-gray-50 border border-gray-200 rounded-lg">
         <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
-          👨‍⚕️ Doctor Comments
+          <Stethoscope className="text-gray-900 w-5 h-5" />
+          Doctor's Comments
         </h3>
         <div className="bg-white p-4 rounded border border-gray-300 min-h-20">
           <p className="text-gray-700 text-sm">{data.doctorComments}</p>
@@ -117,8 +122,8 @@ function LabTechResults({ data, onClose }) {
         <button
           className={`flex-1 py-3 px-4 rounded-lg font-semibold transition duration-300 cursor-pointer ${
             isDone
-              ? "bg-green-600 text-white  hover:opacity-90 "
-              : "bg-green-500 text-white  hover:opacity-90 "
+              ? "bg-green-900 text-white  hover:opacity-90 "
+              : "bg-green-700 text-white  hover:opacity-90 "
           }`}
           onClick={() => setIsDone(true)}
         >
@@ -177,12 +182,13 @@ function DoctorResults({ data, onClose }) {
       <ResultsDisplay results={data.results} />
 
       {/* Doctor Comments Section */}
-      <div className="p-6 bg-purple-50 border border-purple-200 rounded-lg">
+      <div className="p-6 bg-gray-50 border border-gray-200 rounded-lg">
         <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
-          💬 Add Your Comments
+          <MessageSquareText className="text-gray-900 w-5 h-5" />
+          Add Your Comments
         </h3>
         <textarea
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-200 resize-none transition"
+          className="w-full px-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-[#0a0e3f] focus:ring-1 focus:ring-[#0a0e3f] resize-none transition"
           rows="5"
           placeholder="Add your medical assessment and observations..."
           value={comments}
@@ -193,7 +199,8 @@ function DoctorResults({ data, onClose }) {
 
       {/* Action Selection */}
       <div className="p-6 bg-gray-50 border border-gray-200 rounded-lg">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+          <MousePointerClick className="text-gray-900 w-5 h-5" />
           Select Action
         </h3>
         <div className="grid grid-cols-2 gap-4">
@@ -279,9 +286,10 @@ function DoctorResults({ data, onClose }) {
 // Shared Results Display Component
 function ResultsDisplay({ results }) {
   return (
-    <div className="p-6 bg-gradient-to-br from-blue-50 to-indigo-50 border border-indigo-200 rounded-lg">
+        <div className="p-6 bg-gray-50 border border-gray-200 rounded-lg">
       <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-        🧪 Diagnosis Results
+        <TestTubeDiagonal className="text-gray-900 w-5 h-5" />
+        Diagnosis Results
       </h3>
       <div className="space-y-3">
         {results.map((result) => (
