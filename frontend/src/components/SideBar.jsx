@@ -81,7 +81,7 @@ export default function SideBar() {
           onClick={closeCalendar}
         >
           <div
-            className="bg-white rounded-lg shadow-2xl p-10 relative w-full max-w-md"
+            className="bg-white rounded-lg shadow-lg p-10 relative w-full max-w-md"
             onClick={(e) => e.stopPropagation()}
           >
             <button

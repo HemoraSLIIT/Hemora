@@ -83,7 +83,12 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
       const errorData = error.response?.data;
       if (errorData) {
         const errorMessages = Object.entries(errorData)
-          .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(", ") : messages}`)
+          .map(
+            ([field, messages]) =>
+              `${field}: ${
+                Array.isArray(messages) ? messages.join(", ") : messages
+              }`
+          )
           .join("\n");
         toast.error(errorMessages || "Failed to update user");
       } else {
@@ -103,7 +108,9 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
           <>
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2">Specialization *</label>
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                  Specialization *
+                </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
                   type="text"
@@ -115,7 +122,9 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2">Hospital Affiliation *</label>
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                  Hospital Affiliation *
+                </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
                   type="text"
@@ -129,7 +138,9 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
             </div>
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2">Medical License Number *</label>
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                  Medical License Number *
+                </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
                   type="text"
@@ -141,7 +152,9 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2">Phone</label>
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                  Phone
+                </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
                   type="tel"
@@ -159,7 +172,9 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
         return (
           <div className="grid grid-cols-2 gap-6 mb-6">
             <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2">Hospital / Lab Affiliation *</label>
+              <label className="block text-sm font-semibold text-gray-900 mb-2">
+                Hospital / Lab Affiliation *
+              </label>
               <input
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
                 type="text"
@@ -171,7 +186,9 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2">Phone</label>
+              <label className="block text-sm font-semibold text-gray-900 mb-2">
+                Phone
+              </label>
               <input
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
                 type="tel"
@@ -188,7 +205,9 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
         return (
           <div className="grid grid-cols-2 gap-6 mb-6">
             <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2">University Affiliation *</label>
+              <label className="block text-sm font-semibold text-gray-900 mb-2">
+                University Affiliation *
+              </label>
               <input
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
                 type="text"
@@ -200,7 +219,9 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2">Phone</label>
+              <label className="block text-sm font-semibold text-gray-900 mb-2">
+                Phone
+              </label>
               <input
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
                 type="tel"
@@ -217,7 +238,9 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
         return (
           <div className="grid grid-cols-2 gap-6 mb-6">
             <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2">Phone</label>
+              <label className="block text-sm font-semibold text-gray-900 mb-2">
+                Phone
+              </label>
               <input
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
                 type="tel"
@@ -247,7 +270,9 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h2 className="text-2xl font-semibold text-gray-900">✏️ Edit User</h2>
+            <h2 className="text-2xl font-semibold text-gray-900">
+              ✏️ Edit User
+            </h2>
             <p className="text-sm text-gray-500 mt-1">
               Editing: {user.fullName || user.username} ({user.role})
             </p>
@@ -256,7 +281,7 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
             className="bg-none border-none text-2xl cursor-pointer text-gray-600 hover:text-gray-900"
             onClick={onClose}
           >
-            <X className="w-6 h-6" />
+            ✕
           </button>
         </div>
 
@@ -264,17 +289,23 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
           {/* Username (Read-only) & Email */}
           <div className="grid grid-cols-2 gap-6 mb-6">
             <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2">Username</label>
+              <label className="block text-sm font-semibold text-gray-900 mb-2">
+                Username
+              </label>
               <input
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-gray-100 cursor-not-allowed"
                 type="text"
                 value={user.username}
                 disabled
               />
-              <p className="text-xs text-gray-500 mt-1">Username cannot be changed</p>
+              <p className="text-xs text-gray-500 mt-1">
+                Username cannot be changed
+              </p>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2">Email *</label>
+              <label className="block text-sm font-semibold text-gray-900 mb-2">
+                Email *
+              </label>
               <input
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
                 type="email"
@@ -291,7 +322,9 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
           {user.role !== "Admin" && (
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2">First Name *</label>
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                  First Name *
+                </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
                   type="text"
@@ -303,7 +336,9 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2">Last Name *</label>
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                  Last Name *
+                </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
                   type="text"
@@ -322,7 +357,9 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
 
           {/* Password (Optional) */}
           <div className="mb-6">
-            <label className="block text-sm font-semibold text-gray-900 mb-2">New Password (Optional)</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-2">
+              New Password (Optional)
+            </label>
             <input
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
               type="password"
@@ -331,7 +368,9 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
               value={formData.password}
               onChange={handleChange}
             />
-            <p className="text-xs text-gray-500 mt-1">Only fill this if you want to change the password</p>
+            <p className="text-xs text-gray-500 mt-1">
+              Only fill this if you want to change the password
+            </p>
           </div>
 
           {/* Buttons */}
@@ -339,14 +378,14 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 py-3 bg-gray-200 text-gray-800 rounded-lg font-semibold hover:bg-gray-300 transition duration-300"
+              className="flex-1 py-3 bg-gray-200 text-gray-800 rounded-lg font-semibold hover:bg-gray-300 transition duration-300 cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="flex-1 py-3 bg-[#0a0e3f] text-white rounded-lg font-semibold hover:opacity-90 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 py-3 bg-[#0a0e3f] text-white rounded-lg font-semibold hover:opacity-90 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               {loading ? "Saving..." : "Save Changes"}
             </button>
