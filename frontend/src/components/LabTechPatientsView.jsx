@@ -15,6 +15,7 @@ import toast from "react-hot-toast";
 import DeleteConfirm from "./DeleteConfirm";
 import ViewResults from "./ViewResults";
 import ViewPatient from "./ViewPatient";
+import EditPatient from "./EditPatient";
 
 export default function LabTechPatientsView() {
   const [user, setUser] = useState(null);
@@ -116,6 +117,7 @@ export default function LabTechPatientsView() {
   const [filteredPatients, setFilteredPatients] = useState(patients);
   const [isViewResultsOpen, setIsViewResultsOpen] = useState(false);
   const [isViewPatientOpen, setIsViewPatientOpen] = useState(false);
+  const [isEditPatientOpen, setIsEditPatientOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const navigate = useNavigate();
 
@@ -179,8 +181,9 @@ export default function LabTechPatientsView() {
   };
 
   const handleEditPatient = (patientId) => {
-    toast.success(`Editing patient ${patientId}`);
-    // Navigate to edit patient when implemented
+    const patient = patients.find((p) => p.id === patientId);
+    setSelectedPatient(patient);
+    setIsEditPatientOpen(true);
   };
 
   const handleDeletePatient = (patientId) => {
@@ -272,6 +275,11 @@ export default function LabTechPatientsView() {
   const cancelDelete = () => {
     setIsDeleteConfirmOpen(false);
     setDeletePatientId(null);
+  };
+
+  const handlePatientUpdated = () => {
+    // Refresh patient list if needed
+    // This will be called after the patient is successfully updated
   };
 
   return (
@@ -512,6 +520,13 @@ export default function LabTechPatientsView() {
         message={`Are you sure you want to delete this patient? This action cannot be undone.`}
         onConfirm={confirmDelete}
         onCancel={cancelDelete}
+      />
+
+      <EditPatient
+        isOpen={isEditPatientOpen}
+        onClose={() => setIsEditPatientOpen(false)}
+        patient={selectedPatient}
+        onPatientUpdated={handlePatientUpdated}
       />
 
       <ViewResults
