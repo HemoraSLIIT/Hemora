@@ -14,82 +14,36 @@ import { authAPI, userAPI } from "../services/api";
 import toast from "react-hot-toast";
 import AddUser from "../components/AddUser";
 import DeleteConfirm from "./DeleteConfirm";
+import ViewUser from "../components/ViewUser";
+import EditUser from "../components/EditUser";
 
 export default function UserView() {
   const [user, setUser] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-  const [users, setUsers] = useState([
-    {
-      id: "U001",
-      name: "John Smith",
-      email: "john.smith@hospital.com",
-      role: "Doctor",
-      dateAdded: "2024-12-11",
-      phone: "555-1001",
-    },
-    {
-      id: "U002",
-      name: "Sarah Johnson",
-      email: "sarah.johnson@hospital.com",
-      role: "Lab Technician",
-      dateAdded: "2024-12-10",
-      phone: "555-1002",
-    },
-    {
-      id: "U003",
-      name: "Michael Chen",
-      email: "michael.chen@hospital.com",
-      role: "Admin",
-      dateAdded: "2024-12-09",
-      phone: "555-1003",
-    },
-    {
-      id: "U004",
-      name: "Emily Davis",
-      email: "emily.davis@hospital.com",
-      role: "Admin",
-      dateAdded: "2024-12-09",
-      phone: "555-1004",
-    },
-    {
-      id: "U005",
-      name: "Robert Wilson",
-      email: "robert.wilson@hospital.com",
-      role: "Doctor",
-      dateAdded: "2024-12-08",
-      phone: "555-1005",
-    },
-    {
-      id: "U006",
-      name: "Lisa Martinez",
-      email: "lisa.martinez@hospital.com",
-      role: "Lab Technician",
-      dateAdded: "2024-12-08",
-      phone: "555-1006",
-    },
-    {
-      id: "U007",
-      name: "David Brown",
-      email: "david.brown@hospital.com",
-      role: "Doctor",
-      dateAdded: "2024-12-07",
-      phone: "555-1007",
-    },
-    {
-      id: "U008",
-      name: "Jennifer Lee",
-      email: "jennifer.lee@hospital.com",
-      role: "Doctor",
-      dateAdded: "2024-12-07",
-      phone: "555-1008",
-    },
-  ]);
+  const [users, setUsers] = useState([]);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRole, setFilterRole] = useState("All");
-  const [filteredUsers, setFilteredUsers] = useState(users);
+  const [filteredUsers, setFilteredUsers] = useState([]);
+  const [isAddUserOpen, setIsAddUserOpen] = useState(false);
+  const [isViewUserOpen, setIsViewUserOpen] = useState(false);
+  const [isEditUserOpen, setIsEditUserOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
   const navigate = useNavigate();
+
+  // Fetch all users from API
+  const fetchUsers = async () => {
+    try {
+      const response = await userAPI.getAllUsers();
+      // Handle paginated response (results array) or direct array
+      const usersData = response.results || response;
+      setUsers(usersData);
+    } catch (err) {
+      console.error("Failed to fetch users:", err);
+      toast.error("Failed to fetch users");
+    }
+  };
 
   useEffect(() => {
     // Check if user is authenticated
@@ -104,6 +58,9 @@ export default function UserView() {
         const userData = await userAPI.getCurrentUser();
         setUser(userData);
         setLoading(false);
+        
+        // Fetch all users after current user is loaded
+        await fetchUsers();
       } catch (err) {
         console.error("Failed to fetch user data:", err);
         setError("Failed to fetch user data.");
@@ -127,10 +84,10 @@ export default function UserView() {
     if (searchTerm) {
       filtered = filtered.filter(
         (user) =>
-          user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user.phone.includes(searchTerm)
+          user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user.id?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user.phone?.includes(searchTerm)
       );
     }
 
@@ -141,28 +98,55 @@ export default function UserView() {
     setFilteredUsers(filtered);
   }, [searchTerm, filterRole, users]);
 
-  const handleViewUser = (userId) => {
-    toast.success(`Viewing user ${userId}`);
-    // Navigate to user detail view when implemented
+  const handleViewUser = async (userId) => {
+    try {
+      const userData = await userAPI.getUserById(userId);
+      setSelectedUser(userData);
+      setIsViewUserOpen(true);
+    } catch (err) {
+      console.error("Failed to fetch user details:", err);
+      toast.error("Failed to fetch user details");
+    }
   };
 
-  const handleEditUser = (userId) => {
-    toast.success(`Editing user ${userId}`);
-    // Navigate to edit user when implemented
+  const handleEditUser = async (userId) => {
+    try {
+      const userData = await userAPI.getUserById(userId);
+      setSelectedUser(userData);
+      setIsEditUserOpen(true);
+    } catch (err) {
+      console.error("Failed to fetch user details:", err);
+      toast.error("Failed to fetch user details");
+    }
   };
 
-  const handleDeleteUser = (userId) => {
-    setUsers((prev) => prev.filter((u) => u.id !== userId));
-    toast.success("User deleted successfully");
+  const handleDeleteUser = async (userId) => {
+    if (!window.confirm("Are you sure you want to delete this user?")) {
+      return;
+    }
+    
+    try {
+      await userAPI.deleteUser(userId);
+      setUsers((prev) => prev.filter((u) => u.id !== userId));
+      toast.success("User deleted successfully");
+    } catch (err) {
+      console.error("Failed to delete user:", err);
+      toast.error(err.response?.data?.detail || "Failed to delete user");
+    }
+  };
+
+  // Callback when a new user is created
+  const handleUserCreated = () => {
+    fetchUsers();
   };
 
   const handleExportData = () => {
     // Convert users data to CSV
-    const headers = ["ID", "Name", "Email", "Role", "Phone", "Date Added"];
+    const headers = ["ID", "Name", "Email", "Role", "Date Added"];
     const csvContent = [
       headers.join(","),
       ...filteredUsers.map((u) =>
-        [u.id, u.name, u.email, u.role, u.phone, u.dateAdded].join(",")
+        [u.id, u.fullName || u.username, u.email, u.role, u.createdAt].join(",")
       ),
     ].join("\n");
 
@@ -184,12 +168,13 @@ export default function UserView() {
         return "bg-purple-100 text-purple-800";
       case "Admin":
         return "bg-red-100 text-red-800";
+      case "Researcher":
+        return "bg-green-100 text-green-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
   };
 
-  const [isAddUserOpen, setIsAddUserOpen] = useState(false);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [deleteUserId, setDeleteUserId] = useState(null);
 
@@ -232,6 +217,24 @@ export default function UserView() {
           <AddUser
             isOpen={isAddUserOpen}
             onClose={() => setIsAddUserOpen(false)}
+            onUserCreated={handleUserCreated}
+          />
+          <ViewUser 
+            isOpen={isViewUserOpen} 
+            onClose={() => {
+              setIsViewUserOpen(false);
+              setSelectedUser(null);
+            }} 
+            user={selectedUser} 
+          />
+          <EditUser 
+            isOpen={isEditUserOpen} 
+            onClose={() => {
+              setIsEditUserOpen(false);
+              setSelectedUser(null);
+            }} 
+            user={selectedUser}
+            onUserUpdated={handleUserCreated}
           />
         </div>
       </div>
@@ -364,7 +367,7 @@ export default function UserView() {
                         {user.id}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-700">
-                        {user.name}
+                        {user.fullName || user.username}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">
                         {user.email}

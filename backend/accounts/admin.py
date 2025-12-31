@@ -26,7 +26,7 @@ class UserAdmin(BaseUserAdmin):
         (None, {'fields': ('username', 'password')}),
         ('Personal Info', {'fields': ('first_name', 'last_name', 'email', 'phone_number')}),
         ('Professional Info', {
-            'fields': ('role', 'medical_license_number', 'specialization', 'hospital_affiliation', 'is_verified')
+            'fields': ('role', 'medical_license_number', 'specialization', 'hospital_affiliation', 'university_affiliation', 'is_verified')
         }),
         ('Permissions', {
             'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions'),

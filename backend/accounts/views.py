@@ -5,7 +5,7 @@ Handles CRUD operations for User model.
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, IsAdminUser, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny, BasePermission
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import get_user_model
@@ -19,6 +19,14 @@ from .serializers import (
 )
 
 User = get_user_model()
+
+
+class IsAdminRole(BasePermission):
+    """
+    Custom permission to only allow users with Admin role.
+    """
+    def has_permission(self, request, view):
+        return bool(request.user and request.user.is_authenticated and request.user.role == User.Role.ADMIN)
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -54,7 +62,7 @@ class UserViewSet(viewsets.ModelViewSet):
         - List/Retrieve: Authenticated users
         """
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
-            return [IsAdminUser()]
+            return [IsAdminRole()]
         return [IsAuthenticated()]
     
     def list(self, request, *args, **kwargs):
@@ -162,7 +170,7 @@ class UserViewSet(viewsets.ModelViewSet):
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
     
-    @action(detail=True, methods=['post'], permission_classes=[IsAdminUser])
+    @action(detail=True, methods=['post'], permission_classes=[IsAdminRole])
     def verify(self, request, pk=None):
         """
         Verify a user's credentials.
@@ -175,7 +183,7 @@ class UserViewSet(viewsets.ModelViewSet):
         serializer = UserSerializer(user)
         return Response(serializer.data)
     
-    @action(detail=True, methods=['post'], permission_classes=[IsAdminUser])
+    @action(detail=True, methods=['post'], permission_classes=[IsAdminRole])
     def unverify(self, request, pk=None):
         """
         Unverify a user's credentials.
@@ -188,7 +196,7 @@ class UserViewSet(viewsets.ModelViewSet):
         serializer = UserSerializer(user)
         return Response(serializer.data)
     
-    @action(detail=True, methods=['post'], permission_classes=[IsAdminUser])
+    @action(detail=True, methods=['post'], permission_classes=[IsAdminRole])
     def deactivate(self, request, pk=None):
         """
         Deactivate a user account.
@@ -209,7 +217,7 @@ class UserViewSet(viewsets.ModelViewSet):
         serializer = UserSerializer(user)
         return Response(serializer.data)
     
-    @action(detail=True, methods=['post'], permission_classes=[IsAdminUser])
+    @action(detail=True, methods=['post'], permission_classes=[IsAdminRole])
     def activate(self, request, pk=None):
         """
         Activate a user account.

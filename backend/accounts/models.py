@@ -9,10 +9,10 @@ class User(AbstractUser):
 
     # User Role Choices
     class Role(models.TextChoices):
-        ADMIN = 'ADMIN', 'Administrator'
-        DOCTOR = 'DOCTOR', 'Doctor'
-        LAB_TECH = 'LAB_TECH', 'Lab_Technician'
-        RESEARCHER = 'RESEARCHER', 'Researcher'
+        ADMIN = 'Admin', 'Administrator'
+        DOCTOR = 'Doctor', 'Doctor'
+        LAB_TECH = 'Lab Technician', 'Lab Technician'
+        RESEARCHER = 'Researcher', 'Researcher'
 
     # Additional Fields
     role = models.CharField(
@@ -47,7 +47,14 @@ class User(AbstractUser):
         max_length=200,
         blank=True,
         null=True,
-        help_text="Hospital or institution name"
+        help_text="Hospital or lab name (for doctors and lab technicians)"
+    )
+
+    university_affiliation = models.CharField(
+        max_length=200,
+        blank=True,
+        null=True,
+        help_text="University or research institution (for researchers)"
     )
 
     is_verified = models.BooleanField(
