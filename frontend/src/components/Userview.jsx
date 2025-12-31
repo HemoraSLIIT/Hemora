@@ -196,36 +196,19 @@ export default function UserView() {
     setDeleteUserId(null);
   };
 
-  const handleAddUserClose = () => {
-    setIsAddUserOpen(false);
-    setAddUserMode("add");
-    setSelectedUserForEdit(null);
-  };
-
-  const handleAddUserSuccess = () => {
-    // Refresh the users list
-    // In a real scenario, this would refetch from the API
-    // For now, we're just closing and could implement list refresh
-    handleAddUserClose();
-  };
-
   return (
     <div className="flex-1 overflow-auto">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-8 py-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">aaa Users</h1>
+            <h1 className="text-2xl font-bold text-gray-800">All Users</h1>
             <p className="text-sm text-gray-500">
               Total Users: {filteredUsers.length}
             </p>
           </div>
           <button
-            onClick={() => {
-              setAddUserMode("add");
-              setSelectedUserForEdit(null);
-              setIsAddUserOpen(true);
-            }}
+            onClick={() => setIsAddUserOpen(true)}
             className="flex items-center space-x-2 px-4 py-2 bg-[#0a0e3f] text-white rounded-lg hover:opacity-90 transition-colors cursor-pointer"
           >
             <Plus className="w-5 h-5" />
@@ -439,15 +422,6 @@ export default function UserView() {
           )}
         </div>
       </div>
-
-      <AddUser
-        isOpen={isAddUserOpen}
-        onClose={handleAddUserClose}
-        mode={addUserMode}
-        userId={selectedUserForEdit?.id}
-        userData={selectedUserForEdit}
-        onSuccess={handleAddUserSuccess}
-      />
 
       <DeleteConfirm
         isOpen={isDeleteConfirmOpen}
