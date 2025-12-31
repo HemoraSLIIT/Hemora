@@ -77,11 +77,11 @@ export default function Patients() {
       <SideBar />
 
       {/* Main Content */}
-        {/* For Lab Technicians */}
-        <LabTechPatientsView />
+      {/* For Lab Technicians */}
+      {user?.role === "Lab Technician" && <LabTechPatientsView />}
 
-        {/* For Doctors */}
-        {/* <DocPatientsView /> */}
+      {/* For Doctors */}
+      {user?.role === "Doctor" && <DocPatientsView />}
     </div>
   );
 }

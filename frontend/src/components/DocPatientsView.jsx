@@ -259,13 +259,6 @@ export default function DocPatientsView() {
               Total Patients: {filteredPatients.length}
             </p>
           </div>
-          <button
-            onClick={handleAddPatient}
-            className="flex items-center space-x-2 px-4 py-2 bg-[#0a0e3f] text-white rounded-lg hover:opacity-90 transition-colors cursor-pointer"
-          >
-            <Plus className="w-5 h-5" />
-            <span>Add Patient</span>
-          </button>
         </div>
       </div>
 
