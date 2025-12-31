@@ -1,5 +1,5 @@
 import React from "react";
-import { X, User, Mail, Phone, Building, GraduationCap, Award, Stethoscope, Shield, Calendar } from "lucide-react";
+import { X, User, Mail, Phone, Building, GraduationCap, Award, Stethoscope, Shield, Calendar, UserRoundCheck } from "lucide-react";
 
 export default function ViewUser({ isOpen, onClose, user }) {
   if (!isOpen || !user) return null;
@@ -36,24 +36,29 @@ export default function ViewUser({ isOpen, onClose, user }) {
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-lg shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto p-8"
+        className="bg-white rounded-lg shadow-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto p-8"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-semibold text-gray-900">👤 User Details</h2>
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <UserRoundCheck className="text-gray-900 w-6 h-6" />
+              <h2 className="text-2xl font-semibold text-gray-900">User Details</h2>
+            </div>
+          </div>
           <button
             className="bg-none border-none text-2xl cursor-pointer text-gray-600 hover:text-gray-900"
             onClick={onClose}
           >
-            <X className="w-6 h-6" />
+            ✕
           </button>
         </div>
 
         {/* User Info */}
         <div className="space-y-6">
           {/* Basic Info Section */}
-          <div className="bg-gray-50 rounded-lg p-6">
+          <div className="bg-gray-50 rounded-lg py-6">
             <div className="flex items-center gap-4 mb-4">
               <div className="w-16 h-16 bg-[#0a0e3f] rounded-full flex items-center justify-center">
                 <span className="text-2xl text-white font-bold">
@@ -205,7 +210,7 @@ export default function ViewUser({ isOpen, onClose, user }) {
         <div className="mt-6">
           <button
             onClick={onClose}
-            className="w-full py-3 bg-gray-200 text-gray-800 rounded-lg font-semibold hover:bg-gray-300 transition duration-300"
+            className="w-full py-3 bg-gray-200 text-gray-800 rounded-lg font-semibold hover:bg-gray-300 transition duration-300 cursor-pointer"
           >
             Close
           </button>

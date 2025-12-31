@@ -1,10 +1,7 @@
 import { useEffect, useState } from "react";
 import { authAPI, userAPI } from "../services/api";
 import { useNavigate } from "react-router-dom";
-import {
-  Bell,
-  Search,
-} from "lucide-react";
+import { Bell, Search } from "lucide-react";
 
 export default function Header() {
   const [user, setUser] = useState(null);
@@ -52,7 +49,7 @@ export default function Header() {
         {/* <Bell className="text-gray-600 w-6 h-6 cursor-pointer hover:text-blue-600" /> */}
         <div className="relative">
           <img
-            src={`https://ui-avatars.com/api/?name=${user?.first_name}+${user?.last_name}&background=0a0e3f&color=fff`}
+            src={`https://ui-avatars.com/api/?name=${user?.username?.[0]}&background=0a0e3f&color=fff`}
             alt="Profile"
             className="w-10 h-10 rounded-full cursor-pointer"
           />

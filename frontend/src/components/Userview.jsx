@@ -12,10 +12,10 @@ import {
 } from "lucide-react";
 import { authAPI, userAPI } from "../services/api";
 import toast from "react-hot-toast";
-import AddUser from "../components/AddUser";
+import AddUser from "./AddUser";
 import DeleteConfirm from "./DeleteConfirm";
-import ViewUser from "../components/ViewUser";
-import EditUser from "../components/EditUser";
+import ViewUser from "./ViewUser";
+import EditUser from "./EditUser";
 
 export default function UserView() {
   const [user, setUser] = useState(null);
@@ -58,7 +58,7 @@ export default function UserView() {
         const userData = await userAPI.getCurrentUser();
         setUser(userData);
         setLoading(false);
-        
+
         // Fetch all users after current user is loaded
         await fetchUsers();
       } catch (err) {
@@ -85,7 +85,10 @@ export default function UserView() {
       filtered = filtered.filter(
         (user) =>
           user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          user.id?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+          user.id
+            ?.toString()
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
           user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           user.phone?.includes(searchTerm)
       );
@@ -121,10 +124,10 @@ export default function UserView() {
   };
 
   const handleDeleteUser = async (userId) => {
-    if (!window.confirm("Are you sure you want to delete this user?")) {
-      return;
-    }
-    
+    // if (!window.confirm("Are you sure you want to delete this user?")) {
+    //   return;
+    // }
+
     try {
       await userAPI.deleteUser(userId);
       setUsers((prev) => prev.filter((u) => u.id !== userId));
@@ -198,238 +201,254 @@ export default function UserView() {
 
   return (
     <div className="flex-1 overflow-auto">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-8 py-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-800">All Users</h1>
-            <p className="text-sm text-gray-500">
-              Total Users: {filteredUsers.length}
+      {/* Check if user is Admin */}
+      {user?.role !== "Admin" && (
+        <div className="flex items-center justify-center h-screen bg-gray-100">
+          <div className="bg-white p-8 rounded-lg shadow-lg text-center">
+            <p className="text-red-500 text-lg font-semibold">Access Denied</p>
+            <p className="text-gray-600 mt-2">
+              Only administrators can manage users.
             </p>
           </div>
-          <button
-            onClick={() => setIsAddUserOpen(true)}
-            className="flex items-center space-x-2 px-4 py-2 bg-[#0a0e3f] text-white rounded-lg hover:opacity-90 transition-colors cursor-pointer"
-          >
-            <Plus className="w-5 h-5" />
-            <span>Add User</span>
-          </button>
-          <AddUser
-            isOpen={isAddUserOpen}
-            onClose={() => setIsAddUserOpen(false)}
-            onUserCreated={handleUserCreated}
-          />
-          <ViewUser 
-            isOpen={isViewUserOpen} 
-            onClose={() => {
-              setIsViewUserOpen(false);
-              setSelectedUser(null);
-            }} 
-            user={selectedUser} 
-          />
-          <EditUser 
-            isOpen={isEditUserOpen} 
-            onClose={() => {
-              setIsEditUserOpen(false);
-              setSelectedUser(null);
-            }} 
-            user={selectedUser}
-            onUserUpdated={handleUserCreated}
-          />
         </div>
-      </div>
+      )}
 
-      {/* Content */}
-      <div className="p-8">
-        {/* Search and Filter Section */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 mb-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            {/* Search Box */}
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search by name, ID, email, or phone..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0a0e3f] focus:border-transparent"
+      {user?.role === "Admin" && (
+        <>
+          {/* Header */}
+          <div className="bg-white border-b border-gray-200 px-8 py-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-800">All Users</h1>
+                <p className="text-sm text-gray-500">
+                  Total Users: {filteredUsers.length}
+                </p>
+              </div>
+              <button
+                onClick={() => setIsAddUserOpen(true)}
+                className="flex items-center space-x-2 px-4 py-2 bg-[#0a0e3f] text-white rounded-lg hover:opacity-90 transition-colors cursor-pointer"
+              >
+                <Plus className="w-5 h-5" />
+                <span>Add User</span>
+              </button>
+              <AddUser
+                isOpen={isAddUserOpen}
+                onClose={() => setIsAddUserOpen(false)}
+                onUserCreated={handleUserCreated}
+              />
+              <ViewUser
+                isOpen={isViewUserOpen}
+                onClose={() => {
+                  setIsViewUserOpen(false);
+                  setSelectedUser(null);
+                }}
+                user={selectedUser}
+              />
+              <EditUser
+                isOpen={isEditUserOpen}
+                onClose={() => {
+                  setIsEditUserOpen(false);
+                  setSelectedUser(null);
+                }}
+                user={selectedUser}
+                onUserUpdated={handleUserCreated}
               />
             </div>
-
-            {/* Role Filter */}
-            <div className="flex gap-2">
-              <Filter className="w-5 h-5 text-gray-400 mt-2.5" />
-              <select
-                value={filterRole}
-                onChange={(e) => setFilterRole(e.target.value)}
-                className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0a0e3f] focus:border-transparent cursor-pointer"
-              >
-                <option value="All">All Roles</option>
-                <option value="Doctor">Doctor</option>
-                <option value="Lab Technician">Lab Technician</option>
-                <option value="Admin">Admin</option>
-              </select>
-            </div>
-
-            {/* Export Button */}
-            <button
-              onClick={handleExportData}
-              className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
-            >
-              <Download className="w-5 h-5" />
-              <span>Export</span>
-            </button>
           </div>
-        </div>
 
-        {/* Stats Section */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm">Total Users</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">
-                  {users.length}
-                </p>
+          {/* Content */}
+          <div className="p-8">
+            {/* Search and Filter Section */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6 mb-6">
+              <div className="flex flex-col md:flex-row gap-4">
+                {/* Search Box */}
+                <div className="flex-1 relative">
+                  <Search className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search by name, ID, email, or phone..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0a0e3f] focus:border-transparent"
+                  />
+                </div>
+
+                {/* Role Filter */}
+                <div className="flex gap-2">
+                  <Filter className="w-5 h-5 text-gray-400 mt-2.5" />
+                  <select
+                    value={filterRole}
+                    onChange={(e) => setFilterRole(e.target.value)}
+                    className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0a0e3f] focus:border-transparent cursor-pointer"
+                  >
+                    <option value="All">All Roles</option>
+                    <option value="Doctor">Doctor</option>
+                    <option value="Lab Technician">Lab Technician</option>
+                    <option value="Admin">Admin</option>
+                  </select>
+                </div>
+
+                {/* Export Button */}
+                <button
+                  onClick={handleExportData}
+                  className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
+                >
+                  <Download className="w-5 h-5" />
+                  <span>Export</span>
+                </button>
               </div>
-              <Users className="w-12 h-12 text-gray-200" />
             </div>
-          </div>
 
-          <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm">Doctors</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">
-                  {users.filter((u) => u.role === "Doctor").length}
-                </p>
+            {/* Stats Section */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+              <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-600 text-sm">Total Users</p>
+                    <p className="text-3xl font-bold text-gray-900 mt-2">
+                      {users.length}
+                    </p>
+                  </div>
+                  <Users className="w-12 h-12 text-gray-200" />
+                </div>
               </div>
-              <div className="w-12 h-12 bg-blue-100 rounded-lg"></div>
-            </div>
-          </div>
 
-          <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm">Lab Technicians</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">
-                  {users.filter((u) => u.role === "Lab Technician").length}
-                </p>
+              <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-600 text-sm">Doctors</p>
+                    <p className="text-3xl font-bold text-gray-900 mt-2">
+                      {users.filter((u) => u.role === "Doctor").length}
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 bg-blue-100 rounded-lg"></div>
+                </div>
               </div>
-              <div className="w-12 h-12 bg-purple-100 rounded-lg"></div>
-            </div>
-          </div>
 
-          <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm">Admins</p>
-                <p className="text-3xl font-bold text-gray-900 mt-2">
-                  {users.filter((u) => u.role === "Admin").length}
-                </p>
+              <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-600 text-sm">Lab Technicians</p>
+                    <p className="text-3xl font-bold text-gray-900 mt-2">
+                      {users.filter((u) => u.role === "Lab Technician").length}
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 bg-purple-100 rounded-lg"></div>
+                </div>
               </div>
-              <div className="w-12 h-12 bg-red-100 rounded-lg"></div>
-            </div>
-          </div>
-        </div>
 
-        {/* Users Table */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-          {filteredUsers.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-gray-50 border-b border-gray-200">
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                      ID
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                      Name
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                      Email
-                    </th>
-                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
-                      Role
-                    </th>
-                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
-                      Actions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredUsers.map((user) => (
-                    <tr
-                      key={user.id}
-                      className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
-                    >
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                        {user.id}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-700">
-                        {user.fullName || user.username}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {user.email}
-                      </td>
-                      <td className="px-6 py-4 text-sm">
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${getRoleColor(
-                            user.role
-                          )}`}
+              <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-gray-600 text-sm">Admins</p>
+                    <p className="text-3xl font-bold text-gray-900 mt-2">
+                      {users.filter((u) => u.role === "Admin").length}
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 bg-red-100 rounded-lg"></div>
+                </div>
+              </div>
+            </div>
+
+            {/* Users Table */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
+              {filteredUsers.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="bg-gray-50 border-b border-gray-200">
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                          ID
+                        </th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                          Name
+                        </th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                          Email
+                        </th>
+                        <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                          Role
+                        </th>
+                        <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredUsers.map((user) => (
+                        <tr
+                          key={user.id}
+                          className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
                         >
-                          {user.role}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <div className="flex items-center justify-center space-x-2">
-                          <button
-                            onClick={() => handleViewUser(user.id)}
-                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
-                            title="View"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleEditUser(user.id)}
-                            className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
-                            title="Edit"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => openDeleteConfirm(user.id)}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
-                            title="Delete"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                          <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                            {user.id}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-700">
+                            {user.fullName || user.username}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-600">
+                            {user.email}
+                          </td>
+                          <td className="px-6 py-4 text-sm">
+                            <span
+                              className={`px-3 py-1 rounded-full text-xs font-medium ${getRoleColor(
+                                user.role
+                              )}`}
+                            >
+                              {user.role}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <div className="flex items-center justify-center space-x-2">
+                              <button
+                                onClick={() => handleViewUser(user.id)}
+                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                                title="View"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleEditUser(user.id)}
+                                className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
+                                title="Edit"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => openDeleteConfirm(user.id)}
+                                className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                                title="Delete"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <Users className="w-12 h-12 text-gray-300 mb-4" />
+                  <p className="text-gray-500 text-lg">No users found</p>
+                  <p className="text-gray-400 text-sm">
+                    Try adjusting your search or filters
+                  </p>
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-12">
-              <Users className="w-12 h-12 text-gray-300 mb-4" />
-              <p className="text-gray-500 text-lg">No users found</p>
-              <p className="text-gray-400 text-sm">
-                Try adjusting your search or filters
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
+          </div>
 
-      <DeleteConfirm
-        isOpen={isDeleteConfirmOpen}
-        title="Delete User"
-        message={`Are you sure you want to delete this user? This action cannot be undone.`}
-        onConfirm={confirmDelete}
-        onCancel={cancelDelete}
-      />
+          <DeleteConfirm
+            isOpen={isDeleteConfirmOpen}
+            title="Delete User"
+            message={`Are you sure you want to delete this user? This action cannot be undone.`}
+            onConfirm={confirmDelete}
+            onCancel={cancelDelete}
+          />
+        </>
+      )}
     </div>
   );
 }

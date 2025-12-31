@@ -86,11 +86,11 @@ export default function Dashboard() {
           {/* User Welcome Section */}
           <UserWelcomeSection />
 
-          {/* Disease Distribution & Quick Actions */}
-          {/* <LabTechDashBody /> */}
-          {/* <DocDashBody /> */}
-          {/* <ResearcherDashBody /> */}
-          <AdminDashBody />
+          {/* Disease Distribution & Quick Actions - Role Based */}
+          {user?.role === "Lab Technician" && <LabTechDashBody />}
+          {user?.role === "Doctor" && <DocDashBody />}
+          {user?.role === "Researcher" && <ResearcherDashBody />}
+          {user?.role === "Admin" && <AdminDashBody />}
         </div>
       </div>
     </div>

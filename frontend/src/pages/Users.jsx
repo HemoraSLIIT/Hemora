@@ -76,10 +76,20 @@ export default function Patients() {
       <SideBar />
 
       {/* Main Content */}
-        {/* For Admin */}
-        <UserView />
+      {/* For Admin Only */}
+      {user?.role === "Admin" && <UserView />}
 
-      
+      {/* For non-Admin users - Access Denied */}
+      {user?.role !== "Admin" && (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="bg-white p-8 rounded-lg shadow-lg text-center">
+            <p className="text-red-500 text-lg font-semibold">Access Denied</p>
+            <p className="text-gray-600 mt-2">
+              Only administrators can manage users.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
