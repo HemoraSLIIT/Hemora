@@ -12,10 +12,10 @@ import {
 } from "lucide-react";
 import { authAPI, userAPI } from "../services/api";
 import toast from "react-hot-toast";
-import AddUser from "../components/AddUser";
+import AddUser from "./AddUser";
 import DeleteConfirm from "./DeleteConfirm";
-import ViewUser from "../components/ViewUser";
-import EditUser from "../components/EditUser";
+import ViewUser from "./ViewUser";
+import EditUser from "./EditUser";
 
 export default function UserView() {
   const [user, setUser] = useState(null);
