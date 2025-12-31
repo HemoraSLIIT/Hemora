@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
-import toast from "react-hot-toast";
+import React, { useState } from "react";
 import { userAPI } from "../services/api";
+import toast from "react-hot-toast";
 
-export default function AddUser({ isOpen, onClose, mode = "add", userId = null, userData = null, onSuccess }) {
+export default function AddUser({ isOpen, onClose, onUserCreated }) {
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     role: "Doctor",
     username: "",
@@ -87,46 +88,72 @@ export default function AddUser({ isOpen, onClose, mode = "add", userId = null, 
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Basic validation
-    if (!formData.firstName || !formData.lastName || !formData.email) {
-      toast.error("Please fill in all required fields");
-      return;
-    }
-
-    if (mode === "add" && (!formData.password || !formData.confirmPassword)) {
-      toast.error("Password fields are required");
-      return;
-    }
-
-    if (mode === "add" && formData.password !== formData.confirmPassword) {
-      toast.error("Passwords do not match");
-      return;
-    }
-
     setLoading(true);
+
     try {
-      if (mode === "add") {
-        await userAPI.createUser(formData);
-        toast.success("User created successfully");
-      } else if (mode === "edit") {
-        // For edit, exclude password fields if empty
-        const updatePayload = { ...formData };
-        if (!updatePayload.password) {
-          delete updatePayload.password;
-          delete updatePayload.confirmPassword;
-        }
-        await userAPI.updateUser(userId, updatePayload);
-        toast.success("User updated successfully");
+      // Build payload with camelCase field names matching backend
+      const payload = {
+        username: formData.username,
+        email: formData.email,
+        password: formData.password,
+        confirmPassword: formData.confirmPassword,
+        role: formData.role,
+      };
+
+      // Add role-specific fields
+      if (formData.role === "Doctor") {
+        payload.firstName = formData.firstName;
+        payload.lastName = formData.lastName;
+        payload.specialization = formData.specialization;
+        payload.hospitalAffiliation = formData.hospitalAffiliation;
+        payload.medicalLicense = formData.medicalLicense;
+        if (formData.phone) payload.phoneNumber = formData.phone;
+      } else if (formData.role === "Lab Technician") {
+        payload.firstName = formData.firstName;
+        payload.lastName = formData.lastName;
+        payload.hospitalAffiliation = formData.hospitalAffiliation;
+        if (formData.phone) payload.phoneNumber = formData.phone;
+      } else if (formData.role === "Admin") {
+        // Admin only needs username, email, password (already added above)
+        if (formData.phone) payload.phoneNumber = formData.phone;
+      }
+
+      await userAPI.createUser(payload);
+      toast.success("User created successfully!");
+      
+      // Reset form
+      setFormData({
+        role: "Doctor",
+        username: "",
+        email: "",
+        firstName: "",
+        lastName: "",
+        password: "",
+        confirmPassword: "",
+        specialization: "",
+        hospitalAffiliation: "",
+        medicalLicense: "",
+        phone: "",
+      });
+
+      // Notify parent to refresh user list
+      if (onUserCreated) {
+        onUserCreated();
       }
       
       onClose();
-      if (onSuccess) {
-        onSuccess();
-      }
     } catch (error) {
-      console.error("Error:", error);
-      toast.error(error.message || "Failed to save user");
+      console.error("Failed to create user:", error);
+      const errorData = error.response?.data;
+      if (errorData) {
+        // Show specific field errors
+        const errorMessages = Object.entries(errorData)
+          .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(", ") : messages}`)
+          .join("\n");
+        toast.error(errorMessages || "Failed to create user");
+      } else {
+        toast.error("Failed to create user");
+      }
     } finally {
       setLoading(false);
     }
@@ -230,18 +257,6 @@ export default function AddUser({ isOpen, onClose, mode = "add", userId = null, 
           <>
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2">Hospital / Lab Affiliation *</label>
-                <input
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
-                  type="text"
-                  name="hospitalAffiliation"
-                  placeholder="Enter hospital / lab affiliation"
-                  value={formData.hospitalAffiliation}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-2">Phone</label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
@@ -330,7 +345,8 @@ export default function AddUser({ isOpen, onClose, mode = "add", userId = null, 
               </div>
             </div>
 
-            {/* First & Last Name */}
+          {/* First & Last Name - Only show for Doctor and Lab Technician */}
+          {formData.role !== "Admin" && (
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-2">First Name *</label>
@@ -357,6 +373,7 @@ export default function AddUser({ isOpen, onClose, mode = "add", userId = null, 
                 />
               </div>
             </div>
+          )}
 
             {/* Password - only show in add mode */}
             {!isEditMode && (
@@ -416,18 +433,14 @@ export default function AddUser({ isOpen, onClose, mode = "add", userId = null, 
               </div>
             )}
 
-            {/* Dynamic fields based on role */}
-            {renderFormFields()}
-
-            <button 
-              type="submit" 
-              disabled={loading}
-              className="w-full py-3 bg-[#0a0e3f] text-white rounded-lg font-semibold hover:opacity-90 transition duration-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? "Processing..." : submitButtonText}
-            </button>
-          </form>
-        )}
+          <button 
+            type="submit" 
+            disabled={loading}
+            className="w-full py-3 bg-[#0a0e3f] text-white rounded-lg font-semibold hover:opacity-90 transition duration-300 cursor-pointer"
+          >
+            {loading ? "Creating..." : "Add"}
+          </button>
+        </form>
       </div>
     </div>
   );
