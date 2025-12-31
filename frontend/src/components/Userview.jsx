@@ -91,6 +91,12 @@ export default function UserView() {
   const [filteredUsers, setFilteredUsers] = useState(users);
   const navigate = useNavigate();
 
+  const [isAddUserOpen, setIsAddUserOpen] = useState(false);
+  const [addUserMode, setAddUserMode] = useState("add");
+  const [selectedUserForEdit, setSelectedUserForEdit] = useState(null);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [deleteUserId, setDeleteUserId] = useState(null);
+
   useEffect(() => {
     // Check if user is authenticated
     if (!authAPI.isAuthenticated()) {
@@ -147,8 +153,12 @@ export default function UserView() {
   };
 
   const handleEditUser = (userId) => {
-    toast.success(`Editing user ${userId}`);
-    // Navigate to edit user when implemented
+    const userToEdit = users.find((u) => u.id === userId);
+    if (userToEdit) {
+      setSelectedUserForEdit(userToEdit);
+      setAddUserMode("edit");
+      setIsAddUserOpen(true);
+    }
   };
 
   const handleDeleteUser = (userId) => {
@@ -189,10 +199,6 @@ export default function UserView() {
     }
   };
 
-  const [isAddUserOpen, setIsAddUserOpen] = useState(false);
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-  const [deleteUserId, setDeleteUserId] = useState(null);
-
   const openDeleteConfirm = (userId) => {
     setDeleteUserId(userId);
     setIsDeleteConfirmOpen(true);
@@ -211,28 +217,41 @@ export default function UserView() {
     setDeleteUserId(null);
   };
 
+  const handleAddUserClose = () => {
+    setIsAddUserOpen(false);
+    setAddUserMode("add");
+    setSelectedUserForEdit(null);
+  };
+
+  const handleAddUserSuccess = () => {
+    // Refresh the users list
+    // In a real scenario, this would refetch from the API
+    // For now, we're just closing and could implement list refresh
+    handleAddUserClose();
+  };
+
   return (
     <div className="flex-1 overflow-auto">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-8 py-4">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">All Users</h1>
+            <h1 className="text-2xl font-bold text-gray-800">aaa Users</h1>
             <p className="text-sm text-gray-500">
               Total Users: {filteredUsers.length}
             </p>
           </div>
           <button
-            onClick={() => setIsAddUserOpen(true)}
+            onClick={() => {
+              setAddUserMode("add");
+              setSelectedUserForEdit(null);
+              setIsAddUserOpen(true);
+            }}
             className="flex items-center space-x-2 px-4 py-2 bg-[#0a0e3f] text-white rounded-lg hover:opacity-90 transition-colors cursor-pointer"
           >
             <Plus className="w-5 h-5" />
             <span>Add User</span>
           </button>
-          <AddUser
-            isOpen={isAddUserOpen}
-            onClose={() => setIsAddUserOpen(false)}
-          />
         </div>
       </div>
 
@@ -419,6 +438,15 @@ export default function UserView() {
           )}
         </div>
       </div>
+
+      <AddUser
+        isOpen={isAddUserOpen}
+        onClose={handleAddUserClose}
+        mode={addUserMode}
+        userId={selectedUserForEdit?.id}
+        userData={selectedUserForEdit}
+        onSuccess={handleAddUserSuccess}
+      />
 
       <DeleteConfirm
         isOpen={isDeleteConfirmOpen}
