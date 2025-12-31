@@ -1,6 +1,7 @@
 """
 Serializers for User model.
 Handles conversion between User model instances and JSON.
+Uses camelCase field names for frontend compatibility.
 """
 from rest_framework import serializers
 from django.contrib.auth.password_validation import validate_password
@@ -10,8 +11,20 @@ from .models import User
 class UserSerializer(serializers.ModelSerializer):
     """
     Serializer for User model (read operations).
+    Uses camelCase field names for frontend compatibility.
     """
-    full_name = serializers.SerializerMethodField()
+    fullName = serializers.SerializerMethodField()
+    firstName = serializers.CharField(source='first_name')
+    lastName = serializers.CharField(source='last_name')
+    phoneNumber = serializers.CharField(source='phone_number', allow_blank=True, allow_null=True)
+    medicalLicense = serializers.CharField(source='medical_license_number', allow_blank=True, allow_null=True)
+    hospitalAffiliation = serializers.CharField(source='hospital_affiliation', allow_blank=True, allow_null=True)
+    universityAffiliation = serializers.CharField(source='university_affiliation', allow_blank=True, allow_null=True)
+    isVerified = serializers.BooleanField(source='is_verified')
+    isActive = serializers.BooleanField(source='is_active')
+    isStaff = serializers.BooleanField(source='is_staff')
+    createdAt = serializers.DateTimeField(source='created_at', read_only=True)
+    updatedAt = serializers.DateTimeField(source='updated_at', read_only=True)
     
     class Meta:
         model = User
@@ -19,23 +32,24 @@ class UserSerializer(serializers.ModelSerializer):
             'id',
             'username',
             'email',
-            'first_name',
-            'last_name',
-            'full_name',
+            'firstName',
+            'lastName',
+            'fullName',
             'role',
-            'phone_number',
-            'medical_license_number',
+            'phoneNumber',
+            'medicalLicense',
             'specialization',
-            'hospital_affiliation',
-            'is_verified',
-            'is_active',
-            'is_staff',
-            'created_at',
-            'updated_at',
+            'hospitalAffiliation',
+            'universityAffiliation',
+            'isVerified',
+            'isActive',
+            'isStaff',
+            'createdAt',
+            'updatedAt',
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'createdAt', 'updatedAt']
     
-    def get_full_name(self, obj):
+    def get_fullName(self, obj):
         """Get user's full name."""
         return obj.get_full_name()
 
@@ -44,6 +58,8 @@ class UserCreateSerializer(serializers.ModelSerializer):
     """
     Serializer for creating new users.
     Includes password field with validation.
+    Role-based field validation enforced.
+    Uses camelCase field names for frontend compatibility.
     """
     password = serializers.CharField(
         write_only=True,
@@ -51,11 +67,17 @@ class UserCreateSerializer(serializers.ModelSerializer):
         validators=[validate_password],
         style={'input_type': 'password'}
     )
-    password_confirm = serializers.CharField(
+    confirmPassword = serializers.CharField(
         write_only=True,
         required=True,
         style={'input_type': 'password'}
     )
+    firstName = serializers.CharField(source='first_name', required=False, allow_blank=True)
+    lastName = serializers.CharField(source='last_name', required=False, allow_blank=True)
+    phoneNumber = serializers.CharField(source='phone_number', required=False, allow_blank=True)
+    medicalLicense = serializers.CharField(source='medical_license_number', required=False, allow_blank=True)
+    hospitalAffiliation = serializers.CharField(source='hospital_affiliation', required=False, allow_blank=True)
+    universityAffiliation = serializers.CharField(source='university_affiliation', required=False, allow_blank=True)
     
     class Meta:
         model = User
@@ -63,29 +85,86 @@ class UserCreateSerializer(serializers.ModelSerializer):
             'username',
             'email',
             'password',
-            'password_confirm',
-            'first_name',
-            'last_name',
+            'confirmPassword',
+            'firstName',
+            'lastName',
             'role',
-            'phone_number',
-            'medical_license_number',
+            'phoneNumber',
+            'medicalLicense',
             'specialization',
-            'hospital_affiliation',
+            'hospitalAffiliation',
+            'universityAffiliation',
         ]
     
     def validate(self, attrs):
-        """Validate password confirmation matches."""
-        if attrs['password'] != attrs['password_confirm']:
+        """Validate password confirmation and role-based required fields."""
+        # Password confirmation check
+        if attrs['password'] != attrs.pop('confirmPassword'):
             raise serializers.ValidationError({
-                "password": "Password fields didn't match."
+                "confirmPassword": "Password fields didn't match."
             })
+        
+        role = attrs.get('role')
+        
+        # DOCTOR required fields
+        if role == User.Role.DOCTOR:
+            if not attrs.get('first_name'):
+                raise serializers.ValidationError({
+                    "firstName": "First name is required for doctors."
+                })
+            if not attrs.get('last_name'):
+                raise serializers.ValidationError({
+                    "lastName": "Last name is required for doctors."
+                })
+            if not attrs.get('medical_license_number'):
+                raise serializers.ValidationError({
+                    "medicalLicense": "Medical license number is required for doctors."
+                })
+            if not attrs.get('specialization'):
+                raise serializers.ValidationError({
+                    "specialization": "Specialization is required for doctors."
+                })
+            if not attrs.get('hospital_affiliation'):
+                raise serializers.ValidationError({
+                    "hospitalAffiliation": "Hospital affiliation is required for doctors."
+                })
+        
+        # LAB_TECH required fields
+        elif role == User.Role.LAB_TECH:
+            if not attrs.get('first_name'):
+                raise serializers.ValidationError({
+                    "firstName": "First name is required for lab technicians."
+                })
+            if not attrs.get('last_name'):
+                raise serializers.ValidationError({
+                    "lastName": "Last name is required for lab technicians."
+                })
+            if not attrs.get('hospital_affiliation'):
+                raise serializers.ValidationError({
+                    "hospitalAffiliation": "Hospital/Lab affiliation is required for lab technicians."
+                })
+        
+        # RESEARCHER required fields
+        elif role == User.Role.RESEARCHER:
+            if not attrs.get('first_name'):
+                raise serializers.ValidationError({
+                    "firstName": "First name is required for researchers."
+                })
+            if not attrs.get('last_name'):
+                raise serializers.ValidationError({
+                    "lastName": "Last name is required for researchers."
+                })
+            if not attrs.get('university_affiliation'):
+                raise serializers.ValidationError({
+                    "universityAffiliation": "University affiliation is required for researchers."
+                })
+        
+        # ADMIN - only username, email, password required (already validated by serializer)
+        
         return attrs
     
     def create(self, validated_data):
         """Create user with hashed password."""
-        # Remove password_confirm as it's not part of the User model
-        validated_data.pop('password_confirm')
-        
         # Extract password
         password = validated_data.pop('password')
         
@@ -103,6 +182,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
     """
     Serializer for updating existing users.
     Password field is optional.
+    Uses camelCase field names for frontend compatibility.
     """
     password = serializers.CharField(
         write_only=True,
@@ -110,22 +190,97 @@ class UserUpdateSerializer(serializers.ModelSerializer):
         validators=[validate_password],
         style={'input_type': 'password'}
     )
+    firstName = serializers.CharField(source='first_name', required=False, allow_blank=True)
+    lastName = serializers.CharField(source='last_name', required=False, allow_blank=True)
+    phoneNumber = serializers.CharField(source='phone_number', required=False, allow_blank=True)
+    medicalLicense = serializers.CharField(source='medical_license_number', required=False, allow_blank=True)
+    hospitalAffiliation = serializers.CharField(source='hospital_affiliation', required=False, allow_blank=True)
+    universityAffiliation = serializers.CharField(source='university_affiliation', required=False, allow_blank=True)
+    isVerified = serializers.BooleanField(source='is_verified', required=False)
+    isActive = serializers.BooleanField(source='is_active', required=False)
     
     class Meta:
         model = User
         fields = [
             'email',
-            'first_name',
-            'last_name',
+            'firstName',
+            'lastName',
             'password',
             'role',
-            'phone_number',
-            'medical_license_number',
+            'phoneNumber',
+            'medicalLicense',
             'specialization',
-            'hospital_affiliation',
-            'is_verified',
-            'is_active',
+            'hospitalAffiliation',
+            'universityAffiliation',
+            'isVerified',
+            'isActive',
         ]
+    
+    def validate(self, attrs):
+        """Validate role-based required fields on update."""
+        instance = self.instance
+        role = attrs.get('role', instance.role if instance else None)
+        
+        # Helper to get value from attrs or instance
+        def get_value(field):
+            if field in attrs:
+                return attrs.get(field)
+            return getattr(instance, field, None) if instance else None
+        
+        # DOCTOR required fields
+        if role == User.Role.DOCTOR:
+            if not get_value('first_name'):
+                raise serializers.ValidationError({
+                    "firstName": "First name is required for doctors."
+                })
+            if not get_value('last_name'):
+                raise serializers.ValidationError({
+                    "lastName": "Last name is required for doctors."
+                })
+            if not get_value('medical_license_number'):
+                raise serializers.ValidationError({
+                    "medicalLicense": "Medical license number is required for doctors."
+                })
+            if not get_value('specialization'):
+                raise serializers.ValidationError({
+                    "specialization": "Specialization is required for doctors."
+                })
+            if not get_value('hospital_affiliation'):
+                raise serializers.ValidationError({
+                    "hospitalAffiliation": "Hospital affiliation is required for doctors."
+                })
+        
+        # LAB_TECH required fields
+        elif role == User.Role.LAB_TECH:
+            if not get_value('first_name'):
+                raise serializers.ValidationError({
+                    "firstName": "First name is required for lab technicians."
+                })
+            if not get_value('last_name'):
+                raise serializers.ValidationError({
+                    "lastName": "Last name is required for lab technicians."
+                })
+            if not get_value('hospital_affiliation'):
+                raise serializers.ValidationError({
+                    "hospitalAffiliation": "Hospital/Lab affiliation is required for lab technicians."
+                })
+        
+        # RESEARCHER required fields
+        elif role == User.Role.RESEARCHER:
+            if not get_value('first_name'):
+                raise serializers.ValidationError({
+                    "firstName": "First name is required for researchers."
+                })
+            if not get_value('last_name'):
+                raise serializers.ValidationError({
+                    "lastName": "Last name is required for researchers."
+                })
+            if not get_value('university_affiliation'):
+                raise serializers.ValidationError({
+                    "universityAffiliation": "University affiliation is required for researchers."
+                })
+        
+        return attrs
     
     def update(self, instance, validated_data):
         """Update user, handling password separately."""
@@ -148,9 +303,13 @@ class UserListSerializer(serializers.ModelSerializer):
     """
     Lightweight serializer for listing users.
     Returns minimal fields for performance.
+    Uses camelCase field names for frontend compatibility.
     """
-    full_name = serializers.SerializerMethodField()
-    role_display = serializers.CharField(source='get_role_display', read_only=True)
+    fullName = serializers.SerializerMethodField()
+    roleDisplay = serializers.CharField(source='get_role_display', read_only=True)
+    isVerified = serializers.BooleanField(source='is_verified')
+    isActive = serializers.BooleanField(source='is_active')
+    createdAt = serializers.DateTimeField(source='created_at', read_only=True)
     
     class Meta:
         model = User
@@ -158,14 +317,14 @@ class UserListSerializer(serializers.ModelSerializer):
             'id',
             'username',
             'email',
-            'full_name',
+            'fullName',
             'role',
-            'role_display',
-            'is_verified',
-            'is_active',
-            'created_at',
+            'roleDisplay',
+            'isVerified',
+            'isActive',
+            'createdAt',
         ]
     
-    def get_full_name(self, obj):
+    def get_fullName(self, obj):
         """Get user's full name."""
         return obj.get_full_name()
