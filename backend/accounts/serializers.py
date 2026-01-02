@@ -356,3 +356,136 @@ class UserListSerializer(serializers.ModelSerializer):
     def get_fullName(self, obj):
         """Get user's full name."""
         return obj.get_full_name()
+
+
+class UserSelfUpdateSerializer(serializers.ModelSerializer):
+    """
+    Serializer for users updating their own profile.
+    Excludes admin-only fields like role, isVerified, isActive.
+    Users can change their own password.
+    Uses camelCase field names for frontend compatibility.
+    """
+    password = serializers.CharField(
+        write_only=True,
+        required=False,
+        validators=[validate_password],
+        style={'input_type': 'password'}
+    )
+    firstName = serializers.CharField(source='first_name', required=False, allow_blank=True)
+    lastName = serializers.CharField(source='last_name', required=False, allow_blank=True)
+    phoneNumber = serializers.CharField(source='phone_number', required=False, allow_blank=True)
+    medicalLicense = serializers.CharField(source='medical_license_number', required=False, allow_blank=True)
+    hospitalAffiliation = serializers.CharField(source='hospital_affiliation', required=False, allow_blank=True)
+    universityAffiliation = serializers.CharField(source='university_affiliation', required=False, allow_blank=True)
+    
+    class Meta:
+        model = User
+        fields = [
+            'email',
+            'firstName',
+            'lastName',
+            'password',
+            'phoneNumber',
+            'medicalLicense',
+            'specialization',
+            'hospitalAffiliation',
+            'universityAffiliation',
+        ]
+    
+    def validate(self, attrs):
+        """Validate role-based required fields on self-update."""
+        instance = self.instance
+        # Role cannot be changed by user, so use instance role
+        role = instance.role if instance else None
+        
+        # Helper to get value from attrs or instance
+        def get_value(field):
+            if field in attrs:
+                return attrs.get(field)
+            return getattr(instance, field, None) if instance else None
+        
+        # DOCTOR required fields
+        if role == User.Role.DOCTOR:
+            if not get_value('first_name'):
+                raise serializers.ValidationError({
+                    "firstName": "First name is required for doctors."
+                })
+            if not get_value('last_name'):
+                raise serializers.ValidationError({
+                    "lastName": "Last name is required for doctors."
+                })
+            if not get_value('medical_license_number'):
+                raise serializers.ValidationError({
+                    "medicalLicense": "Medical license number is required for doctors."
+                })
+            if not get_value('specialization'):
+                raise serializers.ValidationError({
+                    "specialization": "Specialization is required for doctors."
+                })
+            if not get_value('hospital_affiliation'):
+                raise serializers.ValidationError({
+                    "hospitalAffiliation": "Hospital affiliation is required for doctors."
+                })
+        
+        # LAB_TECH required fields
+        elif role == User.Role.LAB_TECH:
+            if not get_value('first_name'):
+                raise serializers.ValidationError({
+                    "firstName": "First name is required for lab technicians."
+                })
+            if not get_value('last_name'):
+                raise serializers.ValidationError({
+                    "lastName": "Last name is required for lab technicians."
+                })
+            if not get_value('hospital_affiliation'):
+                raise serializers.ValidationError({
+                    "hospitalAffiliation": "Hospital/Lab affiliation is required for lab technicians."
+                })
+        
+        # RESEARCHER required fields
+        elif role == User.Role.RESEARCHER:
+            if not get_value('first_name'):
+                raise serializers.ValidationError({
+                    "firstName": "First name is required for researchers."
+                })
+            if not get_value('last_name'):
+                raise serializers.ValidationError({
+                    "lastName": "Last name is required for researchers."
+                })
+            if not get_value('university_affiliation'):
+                raise serializers.ValidationError({
+                    "universityAffiliation": "University affiliation is required for researchers."
+                })
+        
+        # ADMIN required fields
+        elif role == User.Role.ADMIN:
+            if not get_value('first_name'):
+                raise serializers.ValidationError({
+                    "firstName": "First name is required for administrators."
+                })
+            if not get_value('last_name'):
+                raise serializers.ValidationError({
+                    "lastName": "Last name is required for administrators."
+                })
+            if not get_value('hospital_affiliation'):
+                raise serializers.ValidationError({
+                    "hospitalAffiliation": "Hospital/Lab affiliation is required for administrators."
+                })
+        
+        return attrs
+    
+    def update(self, instance, validated_data):
+        """Update user, handling password separately."""
+        # Extract password if provided
+        password = validated_data.pop('password', None)
+        
+        # Update other fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        
+        # Update password if provided
+        if password:
+            instance.set_password(password)
+        
+        instance.save()
+        return instance

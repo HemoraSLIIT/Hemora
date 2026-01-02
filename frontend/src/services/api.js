@@ -116,6 +116,12 @@ export const userAPI = {
     return response.data;
   },
 
+  // Update current user's profile (self-update)
+  updateProfile: async (userData) => {
+    const response = await api.patch('/users/me/', userData);
+    return response.data;
+  },
+
   // Get all users (admin only)
   getAllUsers: async (params = {}) => {
     const response = await api.get('/users/', { params });
