@@ -40,11 +40,11 @@ export default function ViewPatient({ isOpen, onClose, patient }) {
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-lg shadow-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto p-8"
+        className="bg-white rounded-lg shadow-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto p-8 relative"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-2">
           <div>
             <div className="flex items-center gap-2 mb-2">
               <UserRoundCheck className="text-gray-900 w-6 h-6" />
@@ -54,17 +54,18 @@ export default function ViewPatient({ isOpen, onClose, patient }) {
             </div>
           </div>
           <button
-            className="bg-none border-none text-2xl cursor-pointer text-gray-600 hover:text-gray-900"
+            className="absolute top-4 right-4 p-1 bg-none border-none cursor-pointer text-gray-400 hover:text-gray-700 transition-colors duration-200 rounded hover:scale-110"
             onClick={onClose}
+            aria-label="Close"
           >
-            ✕
+            <X size={24} />
           </button>
         </div>
 
         {/* Patient Info */}
         <div className="space-y-6">
           {/* Basic Info Section */}
-          <div className="bg-gray-50 rounded-lg py-6">
+          <div className="py-6">
             <div className="flex items-center gap-4 mb-4">
               <div className="w-16 h-16 bg-[#0a0e3f] rounded-full flex items-center justify-center">
                 <span className="text-2xl text-white font-bold">
