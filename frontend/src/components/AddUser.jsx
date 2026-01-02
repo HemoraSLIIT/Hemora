@@ -55,7 +55,9 @@ export default function AddUser({ isOpen, onClose, onUserCreated }) {
         payload.hospitalAffiliation = formData.hospitalAffiliation;
         if (formData.phone) payload.phoneNumber = formData.phone;
       } else if (formData.role === "Admin") {
-        // Admin only needs username, email, password (already added above)
+        payload.firstName = formData.firstName;
+        payload.lastName = formData.lastName;
+        if (formData.hospitalAffiliation) payload.hospitalAffiliation = formData.hospitalAffiliation;
         if (formData.phone) payload.phoneNumber = formData.phone;
       }
 
@@ -212,6 +214,17 @@ export default function AddUser({ isOpen, onClose, onUserCreated }) {
           <>
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
+                <label className="block text-sm font-semibold text-gray-900 mb-2">Hospital / Organization Affiliation</label>
+                <input
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
+                  type="text"
+                  name="hospitalAffiliation"
+                  placeholder="Enter hospital or organization"
+                  value={formData.hospitalAffiliation}
+                  onChange={handleChange}
+                />
+              </div>
+              <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-2">Phone</label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
@@ -286,7 +299,7 @@ export default function AddUser({ isOpen, onClose, onUserCreated }) {
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
                 type="email"
                 name="email"
-                placeholder="Enter email"
+                placeholder="Enter email address"
                 value={formData.email}
                 onChange={handleChange}
                 required
@@ -294,35 +307,33 @@ export default function AddUser({ isOpen, onClose, onUserCreated }) {
             </div>
           </div>
 
-          {/* First & Last Name - Only show for Doctor and Lab Technician */}
-          {formData.role !== "Admin" && (
-            <div className="grid grid-cols-2 gap-6 mb-6">
-              <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2">First Name *</label>
-                <input
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
-                  type="text"
-                  name="firstName"
-                  placeholder="Enter first name"
-                  value={formData.firstName}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2">Last Name *</label>
-                <input
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
-                  type="text"
-                  name="lastName"
-                  placeholder="Enter last name"
-                  value={formData.lastName}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
+          {/* First & Last Name */}
+          <div className="grid grid-cols-2 gap-6 mb-6">
+            <div>
+              <label className="block text-sm font-semibold text-gray-900 mb-2">First Name *</label>
+              <input
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
+                type="text"
+                name="firstName"
+                placeholder="Enter first name"
+                value={formData.firstName}
+                onChange={handleChange}
+                required
+              />
             </div>
-          )}
+            <div>
+              <label className="block text-sm font-semibold text-gray-900 mb-2">Last Name *</label>
+              <input
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
+                type="text"
+                name="lastName"
+                placeholder="Enter last name"
+                value={formData.lastName}
+                onChange={handleChange}
+                required
+              />
+            </div>
+          </div>
 
           {/* Password */}
           <div className="grid grid-cols-2 gap-6 mb-6">
