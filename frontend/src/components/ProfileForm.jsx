@@ -160,11 +160,11 @@ export default function ProfileForm({
       }
     } else if (role === "Admin") {
       if (!hospitalAffiliation) {
-        toast.error("Hospital/Organization affiliation is required");
+        toast.error("Hospital/Lab affiliation is required");
         return;
       }
       if (!isValidText(hospitalAffiliation)) {
-        toast.error("Hospital/Organization affiliation must be 2-100 valid characters");
+        toast.error("Hospital/Lab affiliation must be 2-100 valid characters");
         return;
       }
     }
@@ -227,7 +227,7 @@ export default function ProfileForm({
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  First Name *
+                  First Name
                 </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
@@ -244,7 +244,7 @@ export default function ProfileForm({
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  Last Name *
+                  Last Name
                 </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
@@ -265,7 +265,7 @@ export default function ProfileForm({
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  Specialization *
+                  Specialization
                 </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
@@ -282,7 +282,7 @@ export default function ProfileForm({
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  Hospital Affiliation *
+                  Hospital Affiliation
                 </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
@@ -303,7 +303,7 @@ export default function ProfileForm({
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  Medical License Number *
+                  Medical License Number
                 </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
@@ -320,7 +320,7 @@ export default function ProfileForm({
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  Phone *
+                  Phone
                 </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
@@ -349,7 +349,7 @@ export default function ProfileForm({
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  First Name *
+                  First Name
                 </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
@@ -366,7 +366,7 @@ export default function ProfileForm({
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  Last Name *
+                  Last Name
                 </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
@@ -387,7 +387,7 @@ export default function ProfileForm({
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  Hospital / Lab Affiliation *
+                  Hospital / Lab Affiliation
                 </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
@@ -404,7 +404,7 @@ export default function ProfileForm({
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  Phone *
+                  Phone
                 </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
@@ -433,7 +433,7 @@ export default function ProfileForm({
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  First Name *
+                  First Name
                 </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
@@ -450,7 +450,7 @@ export default function ProfileForm({
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  Last Name *
+                  Last Name
                 </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
@@ -467,11 +467,11 @@ export default function ProfileForm({
               </div>
             </div>
 
-            {/* Phone & Hospital / Organization Affiliation in one row */}
+            {/* Phone & Hospital / Lab Affiliation in one row */}
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  Phone *
+                  Phone
                 </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
@@ -491,13 +491,13 @@ export default function ProfileForm({
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  Hospital / Organization Affiliation *
+                  Hospital / Lab Affiliation
                 </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
                   type="text"
                   name="hospitalAffiliation"
-                  placeholder="Enter hospital / organization affiliation"
+                  placeholder="Enter hospital / lab affiliation"
                   value={formData.hospitalAffiliation}
                   onChange={handleChange}
                   disabled={!isEditing}
@@ -542,7 +542,7 @@ export default function ProfileForm({
           <p className="text-xs text-gray-500 mt-1">Username cannot be changed</p>
         </div>
         <div>
-          <label className="block text-sm font-semibold text-gray-900 mb-2">Email *</label>
+          <label className="block text-sm font-semibold text-gray-900 mb-2">Email</label>
           <input
             className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
             type="email"
@@ -566,7 +566,7 @@ export default function ProfileForm({
             <button
               type="button"
               onClick={onCancel}
-              className="px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-200 rounded-lg shadow-sm hover:bg-gray-300 focus:outline-none"
+              className="px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-200 rounded-lg shadow-sm hover:bg-gray-300 focus:outline-none cursor-pointer"
             >
               Cancel
             </button>
@@ -574,7 +574,7 @@ export default function ProfileForm({
           <button
             type="submit"
             disabled={loading}
-            className={`px-4 py-2 text-sm font-semibold rounded-lg shadow-sm focus:outline-none ${
+            className={`px-4 py-2 text-sm font-semibold rounded-lg shadow-sm cursor-pointer focus:outline-none ${
               loading ? "bg-[#0a0e3f]/60 text-white cursor-not-allowed" : "bg-[#0a0e3f] text-white hover:opacity-90"
             }`}
           >

@@ -248,7 +248,7 @@ function DoctorSidebar({ data, navigate }) {
     <div className="space-y-8">
       <div className="flex gap-8">
         {/* Comments Section */}
-        <div className="flex-[2] bg-white rounded-xl p-6 shadow-sm border border-gray-200 flex flex-col">
+        <div className="flex-[2.5] bg-white rounded-xl p-6 shadow-sm border border-gray-200 flex flex-col">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <MessageSquareText className="text-gray-900 w-5 h-5" />
             Add Your Comments
@@ -263,65 +263,63 @@ function DoctorSidebar({ data, navigate }) {
         </div>
 
         {/* Action Selection and Submit */}
-        <div className="flex-1 flex flex-col gap-4">
-          <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-            <h3 className="text-sm font-semibold text-gray-600 mb-4 uppercase tracking-wide">
-              Decision
-            </h3>
-            <div className="space-y-3">
-              <label
-                className={`flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition ${
-                  selectedAction === "accept"
-                    ? "border-[#0a0e3f] bg-blue-50"
-                    : "border-gray-300 bg-white hover:border-gray-400"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="action"
-                  value="accept"
-                  checked={selectedAction === "accept"}
-                  onChange={(e) => setSelectedAction(e.target.value)}
-                  disabled={submitted}
-                  className="cursor-pointer"
-                />
-                <div>
-                  <span className="font-semibold text-gray-900 block text-sm">
-                    Accept Results
-                  </span>
-                  <p className="text-xs text-gray-600">Confirm diagnosis</p>
-                </div>
-              </label>
+        <div className="flex-1 bg-white rounded-xl p-6 shadow-sm border border-gray-200 flex flex-col">
+          <h3 className="text-sm font-semibold text-gray-600 mb-4 uppercase tracking-wide">
+            Decision
+          </h3>
+          <div className="space-y-3 flex-1">
+            <label
+              className={`flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition ${
+                selectedAction === "accept"
+                  ? "border-[#0a0e3f] bg-blue-50"
+                  : "border-gray-300 bg-white hover:border-gray-400"
+              }`}
+            >
+              <input
+                type="radio"
+                name="action"
+                value="accept"
+                checked={selectedAction === "accept"}
+                onChange={(e) => setSelectedAction(e.target.value)}
+                disabled={submitted}
+                className="cursor-pointer"
+              />
+              <div>
+                <span className="font-semibold text-gray-900 block text-sm">
+                  Accept Results
+                </span>
+                <p className="text-xs text-gray-600">Confirm diagnosis</p>
+              </div>
+            </label>
 
-              <label
-                className={`flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition ${
-                  selectedAction === "rediagnose"
-                    ? "border-[#0a0e3f] bg-blue-50"
-                    : "border-gray-300 bg-white hover:border-gray-400"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="action"
-                  value="rediagnose"
-                  checked={selectedAction === "rediagnose"}
-                  onChange={(e) => setSelectedAction(e.target.value)}
-                  disabled={submitted}
-                  className="cursor-pointer"
-                />
-                <div>
-                  <span className="font-semibold text-gray-900 block text-sm">
-                    Re-Diagnosis
-                  </span>
-                  <p className="text-xs text-gray-600">Request new analysis</p>
-                </div>
-              </label>
-            </div>
+            <label
+              className={`flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition ${
+                selectedAction === "rediagnose"
+                  ? "border-[#0a0e3f] bg-blue-50"
+                  : "border-gray-300 bg-white hover:border-gray-400"
+              }`}
+            >
+              <input
+                type="radio"
+                name="action"
+                value="rediagnose"
+                checked={selectedAction === "rediagnose"}
+                onChange={(e) => setSelectedAction(e.target.value)}
+                disabled={submitted}
+                className="cursor-pointer"
+              />
+              <div>
+                <span className="font-semibold text-gray-900 block text-sm">
+                  Re-Diagnosis
+                </span>
+                <p className="text-xs text-gray-600">Request new analysis</p>
+              </div>
+            </label>
           </div>
 
           {/* Submit Button */}
           <button
-            className="w-full py-3 px-4 bg-[#0a0e3f] text-white rounded-lg font-semibold hover:opacity-90 transition duration-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-3 px-4 bg-[#0a0e3f] text-white rounded-lg font-semibold hover:opacity-90 transition duration-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed mt-4"
             onClick={handleSubmit}
             disabled={submitted}
           >
