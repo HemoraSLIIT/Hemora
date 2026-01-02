@@ -159,7 +159,20 @@ class UserCreateSerializer(serializers.ModelSerializer):
                     "universityAffiliation": "University affiliation is required for researchers."
                 })
         
-        # ADMIN - only username, email, password required (already validated by serializer)
+        # ADMIN required fields
+        elif role == User.Role.ADMIN:
+            if not attrs.get('first_name'):
+                raise serializers.ValidationError({
+                    "firstName": "First name is required for administrators."
+                })
+            if not attrs.get('last_name'):
+                raise serializers.ValidationError({
+                    "lastName": "Last name is required for administrators."
+                })
+            if not attrs.get('hospital_affiliation'):
+                raise serializers.ValidationError({
+                    "hospitalAffiliation": "Hospital/Lab affiliation is required for administrators."
+                })
         
         return attrs
     
@@ -278,6 +291,21 @@ class UserUpdateSerializer(serializers.ModelSerializer):
             if not get_value('university_affiliation'):
                 raise serializers.ValidationError({
                     "universityAffiliation": "University affiliation is required for researchers."
+                })
+        
+        # ADMIN required fields
+        elif role == User.Role.ADMIN:
+            if not get_value('first_name'):
+                raise serializers.ValidationError({
+                    "firstName": "First name is required for administrators."
+                })
+            if not get_value('last_name'):
+                raise serializers.ValidationError({
+                    "lastName": "Last name is required for administrators."
+                })
+            if not get_value('hospital_affiliation'):
+                raise serializers.ValidationError({
+                    "hospitalAffiliation": "Hospital/Lab affiliation is required for administrators."
                 })
         
         return attrs
