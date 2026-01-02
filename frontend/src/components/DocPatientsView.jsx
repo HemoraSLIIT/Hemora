@@ -12,7 +12,6 @@ import {
 } from "lucide-react";
 import { authAPI, userAPI } from "../services/api";
 import toast from "react-hot-toast";
-import ViewResults from "./ViewResults";
 import ViewPatient from "./ViewPatient";
 
 export default function DocPatientsView() {
@@ -113,7 +112,6 @@ export default function DocPatientsView() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("All");
   const [filteredPatients, setFilteredPatients] = useState(patients);
-  const [isViewResultsOpen, setIsViewResultsOpen] = useState(false);
   const [isViewPatientOpen, setIsViewPatientOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const navigate = useNavigate();
@@ -194,9 +192,7 @@ export default function DocPatientsView() {
   };
 
   const handleViewResults = (patientId) => {
-    const patient = patients.find((p) => p.id === patientId);
-    setSelectedPatient(patient);
-    setIsViewResultsOpen(true);
+    navigate("/view-results");
   };
 
   const handleExportData = () => {
@@ -476,12 +472,6 @@ export default function DocPatientsView() {
           )}
         </div>
       </div>
-
-      <ViewResults
-        isOpen={isViewResultsOpen}
-        onClose={() => setIsViewResultsOpen(false)}
-        userRole="Doctor"
-      />
 
       <ViewPatient
         isOpen={isViewPatientOpen}

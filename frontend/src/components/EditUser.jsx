@@ -65,10 +65,10 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
         payload.medicalLicense = formData.medicalLicense;
       } else if (user.role === "Lab Technician") {
         payload.hospitalAffiliation = formData.hospitalAffiliation;
+      } else if (user.role === "Admin") {
+        payload.hospitalAffiliation = formData.hospitalAffiliation;
       } else if (user.role === "Researcher") {
         payload.universityAffiliation = formData.universityAffiliation;
-      } else if (user.role === "Admin") {
-        if (formData.hospitalAffiliation) payload.hospitalAffiliation = formData.hospitalAffiliation;
       }
 
       await userAPI.updateUser(user.id, payload);
@@ -111,7 +111,7 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  Specialization *
+                  Specialization
                 </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
@@ -125,7 +125,7 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  Hospital Affiliation *
+                  Hospital Affiliation
                 </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
@@ -141,7 +141,7 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  Medical License Number *
+                  Medical License Number
                 </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
@@ -175,7 +175,7 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
           <div className="grid grid-cols-2 gap-6 mb-6">
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-2">
-                Hospital / Lab Affiliation *
+                Hospital / Lab Affiliation
               </label>
               <input
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
@@ -208,7 +208,7 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
           <div className="grid grid-cols-2 gap-6 mb-6">
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-2">
-                University Affiliation *
+                University Affiliation
               </label>
               <input
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
@@ -241,15 +241,16 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
           <div className="grid grid-cols-2 gap-6 mb-6">
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-2">
-                Hospital / Organization Affiliation
+                Hospital / Lab Affiliation
               </label>
               <input
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
                 type="text"
                 name="hospitalAffiliation"
-                placeholder="Enter hospital or organization"
+                placeholder="Enter hospital / lab affiliation"
                 value={formData.hospitalAffiliation}
                 onChange={handleChange}
+                required
               />
             </div>
             <div>
@@ -279,7 +280,7 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-lg shadow-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto p-8"
+        className="bg-white rounded-lg shadow-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto p-8 relative"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -296,10 +297,11 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
             </p>
           </div>
           <button
-            className="bg-none border-none text-2xl cursor-pointer text-gray-600 hover:text-gray-900"
+            className="absolute top-4 right-4 p-1 bg-none border-none cursor-pointer text-gray-400 hover:text-gray-700 transition-colors duration-200 rounded hover:scale-110"
             onClick={onClose}
+            aria-label="Close"
           >
-            ✕
+            <X size={24} />
           </button>
         </div>
 
@@ -322,7 +324,7 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-2">
-                Email *
+                Email
               </label>
               <input
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
@@ -336,43 +338,45 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
             </div>
           </div>
 
-          {/* First & Last Name */}
-          <div className="grid grid-cols-2 gap-6 mb-6">
-            <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2">
-                First Name *
-              </label>
-              <input
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
-                type="text"
-                name="firstName"
-                placeholder="Enter first name"
-                value={formData.firstName}
-                onChange={handleChange}
-                required
-              />
+          {/* First & Last Name - Show for Doctor, Lab Technician, and Admin */}
+          {user.role !== "Researcher" && (
+            <div className="grid grid-cols-2 gap-6 mb-6">
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                  First Name
+                </label>
+                <input
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
+                  type="text"
+                  name="firstName"
+                  placeholder="Enter first name"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                  Last Name
+                </label>
+                <input
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
+                  type="text"
+                  name="lastName"
+                  placeholder="Enter last name"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2">
-                Last Name *
-              </label>
-              <input
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
-                type="text"
-                name="lastName"
-                placeholder="Enter last name"
-                value={formData.lastName}
-                onChange={handleChange}
-                required
-              />
-            </div>
-          </div>
+          )}
 
           {/* Role-specific fields */}
           {renderRoleSpecificFields()}
 
           {/* Password (Optional) */}
-          <div className="mb-6">
+          {/* <div className="mb-6">
             <label className="block text-sm font-semibold text-gray-900 mb-2">
               New Password (Optional)
             </label>
@@ -387,7 +391,7 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
             <p className="text-xs text-gray-500 mt-1">
               Only fill this if you want to change the password
             </p>
-          </div>
+          </div> */}
 
           {/* Buttons */}
           <div className="flex gap-4">
