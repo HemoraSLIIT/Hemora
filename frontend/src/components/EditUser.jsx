@@ -111,7 +111,7 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  Specialization *
+                  Specialization
                 </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
@@ -125,7 +125,7 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  Hospital Affiliation *
+                  Hospital Affiliation
                 </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
@@ -141,7 +141,7 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  Medical License Number *
+                  Medical License Number
                 </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
@@ -175,7 +175,7 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
           <div className="grid grid-cols-2 gap-6 mb-6">
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-2">
-                Hospital / Lab Affiliation *
+                Hospital / Lab Affiliation
               </label>
               <input
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
@@ -208,7 +208,7 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
           <div className="grid grid-cols-2 gap-6 mb-6">
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-2">
-                University Affiliation *
+                University Affiliation
               </label>
               <input
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
@@ -241,7 +241,7 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
           <div className="grid grid-cols-2 gap-6 mb-6">
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-2">
-                Hospital / Lab Affiliation *
+                Hospital / Lab Affiliation
               </label>
               <input
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
@@ -324,7 +324,7 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-2">
-                Email *
+                Email
               </label>
               <input
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
@@ -343,7 +343,7 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  First Name *
+                  First Name
                 </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
@@ -357,7 +357,7 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  Last Name *
+                  Last Name
                 </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"

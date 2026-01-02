@@ -117,7 +117,7 @@ export default function AddUser({ isOpen, onClose, onUserCreated }) {
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  Specialization *
+                  Specialization <span className="text-red-500">*</span>
                 </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
@@ -131,7 +131,7 @@ export default function AddUser({ isOpen, onClose, onUserCreated }) {
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  Hospital Affiliation *
+                  Hospital Affiliation <span className="text-red-500">*</span>
                 </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
@@ -148,7 +148,7 @@ export default function AddUser({ isOpen, onClose, onUserCreated }) {
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  Medical License Number *
+                  Medical License Number <span className="text-red-500">*</span>
                 </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
@@ -183,7 +183,7 @@ export default function AddUser({ isOpen, onClose, onUserCreated }) {
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  Hospital / Lab Affiliation *
+                  Hospital / Lab Affiliation <span className="text-red-500">*</span>
                 </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
@@ -232,7 +232,7 @@ export default function AddUser({ isOpen, onClose, onUserCreated }) {
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  Hospital / Lab Affiliation *
+                  Hospital / Lab Affiliation <span className="text-red-500">*</span>
                 </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
@@ -297,7 +297,7 @@ export default function AddUser({ isOpen, onClose, onUserCreated }) {
           {/* Role */}
           <div className="mb-6">
             <label className="block text-sm font-semibold text-gray-900 mb-3">
-              Role *
+              Role <span className="text-red-500">*</span>
             </label>
             <div className="grid grid-cols-3 gap-55 px-3 py-2 border border-gray-300 rounded-lg">
               {["Doctor", "Lab Technician", "Admin"].map((role) => (
@@ -322,7 +322,7 @@ export default function AddUser({ isOpen, onClose, onUserCreated }) {
           <div className="grid grid-cols-2 gap-6 mb-6">
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-2">
-                Username *
+                Username <span className="text-red-500">*</span>
               </label>
               <input
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
@@ -336,7 +336,7 @@ export default function AddUser({ isOpen, onClose, onUserCreated }) {
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-2">
-                Email *
+                Email <span className="text-red-500">*</span>
               </label>
               <input
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
@@ -355,7 +355,7 @@ export default function AddUser({ isOpen, onClose, onUserCreated }) {
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  First Name *
+                  First Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
@@ -369,7 +369,7 @@ export default function AddUser({ isOpen, onClose, onUserCreated }) {
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-2">
-                  Last Name *
+                  Last Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
@@ -388,7 +388,7 @@ export default function AddUser({ isOpen, onClose, onUserCreated }) {
           <div className="grid grid-cols-2 gap-6 mb-6">
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-2">
-                Password *
+                Password <span className="text-red-500">*</span>
               </label>
               <input
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
@@ -402,7 +402,7 @@ export default function AddUser({ isOpen, onClose, onUserCreated }) {
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-900 mb-2">
-                Confirm Password *
+                Confirm Password <span className="text-red-500">*</span>
               </label>
               <input
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
