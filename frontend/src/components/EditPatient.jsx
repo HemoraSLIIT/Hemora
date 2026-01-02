@@ -134,7 +134,7 @@ export default function EditPatient({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-lg shadow-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto p-8"
+        className="bg-white rounded-lg shadow-lg w-full max-w-4xl max-h-[90vh] overflow-y-auto p-8 relative"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -151,10 +151,11 @@ export default function EditPatient({
             </p>
           </div>
           <button
-            className="bg-none border-none text-2xl cursor-pointer text-gray-600 hover:text-gray-900"
+            className="absolute top-4 right-4 p-1 bg-none border-none cursor-pointer text-gray-400 hover:text-gray-700 transition-colors duration-200 rounded hover:scale-110"
             onClick={onClose}
+            aria-label="Close"
           >
-            ✕
+            <X size={24} />
           </button>
         </div>
 

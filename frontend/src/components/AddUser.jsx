@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { UserRoundPlus } from "lucide-react";
+import { UserRoundPlus, X } from "lucide-react";
 import { userAPI } from "../services/api";
 import toast from "react-hot-toast";
 
@@ -57,13 +57,13 @@ export default function AddUser({ isOpen, onClose, onUserCreated }) {
       } else if (formData.role === "Admin") {
         payload.firstName = formData.firstName;
         payload.lastName = formData.lastName;
-        if (formData.hospitalAffiliation) payload.hospitalAffiliation = formData.hospitalAffiliation;
+        payload.hospitalAffiliation = formData.hospitalAffiliation;
         if (formData.phone) payload.phoneNumber = formData.phone;
       }
 
       await userAPI.createUser(payload);
       toast.success("User created successfully!");
-      
+
       // Reset form
       setFormData({
         role: "Doctor",
@@ -83,7 +83,7 @@ export default function AddUser({ isOpen, onClose, onUserCreated }) {
       if (onUserCreated) {
         onUserCreated();
       }
-      
+
       onClose();
     } catch (error) {
       console.error("Failed to create user:", error);
@@ -91,7 +91,12 @@ export default function AddUser({ isOpen, onClose, onUserCreated }) {
       if (errorData) {
         // Show specific field errors
         const errorMessages = Object.entries(errorData)
-          .map(([field, messages]) => `${field}: ${Array.isArray(messages) ? messages.join(", ") : messages}`)
+          .map(
+            ([field, messages]) =>
+              `${field}: ${
+                Array.isArray(messages) ? messages.join(", ") : messages
+              }`
+          )
           .join("\n");
         toast.error(errorMessages || "Failed to create user");
       } else {
@@ -111,7 +116,9 @@ export default function AddUser({ isOpen, onClose, onUserCreated }) {
           <>
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2">Specialization *</label>
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                  Specialization *
+                </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
                   type="text"
@@ -123,7 +130,9 @@ export default function AddUser({ isOpen, onClose, onUserCreated }) {
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2">Hospital Affiliation *</label>
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                  Hospital Affiliation *
+                </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
                   type="text"
@@ -138,7 +147,9 @@ export default function AddUser({ isOpen, onClose, onUserCreated }) {
 
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2">Medical License Number *</label>
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                  Medical License Number *
+                </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
                   type="text"
@@ -150,7 +161,9 @@ export default function AddUser({ isOpen, onClose, onUserCreated }) {
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2">Phone</label>
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                  Phone
+                </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
                   type="tel"
@@ -169,7 +182,9 @@ export default function AddUser({ isOpen, onClose, onUserCreated }) {
           <>
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2">Hospital / Lab Affiliation *</label>
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                  Hospital / Lab Affiliation *
+                </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
                   type="text"
@@ -181,7 +196,9 @@ export default function AddUser({ isOpen, onClose, onUserCreated }) {
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2">Phone</label>
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                  Phone
+                </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
                   type="tel"
@@ -214,18 +231,23 @@ export default function AddUser({ isOpen, onClose, onUserCreated }) {
           <>
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2">Hospital / Organization Affiliation</label>
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                  Hospital / Lab Affiliation *
+                </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
                   type="text"
                   name="hospitalAffiliation"
-                  placeholder="Enter hospital or organization"
+                  placeholder="Enter hospital / lab affiliation"
                   value={formData.hospitalAffiliation}
                   onChange={handleChange}
+                  required
                 />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-900 mb-2">Phone</label>
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                  Phone
+                </label>
                 <input
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
                   type="tel"
@@ -245,44 +267,63 @@ export default function AddUser({ isOpen, onClose, onUserCreated }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-[#000000b4] flex items-center justify-center z-1000 mb-0" onClick={onClose}>
-      <div className="bg-white rounded-lg shadow-lg w-4xl h-60vh overflow-y-auto p-8" onClick={(e) => e.stopPropagation()}>
-                <div className="flex justify-between items-center mb-6">
+    <div
+      className="fixed inset-0 bg-[#000000b4] flex items-center justify-center z-1000 mb-0"
+      onClick={onClose}
+    >
+      <div
+        className="bg-white rounded-lg shadow-lg w-4xl h-60vh overflow-y-auto p-8 relative"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex justify-between items-center mb-6">
           <div>
             <div className="flex items-center gap-2 mb-2">
               <UserRoundPlus className="text-gray-900 w-6 h-6" />
-              <h2 className="text-2xl font-semibold text-gray-900">Add New User</h2>
+              <h2 className="text-2xl font-semibold text-gray-900">
+                Add New User
+              </h2>
             </div>
           </div>
-          <button className="bg-none border-none text-2xl cursor-pointer text-gray-600 hover:text-gray-900" onClick={onClose}>✕</button>
+          <button
+            className="absolute top-4 right-4 p-1 bg-none border-none cursor-pointer text-gray-400 hover:text-gray-700 transition-colors duration-200 rounded hover:scale-110"
+            onClick={onClose}
+            aria-label="Close"
+          >
+            <X size={24} />
+          </button>
         </div>
 
         <form onSubmit={handleSubmit}>
           {/* Role */}
           <div className="mb-6">
-            <label className="block text-sm font-semibold text-gray-900 mb-3">Role *</label>
+            <label className="block text-sm font-semibold text-gray-900 mb-3">
+              Role *
+            </label>
             <div className="grid grid-cols-3 gap-55 px-3 py-2 border border-gray-300 rounded-lg">
-              {["Doctor", "Lab Technician", "Admin"].map(
-                (role) => (
-                  <label key={role} className="flex items-center gap-2 cursor-pointer text-sm">
-                    <input
-                      type="radio"
-                      name="role"
-                      value={role}
-                      checked={formData.role === role}
-                      onChange={handleChange}
-                    />
-                    {role}
-                  </label>
-                )
-              )}
+              {["Doctor", "Lab Technician", "Admin"].map((role) => (
+                <label
+                  key={role}
+                  className="flex items-center gap-2 cursor-pointer text-sm"
+                >
+                  <input
+                    type="radio"
+                    name="role"
+                    value={role}
+                    checked={formData.role === role}
+                    onChange={handleChange}
+                  />
+                  {role}
+                </label>
+              ))}
             </div>
           </div>
 
           {/* Username & Email */}
           <div className="grid grid-cols-2 gap-6 mb-6">
             <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2">Username *</label>
+              <label className="block text-sm font-semibold text-gray-900 mb-2">
+                Username *
+              </label>
               <input
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
                 type="text"
@@ -294,7 +335,9 @@ export default function AddUser({ isOpen, onClose, onUserCreated }) {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2">Email *</label>
+              <label className="block text-sm font-semibold text-gray-900 mb-2">
+                Email *
+              </label>
               <input
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
                 type="email"
@@ -307,38 +350,46 @@ export default function AddUser({ isOpen, onClose, onUserCreated }) {
             </div>
           </div>
 
-          {/* First & Last Name */}
-          <div className="grid grid-cols-2 gap-6 mb-6">
-            <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2">First Name *</label>
-              <input
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
-                type="text"
-                name="firstName"
-                placeholder="Enter first name"
-                value={formData.firstName}
-                onChange={handleChange}
-                required
-              />
+          {/* First & Last Name - Show for Doctor, Lab Technician, and Admin */}
+          {formData.role !== "Researcher" && (
+            <div className="grid grid-cols-2 gap-6 mb-6">
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                  First Name *
+                </label>
+                <input
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
+                  type="text"
+                  name="firstName"
+                  placeholder="Enter first name"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                  Last Name *
+                </label>
+                <input
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
+                  type="text"
+                  name="lastName"
+                  placeholder="Enter last name"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
             </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2">Last Name *</label>
-              <input
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
-                type="text"
-                name="lastName"
-                placeholder="Enter last name"
-                value={formData.lastName}
-                onChange={handleChange}
-                required
-              />
-            </div>
-          </div>
+          )}
 
           {/* Password */}
           <div className="grid grid-cols-2 gap-6 mb-6">
             <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2">Password *</label>
+              <label className="block text-sm font-semibold text-gray-900 mb-2">
+                Password *
+              </label>
               <input
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
                 type="password"
@@ -350,7 +401,9 @@ export default function AddUser({ isOpen, onClose, onUserCreated }) {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2">Confirm Password *</label>
+              <label className="block text-sm font-semibold text-gray-900 mb-2">
+                Confirm Password *
+              </label>
               <input
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500"
                 type="password"
@@ -366,8 +419,8 @@ export default function AddUser({ isOpen, onClose, onUserCreated }) {
           {/* Dynamic fields based on role */}
           {renderFormFields()}
 
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             disabled={loading}
             className="w-full py-3 bg-[#0a0e3f] text-white rounded-lg font-semibold hover:opacity-90 transition duration-300 cursor-pointer"
           >

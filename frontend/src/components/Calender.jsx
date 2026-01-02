@@ -2,8 +2,8 @@ import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function Calender({ onClose }) {
-  const [currentDate, setCurrentDate] = useState(new Date(2025, 11, 31));
   const today = new Date();
+  const [currentDate, setCurrentDate] = useState(new Date());
 
   const getDaysInMonth = (date) => {
     return new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
@@ -23,8 +23,18 @@ export default function Calender({ onClose }) {
   };
 
   const monthNames = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December",
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
   ];
 
   const daysInMonth = getDaysInMonth(currentDate);
@@ -72,7 +82,10 @@ export default function Calender({ onClose }) {
 
       <div className="grid grid-cols-7 gap-2">
         {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-          <div key={day} className="font-bold text-center p-2 text-gray-600 text-sm">
+          <div
+            key={day}
+            className="font-bold text-center p-2 text-gray-600 text-sm"
+          >
             {day}
           </div>
         ))}
