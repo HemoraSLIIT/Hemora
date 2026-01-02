@@ -35,6 +35,7 @@ export default function Header() {
 
     fetchUserData();
   }, [navigate]);
+
   return (
     <div className="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-end">
       <div className="flex items-center space-x-4">
@@ -51,7 +52,9 @@ export default function Header() {
           <img
             src={`https://ui-avatars.com/api/?name=${user?.username?.[0]}&background=0a0e3f&color=fff`}
             alt="Profile"
+            title="View Profile"
             className="w-10 h-10 rounded-full cursor-pointer"
+            onClick={() => navigate("/profile")}
           />
         </div>
       </div>
