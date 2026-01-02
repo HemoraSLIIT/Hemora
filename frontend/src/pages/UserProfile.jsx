@@ -273,7 +273,7 @@ export default function UserProfile() {
                   <button
                     type="button"
                     onClick={handleStartChangePassword}
-                    className="px-4 py-2 text-sm font-semibold rounded-lg shadow-sm bg-[#0a0e3f] text-white hover:opacity-90 focus:outline-none"
+                    className="px-4 py-2 text-sm font-semibold rounded-lg shadow-sm bg-[#0a0e3f] text-white hover:opacity-90 focus:outline-none cursor-pointer"
                   >
                     Change Password
                   </button>
@@ -344,7 +344,7 @@ export default function UserProfile() {
                       type="button"
                       onClick={handleVerify}
                       disabled={pwLoading || blockedAfterAttempts || pwVerified}
-                      className={`px-4 py-2 text-sm font-semibold rounded-lg ${
+                      className={`px-4 py-2 text-sm font-semibold cursor-pointer rounded-lg ${
                         pwLoading || blockedAfterAttempts || pwVerified
                           ? "bg-blue-300 text-blue-700 cursor-not-allowed"
                           : "bg-blue-600 text-white hover:bg-blue-700"
@@ -356,7 +356,7 @@ export default function UserProfile() {
                       type="button"
                       onClick={handleUpdatePassword}
                       disabled={pwLoading || !pwVerified || blockedAfterAttempts}
-                      className={`px-4 py-2 text-sm font-semibold rounded-lg ${
+                      className={`px-4 py-2 text-sm font-semibold cursor-pointer rounded-lg ${
                         pwLoading || !pwVerified || blockedAfterAttempts
                           ? "bg-[#0a0e3f]/60 text-white cursor-not-allowed"
                           : "bg-[#0a0e3f] text-white hover:opacity-90"
@@ -367,7 +367,7 @@ export default function UserProfile() {
                     <button
                       type="button"
                       onClick={handleCancelChangePassword}
-                      className="px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300"
+                      className="px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 cursor-pointer"
                     >
                       Cancel
                     </button>
