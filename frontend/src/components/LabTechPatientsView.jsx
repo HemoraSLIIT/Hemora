@@ -13,7 +13,6 @@ import {
 import { authAPI, userAPI } from "../services/api";
 import toast from "react-hot-toast";
 import DeleteConfirm from "./DeleteConfirm";
-import ViewResults from "./ViewResults";
 import ViewPatient from "./ViewPatient";
 import EditPatient from "./EditPatient";
 
@@ -115,7 +114,6 @@ export default function LabTechPatientsView() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("All");
   const [filteredPatients, setFilteredPatients] = useState(patients);
-  const [isViewResultsOpen, setIsViewResultsOpen] = useState(false);
   const [isViewPatientOpen, setIsViewPatientOpen] = useState(false);
   const [isEditPatientOpen, setIsEditPatientOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(null);
@@ -198,9 +196,7 @@ export default function LabTechPatientsView() {
   };
 
   const handleViewResults = (patientId) => {
-    const patient = patients.find((p) => p.id === patientId);
-    setSelectedPatient(patient);
-    setIsViewResultsOpen(true);
+    navigate("/view-results");
   };
 
   const handleExportData = () => {
@@ -527,12 +523,6 @@ export default function LabTechPatientsView() {
         onClose={() => setIsEditPatientOpen(false)}
         patient={selectedPatient}
         onPatientUpdated={handlePatientUpdated}
-      />
-
-      <ViewResults
-        isOpen={isViewResultsOpen}
-        onClose={() => setIsViewResultsOpen(false)}
-        userRole="Lab Technician"
       />
 
       <ViewPatient
