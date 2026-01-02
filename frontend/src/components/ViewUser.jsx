@@ -229,6 +229,25 @@ export default function ViewUser({ isOpen, onClose, user }) {
             </div>
           )}
 
+          {user.role === "Admin" && user.hospitalAffiliation && (
+            <div>
+              <h4 className="text-lg font-semibold text-gray-800 mb-3">
+                Organization Information
+              </h4>
+              <div className="bg-white border border-gray-200 rounded-lg p-4">
+                <div className="flex items-center gap-2">
+                  <Building className="w-4 h-4 text-gray-400" />
+                  <p className="text-xs text-gray-500">
+                    Hospital / Organization Affiliation
+                  </p>
+                </div>
+                <p className="text-sm font-medium text-gray-900 mt-1">
+                  {user.hospitalAffiliation}
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Status & Timestamps */}
           <div>
             <h4 className="text-lg font-semibold text-gray-800 mb-3">

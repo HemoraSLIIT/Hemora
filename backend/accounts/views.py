@@ -16,6 +16,7 @@ from .serializers import (
     UserCreateSerializer,
     UserUpdateSerializer,
     UserListSerializer,
+    UserSelfUpdateSerializer,
 )
 
 User = get_user_model()
@@ -27,6 +28,25 @@ class IsAdminRole(BasePermission):
     """
     def has_permission(self, request, view):
         return bool(request.user and request.user.is_authenticated and request.user.role == User.Role.ADMIN)
+
+
+class IsAdminOrSelf(BasePermission):
+    """
+    Custom permission to allow:
+    - Admins to edit any user (but not their password)
+    - Users to edit only their own profile
+    """
+    def has_permission(self, request, view):
+        return bool(request.user and request.user.is_authenticated)
+    
+    def has_object_permission(self, request, view, obj):
+        # User can always edit themselves
+        if obj == request.user:
+            return True
+        # Admin can edit anyone
+        if request.user.role == User.Role.ADMIN:
+            return True
+        return False
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -58,11 +78,14 @@ class UserViewSet(viewsets.ModelViewSet):
         """
         Set permissions based on action.
         - Create: Admin only
-        - Update/Delete: Admin only
+        - Update/Partial Update: Admin or Self (with restrictions)
+        - Delete: Admin only
         - List/Retrieve: Authenticated users
         """
-        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+        if self.action in ['create', 'destroy']:
             return [IsAdminRole()]
+        elif self.action in ['update', 'partial_update']:
+            return [IsAdminOrSelf()]
         return [IsAuthenticated()]
     
     def list(self, request, *args, **kwargs):
@@ -135,10 +158,31 @@ class UserViewSet(viewsets.ModelViewSet):
     def update(self, request, *args, **kwargs):
         """
         Update user (full update - all fields required).
+        
+        Password rules:
+        - Only the user themselves can change their password
+        - Admin cannot change other users' passwords
         """
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
-        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        
+        # Check if admin is trying to change someone else's password
+        is_self = instance == request.user
+        is_admin = request.user.role == User.Role.ADMIN
+        
+        # Remove password from request if admin is editing someone else
+        data = request.data.copy() if hasattr(request.data, 'copy') else dict(request.data)
+        if is_admin and not is_self and 'password' in data:
+            data.pop('password')
+        
+        # Use appropriate serializer based on who is editing
+        if is_self and not is_admin:
+            # Non-admin user editing their own profile - use restricted serializer
+            serializer = UserSelfUpdateSerializer(instance, data=data, partial=partial)
+        else:
+            # Admin editing (self or others) - use full serializer
+            serializer = UserUpdateSerializer(instance, data=data, partial=partial)
+        
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
         
@@ -230,14 +274,33 @@ class UserViewSet(viewsets.ModelViewSet):
         serializer = UserSerializer(user)
         return Response(serializer.data)
     
-    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    @action(detail=False, methods=['get', 'put', 'patch'], permission_classes=[IsAuthenticated])
     def me(self, request):
         """
-        Get current user's profile.
-        GET /api/users/me/
+        Get or update current user's profile.
+        GET /api/users/me/ - Get profile
+        PUT/PATCH /api/users/me/ - Update profile
+        
+        Users can update their own profile including password.
         """
-        serializer = UserSerializer(request.user)
-        return Response(serializer.data)
+        if request.method == 'GET':
+            serializer = UserSerializer(request.user)
+            return Response(serializer.data)
+        
+        # PUT or PATCH - update profile
+        partial = request.method == 'PATCH'
+        
+        # Use self-update serializer for non-admin users
+        if request.user.role == User.Role.ADMIN:
+            serializer = UserUpdateSerializer(request.user, data=request.data, partial=partial)
+        else:
+            serializer = UserSelfUpdateSerializer(request.user, data=request.data, partial=partial)
+        
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        
+        response_serializer = UserSerializer(user)
+        return Response(response_serializer.data)
 
 
 class RegisterView(APIView):
