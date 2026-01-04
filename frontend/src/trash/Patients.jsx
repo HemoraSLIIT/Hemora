@@ -17,8 +17,9 @@ import {
 import { authAPI, userAPI } from "../services/api";
 import HemNewLogo from "/assets/hemnewlogo3.svg";
 import toast, { Toaster } from "react-hot-toast";
+import SideBar from "../components/SideBar";
 
-const Patients = () => {
+export default function Patients() {
   const [user, setUser] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
@@ -293,30 +294,7 @@ const Patients = () => {
       <Toaster position="top-right" />
 
       {/* Sidebar */}
-      <div className="w-22 bg-[#0a0e3f] flex flex-col items-center py-6 space-y-0 rounded-tr-4xl rounded-br-4xl">
-        <div className="">
-          <img
-            src={HemNewLogo}
-            alt="Logo"
-            width={60}
-            height={60}
-            className=""
-          />
-        </div>
-        <div className="flex flex-col items-center justify-center flex-1 space-y-8">
-          <Home
-            className="text-white w-6 h-6 cursor-pointer hover:scale-110 transition-transform"
-            onClick={() => navigate("/dashboard")}
-          />
-          <Bell className="text-white w-6 h-6 cursor-pointer hover:scale-110 transition-transform" />
-          <Users
-            className="text-white w-6 h-6 cursor-pointer hover:scale-110 transition-transform"
-            onClick={() => navigate("/patients")}
-          />
-          <Calendar className="text-white w-6 h-6 cursor-pointer hover:scale-110 transition-transform" />
-          <Settings className="text-white w-6 h-6 cursor-pointer hover:scale-110 transition-transform" />
-        </div>
-      </div>
+      <SideBar />
 
       {/* Main Content */}
       <div className="flex-1 overflow-auto">
@@ -449,9 +427,9 @@ const Patients = () => {
                       <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
                         Age / Gender
                       </th>
-                      <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
+                      {/* <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
                         Blood Group
-                      </th>
+                      </th> */}
                       <th className="px-6 py-4 text-left text-sm font-semibold text-gray-700">
                         Disease
                       </th>
@@ -465,7 +443,7 @@ const Patients = () => {
                         Actions
                       </th>
                       <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
-                        Diagnosis
+                        Comments
                       </th>
                     </tr>
                   </thead>
@@ -484,11 +462,11 @@ const Patients = () => {
                         <td className="px-6 py-4 text-sm text-gray-600">
                           {patient.age} / {patient.gender}
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-700">
+                        {/* <td className="px-6 py-4 text-sm text-gray-700">
                           <span className="px-3 py-1 bg-gray-100 text-gray-800 rounded-full text-xs font-medium">
                             {patient.bloodGroup}
                           </span>
-                        </td>
+                        </td> */}
                         <td className="px-6 py-4 text-sm">
                           <span
                             className={`px-3 py-1 rounded-full text-xs font-medium ${getDiseaseColor(
@@ -535,13 +513,26 @@ const Patients = () => {
                             </button>
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-center">
+                        {/* Lab Tech */}
+                        {/* <td className="px-6 py-4 text-center">
                           <button
-                            onClick={() => handleDiagnose(patient.id)}
+                            // onClick={() => handleDiagnose(patient.id)}
                             className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:opacity-90 transition-colors text-sm font-medium cursor-pointer"
                           >
-                            Diagnose
+                            View Comment
                           </button>
+                        </td> */}
+                        {/* Doctor */}
+                        <td className="px-6 py-4 text-center">
+                          <div className="flex justify-center gap-3">
+                            <button className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:opacity-90 transition-colors text-sm font-medium cursor-pointer whitespace-nowrap">
+                              Add Comment
+                            </button>
+
+                            <button className="px-4 py-2 bg-[#32C527] text-white rounded-lg hover:opacity-90 transition-colors text-sm font-medium cursor-pointer">
+                              Approve
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -562,6 +553,4 @@ const Patients = () => {
       </div>
     </div>
   );
-};
-
-export default Patients;
+}
