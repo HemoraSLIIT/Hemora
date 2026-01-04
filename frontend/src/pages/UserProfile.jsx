@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { UserRound } from "lucide-react";
 import { authAPI, userAPI } from "../services/api";
-import toast from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
 import Header from "../components/Header";
 import ProfileForm from "../components/ProfileForm";
 import SideBar from "../components/SideBar"; // added
@@ -144,13 +144,9 @@ export default function UserProfile() {
     return false;
   };
 
-  const changePassword = async (currentPassword, newPassword, confirmPassword) => {
-    return await authAPI.changePassword(currentPassword, newPassword, confirmPassword);
-  };
-
   const handleVerify = async () => {
     if (!pwForm.currentPassword.trim()) {
-      toast.error("Enter current password");
+      toast.error("Enter current password", { duration: 3000 });
       return;
     }
     if (blockedAfterAttempts) return;
@@ -160,20 +156,21 @@ export default function UserProfile() {
       const ok = await verifyCurrentPassword(pwForm.currentPassword.trim());
       if (ok) {
         setPwVerified(true);
-        toast.success("Current password verified");
+        toast.success("Current password verified!", { duration: 3000 });
       } else {
         const next = attemptsLeft - 1;
         setAttemptsLeft(next);
         if (next <= 0) {
           setBlockedAfterAttempts(true);
           setPwVerified(false);
-          toast.error("Attempts exceeded. Contact admin.");
+          toast.error("Too many failed attempts. Please contact admin.", { duration: 5000 });
         } else {
-          toast.error(`Incorrect password. ${next} attempt(s) left.`);
+          toast.error(`Incorrect current password. ${next} attempt(s) remaining.`, { duration: 4000 });
         }
       }
     } catch (err) {
-      toast.error(err?.message || "Failed to verify password");
+      console.error("Password verification error:", err);
+      toast.error("Failed to verify password. Please try again.", { duration: 4000 });
     } finally {
       setPwLoading(false);
     }
@@ -181,34 +178,73 @@ export default function UserProfile() {
 
   const handleUpdatePassword = async () => {
     if (!pwVerified) {
-      toast.error("Verify current password first");
+      toast.error("Verify current password first", { duration: 3000 });
       return;
     }
     const newPwd = pwForm.newPassword.trim();
     const confirmPwd = pwForm.confirmPassword.trim();
 
     if (!newPwd) {
-      toast.error("Enter new password");
+      toast.error("Enter new password", { duration: 3000 });
       return;
     }
     if (!confirmPwd) {
-      toast.error("Confirm your new password");
+      toast.error("Confirm your new password", { duration: 3000 });
       return;
     }
     if (newPwd !== confirmPwd) {
       setPwMismatch(true);
-      toast.error("Passwords do not match");
+      toast.error("Passwords do not match", { duration: 3000 });
       return;
     }
+    
+    // Password strength validation
+    if (newPwd.length < 8) {
+      toast.error("Password must be at least 8 characters long", { duration: 3000 });
+      return;
+    }
+    
     setPwMismatch(false);
 
     setPwLoading(true);
     try {
-      await changePassword(pwForm.currentPassword.trim(), newPwd, confirmPwd);
-      toast.success("Password changed successfully");
-      handleCancelChangePassword();
+      await authAPI.changePassword(pwForm.currentPassword.trim(), newPwd, confirmPwd);
+      // Show success toast first, then close the form after a short delay
+      toast.success("Password changed successfully!", { duration: 4000 });
+      // Delay closing the form so user can see the success message
+      setTimeout(() => {
+        handleCancelChangePassword();
+      }, 500);
     } catch (err) {
-      toast.error(err?.response?.data?.detail || err?.message || "Failed to change password");
+      console.error("Password change error:", err);
+      // Handle different error formats
+      const errorData = err?.response?.data;
+      if (errorData) {
+        if (typeof errorData === 'string') {
+          toast.error(errorData, { duration: 4000 });
+        } else if (errorData.detail) {
+          toast.error(errorData.detail, { duration: 4000 });
+        } else if (errorData.password) {
+          // Django password validation errors come as array
+          const pwdErrors = Array.isArray(errorData.password) 
+            ? errorData.password.join(', ') 
+            : errorData.password;
+          toast.error(`Password error: ${pwdErrors}`, { duration: 5000 });
+        } else {
+          // Other field errors
+          const errorMessages = Object.entries(errorData)
+            .map(([field, messages]) => {
+              const msg = Array.isArray(messages) ? messages.join(', ') : messages;
+              return `${field}: ${msg}`;
+            })
+            .join('\n');
+          toast.error(errorMessages || "Failed to change password", { duration: 4000 });
+        }
+      } else if (err?.message) {
+        toast.error(err.message, { duration: 4000 });
+      } else {
+        toast.error("Failed to change password. Please try again.", { duration: 4000 });
+      }
     } finally {
       setPwLoading(false);
     }
@@ -244,6 +280,7 @@ export default function UserProfile() {
 
   return (
     <div className="flex h-screen bg-gray-50">
+      <Toaster position="top-right" />
       <SideBar />
       <div className="flex-1 overflow-auto">
         <Header />

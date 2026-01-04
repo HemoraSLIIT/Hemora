@@ -106,6 +106,24 @@ export const authAPI = {
   isAuthenticated: () => {
     return !!localStorage.getItem('access_token');
   },
+
+  // Change password for current user
+  changePassword: async (currentPassword, newPassword, confirmPassword) => {
+    // Validate inputs
+    if (!newPassword) {
+      throw new Error('New password is required');
+    }
+    if (newPassword !== confirmPassword) {
+      throw new Error('Passwords do not match');
+    }
+    
+    // Use the /users/me/ endpoint to update password
+    const response = await api.patch('/users/me/', {
+      password: newPassword,
+    });
+    
+    return response.data;
+  },
 };
 
 // User API functions
