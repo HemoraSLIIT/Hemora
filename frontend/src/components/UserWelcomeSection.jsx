@@ -18,11 +18,8 @@ export default function UserWelcomeSection() {
       try {
         const userData = await userAPI.getCurrentUser();
         setUser(userData);
-        setLoading(false);
       } catch (err) {
         console.error("Failed to fetch user data:", err);
-        setError("Failed to fetch user data.");
-        setLoading(false);
 
         // If unauthorized, redirect to login
         if (err.response?.status === 401) {
