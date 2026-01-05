@@ -123,12 +123,12 @@ export default function Login() {
             </p>
 
             {/* SIGN UP LINK */}
-            <p className="text-center text-gray-700">
+            {/* <p className="text-center text-gray-700">
               New user?
               <a href="/" className="text-[#0a0e3f] font-semibold ml-1">
                 create a account
               </a>
-            </p>
+            </p> */}
           </form>
         </div>
       </div>

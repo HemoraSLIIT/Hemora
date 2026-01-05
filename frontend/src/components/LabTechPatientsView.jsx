@@ -117,6 +117,7 @@ export default function LabTechPatientsView() {
   const [isViewPatientOpen, setIsViewPatientOpen] = useState(false);
   const [isEditPatientOpen, setIsEditPatientOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(null);
+  const [diagnosisStatus, setDiagnosisStatus] = useState({}); // { patientId: 'pending' | 'loading' | 'completed' }
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -190,9 +191,14 @@ export default function LabTechPatientsView() {
   };
 
   const handleDiagnose = (patientId) => {
-    toast.success(`Starting diagnosis for patient ${patientId}`);
-    // Navigate to diagnosis page when implemented
-    // navigate(`/diagnosis/${patientId}`);
+    // Set loading state
+    setDiagnosisStatus((prev) => ({ ...prev, [patientId]: 'loading' }));
+    
+    // After 2 seconds, set to completed
+    setTimeout(() => {
+      setDiagnosisStatus((prev) => ({ ...prev, [patientId]: 'completed' }));
+      toast.success(`Diagnosis completed for patient ${patientId}`);
+    }, 2000);
   };
 
   const handleViewResults = (patientId) => {
@@ -475,23 +481,52 @@ export default function LabTechPatientsView() {
                           </button>
                         </div>
                       </td>
-                      {/* Lab Tech */}
+                      {/* Lab Tech - Diagnose / View Results Button */}
                       <td className="px-6 py-4 text-center">
-                        <div className="flex justify-center gap-3">
+                        {diagnosisStatus[patient.id] === 'completed' ? (
+                          // View Results button (after diagnosis complete)
                           <button
                             onClick={() => handleViewResults(patient.id)}
-                            className="px-4 py-2 bg-orange-700 text-white rounded-lg hover:opacity-90 transition-colors text-sm font-medium cursor-pointer whitespace-nowrap"
+                            className="px-6 py-2 bg-[#b91c1c] text-white rounded-lg hover:opacity-90 transition-colors text-sm font-medium cursor-pointer min-w-[130px]"
                           >
                             View Results
                           </button>
-
+                        ) : diagnosisStatus[patient.id] === 'loading' ? (
+                          // Loading state
+                          <button
+                            disabled
+                            className="px-6 py-2 bg-[#f59e0b] text-white rounded-lg text-sm font-medium cursor-not-allowed min-w-[130px] flex items-center justify-center mx-auto"
+                          >
+                            <svg
+                              className="animate-spin h-5 w-5 text-white"
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                            >
+                              <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                              ></circle>
+                              <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                              ></path>
+                            </svg>
+                          </button>
+                        ) : (
+                          // Initial Diagnose button
                           <button
                             onClick={() => handleDiagnose(patient.id)}
-                            className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:opacity-90 transition-colors text-sm font-medium cursor-pointer whitespace-nowrap"
+                            className="px-6 py-2 bg-[#f59e0b] text-white rounded-lg hover:opacity-90 transition-colors text-sm font-medium cursor-pointer min-w-[130px]"
                           >
                             Diagnose
                           </button>
-                        </div>
+                        )}
                       </td>
                     </tr>
                   ))}
