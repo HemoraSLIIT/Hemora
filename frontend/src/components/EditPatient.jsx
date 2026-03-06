@@ -146,7 +146,7 @@ export default function EditPatient({
               </h2>
             </div>
             <p className="text-sm text-gray-500 mt-1">
-              Editing: {patient.name} ({patient.displayId || `P${String(patient.id).padStart(3, "0")}`})
+              Editing: {patient.name} ({patient.id})
             </p>
           </div>
           <button

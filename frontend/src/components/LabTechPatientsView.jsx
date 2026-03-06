@@ -34,7 +34,6 @@ export default function LabTechPatientsView() {
 
       return {
         id: patient.id,
-        displayId: `P${String(patient.id).padStart(3, "0")}`,
         name: fullName || "Unknown",
         age: patient.age || "-",
         gender: patient.gender || "-",
@@ -85,7 +84,7 @@ export default function LabTechPatientsView() {
       filtered = filtered.filter(
         (patient) =>
           patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          patient.displayId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          String(patient.id).toLowerCase().includes(searchTerm.toLowerCase()) ||
           String(patient.phone).includes(searchTerm)
       );
     }
@@ -108,7 +107,6 @@ export default function LabTechPatientsView() {
 
       setSelectedPatient({
         ...patient,
-        id: `P${String(patient.id).padStart(3, "0")}`,
         name: fullName || "Unknown",
         dateAdded: patient.createdAt ? patient.createdAt.split("T")[0] : "-",
       });
@@ -126,7 +124,6 @@ export default function LabTechPatientsView() {
 
       setSelectedPatient({
         ...patient,
-        displayId: `P${String(patient.id).padStart(3, "0")}`,
         name: fullName || "Unknown",
       });
       setIsEditPatientOpen(true);
@@ -412,7 +409,7 @@ export default function LabTechPatientsView() {
                       className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
                     >
                       <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                        {patient.displayId}
+                        {patient.id}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-700">
                         {patient.name}
