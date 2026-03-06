@@ -10,7 +10,7 @@ import {
   Filter,
   Download,
 } from "lucide-react";
-import { authAPI, patientAPI, userAPI } from "../services/api";
+import { authAPI, patientAPI } from "../services/api";
 import toast from "react-hot-toast";
 import DeleteConfirm from "./DeleteConfirm";
 import ViewPatient from "./ViewPatient";
@@ -53,24 +53,21 @@ export default function LabTechPatientsView() {
   }, []);
 
   useEffect(() => {
-    // Check if user is authenticated
     if (!authAPI.isAuthenticated()) {
       navigate("/login");
       return;
     }
 
-    // Fetch current user data
-    const fetchUserData = async () => {
+    const loadPatients = async () => {
       try {
-        await userAPI.getCurrentUser();
         await fetchPatients();
+        setError("");
         setLoading(false);
       } catch (err) {
-        console.error("Failed to fetch user data:", err);
+        console.error("Failed to fetch patients:", err);
         setError("Failed to fetch patients.");
         setLoading(false);
 
-        // If unauthorized, redirect to login
         if (err.response?.status === 401) {
           authAPI.logout();
           navigate("/login");
@@ -78,7 +75,7 @@ export default function LabTechPatientsView() {
       }
     };
 
-    fetchUserData();
+    loadPatients();
   }, [navigate, fetchPatients]);
 
   const filteredPatients = useMemo(() => {

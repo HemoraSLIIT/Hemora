@@ -7,6 +7,9 @@ const API_BASE_URL = /^https?:\/\//i.test(configuredApiBaseUrl)
   ? configuredApiBaseUrl.replace(/\/+$/, '')
   : fallbackApiBaseUrl;
 
+const LOCALHOST_API_BASE_URL = 'http://localhost:8000/api';
+const LOOPBACK_API_BASE_URL = 'http://127.0.0.1:8000/api';
+
 // Create axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -36,6 +39,23 @@ api.interceptors.response.use(
   },
   async (error) => {
     const originalRequest = error.config;
+
+    // Recover from local dev networking edge cases where localhost fails.
+    if (
+      error.code === 'ERR_NETWORK' &&
+      originalRequest &&
+      !originalRequest._networkRetry
+    ) {
+      originalRequest._networkRetry = true;
+
+      if ((originalRequest.baseURL || API_BASE_URL).includes('localhost:8000')) {
+        originalRequest.baseURL = LOOPBACK_API_BASE_URL;
+      } else if ((originalRequest.baseURL || API_BASE_URL).includes('127.0.0.1:8000')) {
+        originalRequest.baseURL = LOCALHOST_API_BASE_URL;
+      }
+
+      return api(originalRequest);
+    }
 
     // If 401 error and we haven't tried to refresh yet
     if (error.response?.status === 401 && !originalRequest._retry) {
