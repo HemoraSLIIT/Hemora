@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import BloodSmearImage, Patient
+from .models import BloodSmearImage, Patient, PatientFeedback
 
 
 @admin.register(Patient)
@@ -14,3 +14,10 @@ class PatientAdmin(admin.ModelAdmin):
 class BloodSmearImageAdmin(admin.ModelAdmin):
 	list_display = ("id", "patient", "uploaded_at")
 	list_filter = ("uploaded_at",)
+
+
+@admin.register(PatientFeedback)
+class PatientFeedbackAdmin(admin.ModelAdmin):
+	list_display = ("id", "patient", "decision", "created_by", "created_at")
+	search_fields = ("patient__first_name", "patient__last_name", "comment")
+	list_filter = ("decision", "created_at")

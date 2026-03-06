@@ -265,6 +265,18 @@ export const patientAPI = {
     const response = await api.patch(`/patients/${id}/status/`, { status });
     return response.data;
   },
+
+  // Get feedback entries for a patient (latest first)
+  getPatientFeedback: async (id) => {
+    const response = await api.get(`/patients/${id}/feedback/`);
+    return response.data?.results || response.data;
+  },
+
+  // Create feedback entry for a patient
+  createPatientFeedback: async (id, payload) => {
+    const response = await api.post(`/patients/${id}/feedback/`, payload);
+    return response.data;
+  },
 };
 
 export default api;

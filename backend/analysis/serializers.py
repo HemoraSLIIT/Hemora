@@ -1,7 +1,7 @@
 """Serializers for patient data and file uploads."""
 from rest_framework import serializers
 
-from .models import BloodSmearImage, Patient
+from .models import BloodSmearImage, Patient, PatientFeedback
 
 
 class BloodSmearImageSerializer(serializers.ModelSerializer):
@@ -123,4 +123,31 @@ class PatientUpdateSerializer(serializers.ModelSerializer):
             "address",
             "emergencyContact",
             "emergencyPhone",
+        ]
+
+
+class PatientFeedbackSerializer(serializers.ModelSerializer):
+    patientId = serializers.IntegerField(source="patient_id", read_only=True)
+    createdAt = serializers.DateTimeField(source="created_at", read_only=True)
+    updatedAt = serializers.DateTimeField(source="updated_at", read_only=True)
+    createdBy = serializers.IntegerField(source="created_by_id", read_only=True)
+
+    class Meta:
+        model = PatientFeedback
+        fields = [
+            "id",
+            "patientId",
+            "results",
+            "comment",
+            "decision",
+            "createdBy",
+            "createdAt",
+            "updatedAt",
+        ]
+        read_only_fields = [
+            "id",
+            "patientId",
+            "createdBy",
+            "createdAt",
+            "updatedAt",
         ]

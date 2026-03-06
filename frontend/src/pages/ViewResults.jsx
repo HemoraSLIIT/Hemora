@@ -1,83 +1,133 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
-  FileText,
   TestTubeDiagonal,
   MessageSquareText,
-  MousePointerClick,
   Stethoscope,
-  ArrowLeft,
   Download,
 } from "lucide-react";
 import SideBar from "../components/SideBar";
-import { userAPI } from "../services/api";
+import toast from "react-hot-toast";
+import { patientAPI, userAPI } from "../services/api";
 
-// Mock data for diagnosis results
-const mockDiagnosisData = {
-  patientId: "P-2025-001",
-  patientName: "John Doe",
-  testDate: "2025-12-30",
-  results: [
-    {
-      id: 1,
-      disease: "Leukemia",
-      probability: 78,
-      severity: "High",
-      status: "Positive",
-    },
-    {
-      id: 2,
-      disease: "Beta Thalassemia",
-      probability: 45,
-      severity: "Medium",
-      status: "Pending",
-    },
-    {
-      id: 3,
-      disease: "Sickle Cell Anemia",
-      probability: 15,
-      severity: "Low",
-      status: "Negative",
-    },
-    {
-      id: 4,
-      disease: "Iron Deficiency Anemia (IDA)",
-      probability: 32,
-      severity: "Low",
-      status: "Pending",
-    },
-  ],
-  doctorComments:
-    "Patient shows elevated WBC count. Recommend immediate hematology consultation.",
+// Keep diagnosis blocks mocked until result integration is completed.
+const mockDiagnosisResults = [
+  {
+    id: 1,
+    disease: "Leukemia",
+    probability: 78,
+    severity: "High",
+    status: "Positive",
+  },
+  {
+    id: 2,
+    disease: "Beta Thalassemia",
+    probability: 45,
+    severity: "Medium",
+    status: "Pending",
+  },
+  {
+    id: 3,
+    disease: "Sickle Cell Anemia",
+    probability: 15,
+    severity: "Low",
+    status: "Negative",
+  },
+  {
+    id: 4,
+    disease: "Iron Deficiency Anemia (IDA)",
+    probability: 32,
+    severity: "Low",
+    status: "Pending",
+  },
+];
+
+const roleMap = {
+  doctor: "Doctor",
+  lab_tech: "Lab Technician",
+  researcher: "Researcher",
+  admin: "Admin",
 };
 
 export default function ViewResultsPage() {
-  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [userRole, setUserRole] = useState(null);
+  const [patient, setPatient] = useState(null);
+  const [feedbackEntries, setFeedbackEntries] = useState([]);
+  const [pageError, setPageError] = useState("");
   const [loading, setLoading] = useState(true);
 
+  const patientId = searchParams.get("patientId");
+
+  const patientDisplayName = useMemo(() => {
+    if (!patient) {
+      return "-";
+    }
+
+    const fullName = `${patient.firstName || ""} ${patient.lastName || ""}`.trim();
+    return fullName || "Unknown";
+  }, [patient]);
+
   useEffect(() => {
-    const fetchUserRole = async () => {
+    const loadPageData = async () => {
+      if (!patientId) {
+        setPageError("Missing patient id in URL.");
+        setLoading(false);
+        return;
+      }
+
       try {
-        const userData = await userAPI.getCurrentUser();
-        // Map role values to display names
-        const roleMap = {
-          doctor: "Doctor",
-          lab_tech: "Lab Technician",
-          researcher: "Researcher",
-          admin: "Admin",
-        };
+        const [userData, patientData, feedbackData] = await Promise.all([
+          userAPI.getCurrentUser(),
+          patientAPI.getPatientById(patientId),
+          patientAPI.getPatientFeedback(patientId),
+        ]);
+
         setUserRole(roleMap[userData.role] || userData.role);
+        setPatient(patientData);
+        setFeedbackEntries(Array.isArray(feedbackData) ? feedbackData : []);
+        setPageError("");
       } catch (err) {
-        console.error("Failed to fetch user role:", err);
-        setUserRole("Lab Technician"); // Default fallback
+        console.error("Failed to load View Results page data:", err);
+        setPageError("Failed to load patient details.");
+        toast.error("Failed to load patient details");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchUserRole();
-  }, []);
+    loadPageData();
+  }, [patientId]);
+
+  const refreshPatientStatus = async () => {
+    if (!patientId) {
+      return;
+    }
+
+    try {
+      const patientData = await patientAPI.getPatientById(patientId);
+      setPatient(patientData);
+    } catch (err) {
+      console.error("Failed to refresh patient:", err);
+    }
+  };
+
+  const handleDoctorFeedbackSubmit = async ({ comment, decision }) => {
+    if (!patientId) {
+      throw new Error("Patient id missing");
+    }
+
+    const payload = {
+      results: mockDiagnosisResults,
+      comment,
+      decision,
+    };
+
+    const feedback = await patientAPI.createPatientFeedback(patientId, payload);
+    setFeedbackEntries((prev) => [feedback, ...prev]);
+    await refreshPatientStatus();
+    return feedback;
+  };
 
   if (loading) {
     return (
@@ -85,6 +135,17 @@ export default function ViewResultsPage() {
         <SideBar />
         <div className="flex-1 flex items-center justify-center">
           <p className="text-gray-500">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (pageError) {
+    return (
+      <div className="flex h-screen bg-gray-50">
+        <SideBar />
+        <div className="flex-1 flex items-center justify-center">
+          <p className="text-red-500">{pageError}</p>
         </div>
       </div>
     );
@@ -112,8 +173,10 @@ export default function ViewResultsPage() {
                   Diagnosis Results
                 </h1>
                 <p className="text-sm text-gray-500">
-                  Patient: {mockDiagnosisData.patientName} (
-                  {mockDiagnosisData.patientId})
+                  Patient: {patientDisplayName} (P-{patient?.id || "-"})
+                </p>
+                <p className="text-sm text-gray-500">
+                  Current Status: {patient?.status || "-"}
                 </p>
               </div>
             </div>
@@ -140,7 +203,9 @@ export default function ViewResultsPage() {
                   Test Date
                 </p>
                 <p className="text-base font-semibold text-gray-900">
-                  {new Date(mockDiagnosisData.testDate).toLocaleDateString()}
+                  {patient?.createdAt
+                    ? new Date(patient.createdAt).toLocaleDateString()
+                    : "-"}
                 </p>
               </div>
             </div>
@@ -148,15 +213,19 @@ export default function ViewResultsPage() {
 
           {/* Diagnosis Results */}
           <div className="mb-8">
-            <ResultsDisplay results={mockDiagnosisData.results} />
+            <ResultsDisplay results={mockDiagnosisResults} />
           </div>
 
           {/* Role-based Actions Section */}
           <div>
             {userRole === "Lab Technician" ? (
-              <LabTechSidebar data={mockDiagnosisData} navigate={navigate} />
+              <LabTechSidebar feedbackEntries={feedbackEntries} />
             ) : userRole === "Doctor" ? (
-              <DoctorSidebar data={mockDiagnosisData} navigate={navigate} />
+              <DoctorSidebar
+                onSubmitFeedback={handleDoctorFeedbackSubmit}
+                feedbackEntries={feedbackEntries}
+                patientStatus={patient?.status}
+              />
             ) : null}
           </div>
         </div>
@@ -166,7 +235,7 @@ export default function ViewResultsPage() {
 }
 
 // Lab Technician Sidebar Component
-function LabTechSidebar({ data, navigate }) {
+function LabTechSidebar({ feedbackEntries }) {
   const [isDone, setIsDone] = useState(false);
 
   return (
@@ -178,11 +247,36 @@ function LabTechSidebar({ data, navigate }) {
             <Stethoscope className="text-gray-900 w-5 h-5" />
             Doctor's Comments
           </h3>
-          <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 min-h-24">
-            <p className="text-gray-700 text-sm leading-relaxed">
-              {data.doctorComments}
-            </p>
-          </div>
+          {feedbackEntries.length > 0 ? (
+            <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
+              {feedbackEntries.map((entry) => (
+                <div
+                  key={entry.id}
+                  className="bg-gray-50 p-4 rounded-lg border border-gray-200"
+                >
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                      {entry.decision || "Decision not set"}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {entry.createdAt
+                        ? new Date(entry.createdAt).toLocaleString()
+                        : ""}
+                    </p>
+                  </div>
+                  <p className="text-gray-700 text-sm leading-relaxed whitespace-pre-wrap">
+                    {entry.comment || "No comment provided"}
+                  </p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 min-h-24">
+              <p className="text-gray-700 text-sm leading-relaxed">
+                No doctor comments submitted for this patient yet.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Action Buttons */}
@@ -223,24 +317,44 @@ function LabTechSidebar({ data, navigate }) {
 }
 
 // Doctor Sidebar Component
-function DoctorSidebar({ data, navigate }) {
+function DoctorSidebar({ onSubmitFeedback, feedbackEntries, patientStatus }) {
   const [comments, setComments] = useState("");
   const [selectedAction, setSelectedAction] = useState(null);
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = () => {
-    if (selectedAction) {
-      setSubmitted(true);
-      console.log({
-        action: selectedAction,
-        comments: comments,
-        timestamp: new Date(),
+  const isDiagnosed = patientStatus === "Diagnosed";
+
+  const handleSubmit = async () => {
+    if (isDiagnosed) {
+      toast.error("Patient is already diagnosed. No more comments can be added.");
+      return;
+    }
+
+    if (!selectedAction) {
+      toast.error("Please select a decision");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      await onSubmitFeedback({
+        comment: comments,
+        decision: selectedAction,
       });
+
+      toast.success("Feedback submitted successfully");
+      setComments("");
+      setSelectedAction(null);
+      setSubmitted(true);
       setTimeout(() => {
-        navigate("/dashboard");
-      }, 2000);
-    } else {
-      alert("Please select a decision");
+        setSubmitted(false);
+      }, 1000);
+    } catch (err) {
+      console.error("Failed to submit feedback:", err);
+      toast.error(err?.response?.data?.detail || "Failed to submit feedback");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -258,7 +372,7 @@ function DoctorSidebar({ data, navigate }) {
             placeholder="Add your medical assessment and observations..."
             value={comments}
             onChange={(e) => setComments(e.target.value)}
-            disabled={submitted}
+            disabled={submitted || submitting || isDiagnosed}
           />
         </div>
 
@@ -270,7 +384,7 @@ function DoctorSidebar({ data, navigate }) {
           <div className="space-y-3 flex-1">
             <label
               className={`flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition ${
-                selectedAction === "accept"
+                selectedAction === "Accept Results"
                   ? "border-[#0a0e3f] bg-blue-50"
                   : "border-gray-300 bg-white hover:border-gray-400"
               }`}
@@ -278,10 +392,10 @@ function DoctorSidebar({ data, navigate }) {
               <input
                 type="radio"
                 name="action"
-                value="accept"
-                checked={selectedAction === "accept"}
+                value="Accept Results"
+                checked={selectedAction === "Accept Results"}
                 onChange={(e) => setSelectedAction(e.target.value)}
-                disabled={submitted}
+                disabled={submitted || submitting || isDiagnosed}
                 className="cursor-pointer"
               />
               <div>
@@ -294,7 +408,7 @@ function DoctorSidebar({ data, navigate }) {
 
             <label
               className={`flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition ${
-                selectedAction === "rediagnose"
+                selectedAction === "Re-Diagnosis"
                   ? "border-[#0a0e3f] bg-blue-50"
                   : "border-gray-300 bg-white hover:border-gray-400"
               }`}
@@ -302,10 +416,10 @@ function DoctorSidebar({ data, navigate }) {
               <input
                 type="radio"
                 name="action"
-                value="rediagnose"
-                checked={selectedAction === "rediagnose"}
+                value="Re-Diagnosis"
+                checked={selectedAction === "Re-Diagnosis"}
                 onChange={(e) => setSelectedAction(e.target.value)}
-                disabled={submitted}
+                disabled={submitted || submitting || isDiagnosed}
                 className="cursor-pointer"
               />
               <div>
@@ -321,12 +435,26 @@ function DoctorSidebar({ data, navigate }) {
           <button
             className="w-full py-3 px-4 bg-[#0a0e3f] text-white rounded-lg font-semibold hover:opacity-90 transition duration-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed mt-4"
             onClick={handleSubmit}
-            disabled={submitted}
+            disabled={submitted || submitting || isDiagnosed}
           >
-            {submitted ? "Submitted ✓" : "Submit Feedback"}
+            {isDiagnosed
+              ? "Comments Locked"
+              : submitted
+              ? "Submitted ✓"
+              : submitting
+              ? "Submitting..."
+              : "Submit Feedback"}
           </button>
         </div>
       </div>
+
+      {isDiagnosed && (
+        <div className="p-4 bg-amber-50 border border-amber-300 rounded-lg">
+          <p className="text-amber-800 text-sm font-semibold">
+            Patient is diagnosed. New comments are disabled.
+          </p>
+        </div>
+      )}
 
       {submitted && (
         <div className="p-4 bg-green-50 border border-green-300 rounded-lg">
@@ -335,6 +463,33 @@ function DoctorSidebar({ data, navigate }) {
           </p>
         </div>
       )}
+
+      <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+        <h3 className="text-sm font-semibold text-gray-600 mb-4 uppercase tracking-wide">
+          Comment History
+        </h3>
+        {feedbackEntries.length > 0 ? (
+          <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
+            {feedbackEntries.map((entry) => (
+              <div key={entry.id} className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                    {entry.decision || "Decision not set"}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {entry.createdAt ? new Date(entry.createdAt).toLocaleString() : ""}
+                  </p>
+                </div>
+                <p className="text-sm text-gray-700 whitespace-pre-wrap">
+                  {entry.comment || "No comment provided"}
+                </p>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500">No comments submitted yet.</p>
+        )}
+      </div>
     </div>
   );
 }

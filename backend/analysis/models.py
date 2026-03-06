@@ -70,3 +70,35 @@ class BloodSmearImage(models.Model):
 
 	def __str__(self):
 		return f"Blood smear image #{self.id} for patient #{self.patient_id}"
+
+
+class PatientFeedback(models.Model):
+	"""Stores doctor/lab decisions and comments for a patient result set."""
+
+	class Decision(models.TextChoices):
+		ACCEPT_RESULTS = "Accept Results", "Accept Results"
+		RE_DIAGNOSIS = "Re-Diagnosis", "Re-Diagnosis"
+
+	patient = models.ForeignKey(
+		Patient,
+		on_delete=models.CASCADE,
+		related_name="feedback_entries",
+	)
+	results = models.JSONField(default=list, blank=True)
+	comment = models.TextField(blank=True)
+	decision = models.CharField(max_length=30, choices=Decision.choices)
+	created_by = models.ForeignKey(
+		settings.AUTH_USER_MODEL,
+		on_delete=models.SET_NULL,
+		blank=True,
+		null=True,
+		related_name="patient_feedback_entries",
+	)
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now=True)
+
+	class Meta:
+		ordering = ["-created_at"]
+
+	def __str__(self):
+		return f"Feedback #{self.id} for patient #{self.patient_id}"
