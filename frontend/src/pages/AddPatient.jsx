@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import SideBar from "../components/SideBar";
+import { patientAPI } from "../services/api";
 
 export default function AddPatient() {
   const navigate = useNavigate();
@@ -184,7 +185,7 @@ export default function AddPatient() {
         formData.append("cbcReport", cbcReport.file);
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await patientAPI.createPatient(formData);
 
       toast.success("Patient added successfully!");
       setTimeout(() => {
@@ -232,7 +233,7 @@ export default function AddPatient() {
         <div className="bg-white border-b border-gray-200 px-8 py-6">
           <div className="max-w-4xl mx-auto">
             <div className="flex items-center mb-6 mx-12">
-              {[1, 2, 3].map((step, index) => (
+              {[1, 2, 3].map((step) => (
                 <React.Fragment key={step}>
                   <div className="flex flex-col items-center">
                     <div

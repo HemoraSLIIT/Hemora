@@ -3,24 +3,21 @@ import { useNavigate } from "react-router-dom";
 import { Home, Bell, Calendar, Settings, Users, X } from "lucide-react";
 import HemNewLogo from "/assets/hemnewlogo3.svg";
 import Calender from "./Calender.jsx";
-import { userAPI } from "../services/api";
 
 export default function SideBar() {
   const navigate = useNavigate();
   const [showCalendar, setShowCalendar] = useState(false);
-  const [user, setUser] = useState(null);
+  const [userRole, setUserRole] = useState(
+    localStorage.getItem("user_role") || "Lab Technician"
+  );
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const userData = await userAPI.getCurrentUser();
-        setUser(userData);
-      } catch (err) {
-        console.error("Failed to fetch user data:", err);
-      }
+    const handleStorage = () => {
+      setUserRole(localStorage.getItem("user_role") || "Lab Technician");
     };
 
-    fetchUserData();
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
   }, []);
 
   const handleViewPatients = () => {
@@ -28,11 +25,9 @@ export default function SideBar() {
   };
 
   const handleUsersClick = () => {
-    if (!user) return;
-
-    if (user.role === "Admin") {
+    if (userRole === "Admin") {
       navigate("/users");
-    } else if (user.role === "Doctor" || user.role === "Lab Technician") {
+    } else if (userRole === "Doctor" || userRole === "Lab Technician") {
       navigate("/patients");
     }
   };
