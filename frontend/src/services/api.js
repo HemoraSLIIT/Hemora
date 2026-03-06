@@ -1,7 +1,11 @@
 import axios from 'axios';
 
-// API Base URL - Use environment variable or fallback to localhost
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+// API base URL: accept only absolute http(s) URLs from env, otherwise fallback.
+const configuredApiBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').trim();
+const fallbackApiBaseUrl = `http://${window.location.hostname || 'localhost'}:8000/api`;
+const API_BASE_URL = /^https?:\/\//i.test(configuredApiBaseUrl)
+  ? configuredApiBaseUrl.replace(/\/+$/, '')
+  : fallbackApiBaseUrl;
 
 // Create axios instance
 const api = axios.create({
@@ -100,6 +104,7 @@ export const authAPI = {
   logout: () => {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user_role');
   },
 
   // Check if user is authenticated
@@ -131,6 +136,9 @@ export const userAPI = {
   // Get current user
   getCurrentUser: async () => {
     const response = await api.get('/users/me/');
+    if (response.data?.role) {
+      localStorage.setItem('user_role', response.data.role);
+    }
     return response.data;
   },
 
@@ -191,6 +199,50 @@ export const userAPI = {
   // Deactivate user (admin only)
   deactivateUser: async (id) => {
     const response = await api.post(`/users/${id}/deactivate/`);
+    return response.data;
+  },
+};
+
+// Patient API functions
+export const patientAPI = {
+  // Create a patient with CBC report and blood smear images
+  createPatient: async (formData) => {
+    const response = await api.post('/patients/', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    return response.data;
+  },
+
+  // Get all patients
+  getPatients: async (params = {}) => {
+    const response = await api.get('/patients/', { params });
+    return response.data?.results || response.data;
+  },
+
+  // Get single patient details
+  getPatientById: async (id) => {
+    const response = await api.get(`/patients/${id}/`);
+    return response.data;
+  },
+
+  // Update single patient details
+  updatePatient: async (id, patientData) => {
+    const response = await api.patch(`/patients/${id}/`, patientData);
+    return response.data;
+  },
+
+  // Delete single patient
+  deletePatient: async (id) => {
+    const response = await api.delete(`/patients/${id}/`);
+    return response.data;
+  },
+
+  // Update patient status
+  updatePatientStatus: async (id, status) => {
+    const response = await api.patch(`/patients/${id}/status/`, { status });
     return response.data;
   },
 };

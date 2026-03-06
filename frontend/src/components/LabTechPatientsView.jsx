@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Users,
@@ -10,114 +10,47 @@ import {
   Filter,
   Download,
 } from "lucide-react";
-import { authAPI, userAPI } from "../services/api";
+import { authAPI, patientAPI, userAPI } from "../services/api";
 import toast from "react-hot-toast";
 import DeleteConfirm from "./DeleteConfirm";
 import ViewPatient from "./ViewPatient";
 import EditPatient from "./EditPatient";
 
 export default function LabTechPatientsView() {
-  const [user, setUser] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-  const [patients, setPatients] = useState([
-    {
-      id: "P001",
-      name: "John Doe",
-      age: 34,
-      gender: "Male",
-      status: "Pending",
-      disease: "Iron Deficiency Anemia",
-      dateAdded: "2024-12-11",
-      bloodGroup: "O+",
-      phone: "555-0101",
-    },
-    {
-      id: "P002",
-      name: "Jane Smith",
-      age: 28,
-      gender: "Female",
-      status: "Diagnosed",
-      disease: "Beta Thalassemia",
-      dateAdded: "2024-12-11",
-      bloodGroup: "A+",
-      phone: "555-0102",
-    },
-    {
-      id: "P003",
-      name: "Robert Johnson",
-      age: 45,
-      gender: "Male",
-      status: "In Progress",
-      disease: "Acute Lymphoblastic Leukemia",
-      dateAdded: "2024-12-10",
-      bloodGroup: "B+",
-      phone: "555-0103",
-    },
-    {
-      id: "P004",
-      name: "Maria Garcia",
-      age: 52,
-      gender: "Female",
-      status: "Pending",
-      disease: "Sickle Cell Disease",
-      dateAdded: "2024-12-10",
-      bloodGroup: "O-",
-      phone: "555-0104",
-    },
-    {
-      id: "P005",
-      name: "David Lee",
-      age: 39,
-      gender: "Male",
-      status: "Diagnosed",
-      disease: "Iron Deficiency Anemia",
-      dateAdded: "2024-12-09",
-      bloodGroup: "A-",
-      phone: "555-0105",
-    },
-    {
-      id: "P006",
-      name: "Sarah Wilson",
-      age: 31,
-      gender: "Female",
-      status: "In Progress",
-      disease: "Beta Thalassemia",
-      dateAdded: "2024-12-09",
-      bloodGroup: "B-",
-      phone: "555-0106",
-    },
-    {
-      id: "P007",
-      name: "Michael Brown",
-      age: 55,
-      gender: "Male",
-      status: "Diagnosed",
-      disease: "Healthy",
-      dateAdded: "2024-12-08",
-      bloodGroup: "AB+",
-      phone: "555-0107",
-    },
-    {
-      id: "P008",
-      name: "Emily Davis",
-      age: 26,
-      gender: "Female",
-      status: "Pending",
-      disease: "Iron Deficiency Anemia",
-      dateAdded: "2024-12-08",
-      bloodGroup: "O+",
-      phone: "555-0108",
-    },
-  ]);
+  const [patients, setPatients] = useState([]);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("All");
-  const [filteredPatients, setFilteredPatients] = useState(patients);
   const [isViewPatientOpen, setIsViewPatientOpen] = useState(false);
   const [isEditPatientOpen, setIsEditPatientOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const navigate = useNavigate();
+
+  const formatPatients = (records) => {
+    return records.map((patient) => {
+      const fullName = `${patient.firstName || ""} ${patient.lastName || ""}`.trim();
+
+      return {
+        id: patient.id,
+        displayId: `P${String(patient.id).padStart(3, "0")}`,
+        name: fullName || "Unknown",
+        age: patient.age || "-",
+        gender: patient.gender || "-",
+        status: patient.status || "Pending",
+        disease: patient.suspectedDisease || "Not specified",
+        dateAdded: patient.createdAt ? patient.createdAt.split("T")[0] : "-",
+        bloodGroup: patient.bloodGroup || "-",
+        phone: patient.phone || "-",
+      };
+    });
+  };
+
+  const fetchPatients = useCallback(async () => {
+    const records = await patientAPI.getPatients();
+    setPatients(formatPatients(records));
+  }, []);
 
   useEffect(() => {
     // Check if user is authenticated
@@ -129,12 +62,12 @@ export default function LabTechPatientsView() {
     // Fetch current user data
     const fetchUserData = async () => {
       try {
-        const userData = await userAPI.getCurrentUser();
-        setUser(userData);
+        await userAPI.getCurrentUser();
+        await fetchPatients();
         setLoading(false);
       } catch (err) {
         console.error("Failed to fetch user data:", err);
-        setError("Failed to fetch user data.");
+        setError("Failed to fetch patients.");
         setLoading(false);
 
         // If unauthorized, redirect to login
@@ -146,18 +79,17 @@ export default function LabTechPatientsView() {
     };
 
     fetchUserData();
-  }, [navigate]);
+  }, [navigate, fetchPatients]);
 
-  useEffect(() => {
-    // Filter patients based on search and status filter
+  const filteredPatients = useMemo(() => {
     let filtered = patients;
 
     if (searchTerm) {
       filtered = filtered.filter(
         (patient) =>
           patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          patient.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          patient.phone.includes(searchTerm)
+          patient.displayId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          String(patient.phone).includes(searchTerm)
       );
     }
 
@@ -165,26 +97,50 @@ export default function LabTechPatientsView() {
       filtered = filtered.filter((patient) => patient.status === filterStatus);
     }
 
-    setFilteredPatients(filtered);
+    return filtered;
   }, [searchTerm, filterStatus, patients]);
 
   const handleAddPatient = () => {
     navigate("/addpatient");
   };
 
-  const handleViewPatient = (patientId) => {
-    const patient = patients.find((p) => p.id === patientId);
-    setSelectedPatient(patient);
-    setIsViewPatientOpen(true);
+  const handleViewPatient = async (patientId) => {
+    try {
+      const patient = await patientAPI.getPatientById(patientId);
+      const fullName = `${patient.firstName || ""} ${patient.lastName || ""}`.trim();
+
+      setSelectedPatient({
+        ...patient,
+        id: `P${String(patient.id).padStart(3, "0")}`,
+        name: fullName || "Unknown",
+        dateAdded: patient.createdAt ? patient.createdAt.split("T")[0] : "-",
+      });
+      setIsViewPatientOpen(true);
+    } catch (err) {
+      console.error("Failed to fetch patient details:", err);
+      toast.error("Failed to load patient details");
+    }
   };
 
-  const handleEditPatient = (patientId) => {
-    const patient = patients.find((p) => p.id === patientId);
-    setSelectedPatient(patient);
-    setIsEditPatientOpen(true);
+  const handleEditPatient = async (patientId) => {
+    try {
+      const patient = await patientAPI.getPatientById(patientId);
+      const fullName = `${patient.firstName || ""} ${patient.lastName || ""}`.trim();
+
+      setSelectedPatient({
+        ...patient,
+        displayId: `P${String(patient.id).padStart(3, "0")}`,
+        name: fullName || "Unknown",
+      });
+      setIsEditPatientOpen(true);
+    } catch (err) {
+      console.error("Failed to fetch patient details for edit:", err);
+      toast.error("Failed to load patient details");
+    }
   };
 
-  const handleDeletePatient = (patientId) => {
+  const handleDeletePatient = async (patientId) => {
+    await patientAPI.deletePatient(patientId);
     setPatients((prev) => prev.filter((p) => p.id !== patientId));
     toast.success("Patient deleted successfully");
   };
@@ -196,7 +152,25 @@ export default function LabTechPatientsView() {
   };
 
   const handleViewResults = (patientId) => {
-    navigate("/view-results");
+    navigate(`/view-results?patientId=${patientId}`);
+  };
+
+  const handleStatusChange = async (patientId, statusValue) => {
+    const previousPatients = [...patients];
+
+    setPatients((prev) =>
+      prev.map((patient) =>
+        patient.id === patientId ? { ...patient, status: statusValue } : patient
+      )
+    );
+
+    try {
+      await patientAPI.updatePatientStatus(patientId, statusValue);
+      toast.success("Patient status updated");
+    } catch {
+      setPatients(previousPatients);
+      toast.error("Failed to update patient status");
+    }
   };
 
   const handleExportData = () => {
@@ -260,11 +234,16 @@ export default function LabTechPatientsView() {
     setIsDeleteConfirmOpen(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (deletePatientId) {
-      handleDeletePatient(deletePatientId);
-      setIsDeleteConfirmOpen(false);
-      setDeletePatientId(null);
+      try {
+        await handleDeletePatient(deletePatientId);
+        setIsDeleteConfirmOpen(false);
+        setDeletePatientId(null);
+      } catch (err) {
+        console.error("Failed to delete patient:", err);
+        toast.error("Failed to delete patient");
+      }
     }
   };
 
@@ -273,13 +252,19 @@ export default function LabTechPatientsView() {
     setDeletePatientId(null);
   };
 
-  const handlePatientUpdated = () => {
-    // Refresh patient list if needed
-    // This will be called after the patient is successfully updated
+  const handlePatientUpdated = async () => {
+    await fetchPatients();
   };
 
   return (
     <div className="flex-1 overflow-auto">
+      {loading && (
+        <div className="px-8 py-4 text-sm text-gray-500">Loading patients...</div>
+      )}
+      {error && !loading && (
+        <div className="px-8 py-4 text-sm text-red-600">{error}</div>
+      )}
+
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-8 py-4">
         <div className="flex items-center justify-between">
@@ -418,9 +403,9 @@ export default function LabTechPatientsView() {
                     <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
                       Actions
                     </th>
-                    {/* <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
-                        Comments
-                      </th> */}
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
+                      Lab Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -430,7 +415,7 @@ export default function LabTechPatientsView() {
                       className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
                     >
                       <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                        {patient.id}
+                        {patient.displayId}
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-700">
                         {patient.name}
@@ -439,13 +424,19 @@ export default function LabTechPatientsView() {
                         {patient.age} / {patient.gender}
                       </td>
                       <td className="px-6 py-4 text-sm">
-                        <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                        <select
+                          value={patient.status}
+                          onChange={(e) =>
+                            handleStatusChange(patient.id, e.target.value)
+                          }
+                          className={`px-3 py-1 rounded-full text-xs font-medium border-0 focus:ring-2 focus:ring-[#0a0e3f] ${getStatusColor(
                             patient.status
                           )}`}
                         >
-                          {patient.status}
-                        </span>
+                          <option value="Pending">Pending</option>
+                          <option value="In Progress">In Progress</option>
+                          <option value="Diagnosed">Diagnosed</option>
+                        </select>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600">
                         {patient.dateAdded}

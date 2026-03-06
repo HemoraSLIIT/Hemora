@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { X, UserRoundPen } from "lucide-react";
-import { userAPI } from "../services/api";
+import { patientAPI } from "../services/api";
 import toast from "react-hot-toast";
 
 export default function EditPatient({
@@ -50,10 +50,10 @@ export default function EditPatient({
         age: patient.age || "",
         gender: patient.gender || "",
         bloodGroup: patient.bloodGroup || "",
-        phoneNumber: patient.phoneNumber || patient.phone || "",
+        phoneNumber: patient.phone || patient.phoneNumber || "",
         email: patient.email || "",
         address: patient.address || "",
-        emergencyContactName: patient.emergencyContactName || "",
+        emergencyContactName: patient.emergencyContact || patient.emergencyContactName || "",
         emergencyPhone: patient.emergencyPhone || "",
       });
     }
@@ -84,18 +84,17 @@ export default function EditPatient({
         firstName: formData.firstName,
         lastName: formData.lastName,
         dateOfBirth: formData.dateOfBirth,
-        age: parseInt(formData.age),
+        age: formData.age ? parseInt(formData.age, 10) : null,
         gender: formData.gender,
         bloodGroup: formData.bloodGroup,
-        phoneNumber: formData.phoneNumber,
+        phone: formData.phoneNumber,
         email: formData.email,
         address: formData.address,
-        emergencyContactName: formData.emergencyContactName,
+        emergencyContact: formData.emergencyContactName,
         emergencyPhone: formData.emergencyPhone,
       };
 
-      // Note: Replace with actual API call when backend is ready
-      // await userAPI.updatePatient(patient.id, payload);
+      await patientAPI.updatePatient(patient.id, payload);
 
       toast.success("Patient updated successfully!");
 
@@ -147,7 +146,7 @@ export default function EditPatient({
               </h2>
             </div>
             <p className="text-sm text-gray-500 mt-1">
-              Editing: {patient.name} ({patient.id})
+              Editing: {patient.name} ({patient.displayId || `P${String(patient.id).padStart(3, "0")}`})
             </p>
           </div>
           <button

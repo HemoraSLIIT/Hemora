@@ -28,7 +28,9 @@ export default function Patients() {
         setLoading(false);
       } catch (err) {
         console.error("Failed to fetch user data:", err);
-        setError("Failed to fetch user data.");
+        const cachedRole = localStorage.getItem("user_role") || "Lab Technician";
+        setUser({ role: cachedRole });
+        setError("Unable to verify user profile now. Loaded fallback view.");
         setLoading(false);
 
         // If unauthorized, redirect to login
@@ -54,19 +56,7 @@ export default function Patients() {
   }
 
   if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <div className="bg-white p-8 rounded-lg shadow-lg">
-          <p className="text-red-500 text-lg font-semibold">{error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    );
+    console.warn(error);
   }
 
   return (
@@ -77,11 +67,14 @@ export default function Patients() {
       <SideBar />
 
       {/* Main Content */}
-      {/* For Lab Technicians */}
-      {user?.role === "Lab Technician" && <LabTechPatientsView />}
+      {error && (
+        <div className="fixed top-3 right-3 z-50 rounded-md bg-yellow-100 px-3 py-2 text-xs text-yellow-800 border border-yellow-300">
+          {error}
+        </div>
+      )}
 
       {/* For Doctors */}
-      {user?.role === "Doctor" && <DocPatientsView />}
+      {user?.role === "Doctor" ? <DocPatientsView /> : <LabTechPatientsView />}
     </div>
   );
 }
