@@ -15,6 +15,7 @@ import toast from "react-hot-toast";
 import DeleteConfirm from "./DeleteConfirm";
 import ViewPatient from "./ViewPatient";
 import EditPatient from "./EditPatient";
+import CBCInputModal from "./CBCInputModal";
 
 export default function LabTechPatientsView() {
   const [error, setError] = useState("");
@@ -27,6 +28,8 @@ export default function LabTechPatientsView() {
   const [isEditPatientOpen, setIsEditPatientOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [diagnosisStatus, setDiagnosisStatus] = useState({}); // { patientId: 'pending' | 'loading' | 'completed' }
+  const [cbcModalOpen, setCbcModalOpen] = useState(false);
+  const [cbcPatientId, setCbcPatientId] = useState(null);
   const navigate = useNavigate();
 
   const formatPatients = (records) => {
@@ -141,14 +144,25 @@ export default function LabTechPatientsView() {
   };
 
   const handleDiagnose = (patientId) => {
-    // Set loading state
-    setDiagnosisStatus((prev) => ({ ...prev, [patientId]: 'loading' }));
-    
-    // After 2 seconds, set to completed
-    setTimeout(() => {
-      setDiagnosisStatus((prev) => ({ ...prev, [patientId]: 'completed' }));
-      toast.success(`Diagnosis completed for patient ${patientId}`);
-    }, 2000);
+    setCbcPatientId(patientId);
+    setCbcModalOpen(true);
+  };
+
+  const handleCBCSubmit = async (cbcParams) => {
+    setCbcModalOpen(false);
+    const pid = cbcPatientId;
+    setDiagnosisStatus((prev) => ({ ...prev, [pid]: 'loading' }));
+
+    try {
+      await patientAPI.diagnosePatient(pid, cbcParams);
+      setDiagnosisStatus((prev) => ({ ...prev, [pid]: 'completed' }));
+      toast.success(`Diagnosis completed for patient ${pid}`);
+      navigate(`/view-results?patientId=${pid}`);
+    } catch (err) {
+      console.error("Diagnosis failed:", err);
+      setDiagnosisStatus((prev) => ({ ...prev, [pid]: 'pending' }));
+      toast.error(err?.response?.data?.detail || "Diagnosis failed");
+    }
   };
 
   const handleViewResults = (patientId) => {
@@ -549,6 +563,13 @@ export default function LabTechPatientsView() {
         isOpen={isViewPatientOpen}
         onClose={() => setIsViewPatientOpen(false)}
         patient={selectedPatient}
+      />
+
+      <CBCInputModal
+        isOpen={cbcModalOpen}
+        onClose={() => setCbcModalOpen(false)}
+        onSubmit={handleCBCSubmit}
+        patientId={cbcPatientId}
       />
     </div>
   );

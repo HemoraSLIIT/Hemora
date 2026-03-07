@@ -102,3 +102,38 @@ class PatientFeedback(models.Model):
 
 	def __str__(self):
 		return f"Feedback #{self.id} for patient #{self.patient_id}"
+
+
+class DiagnosisResult(models.Model):
+	"""Stores CBC parameter values and analysis results for a patient."""
+
+	patient = models.OneToOneField(
+		Patient,
+		on_delete=models.CASCADE,
+		related_name="diagnosis_result",
+	)
+
+	# CBC Parameters
+	wbc = models.FloatField(null=True, blank=True)
+	rbc = models.FloatField(null=True, blank=True)
+	hemoglobin = models.FloatField(null=True, blank=True)
+	hematocrit = models.FloatField(null=True, blank=True)
+	mcv = models.FloatField(null=True, blank=True)
+	mch = models.FloatField(null=True, blank=True)
+	mchc = models.FloatField(null=True, blank=True)
+	rdw = models.FloatField(null=True, blank=True)
+	platelet_count = models.FloatField(null=True, blank=True)
+	neutrophils = models.FloatField(null=True, blank=True)
+	lymphocytes = models.FloatField(null=True, blank=True)
+	monocytes = models.FloatField(null=True, blank=True)
+	eosinophils = models.FloatField(null=True, blank=True)
+	basophils = models.FloatField(null=True, blank=True)
+
+	# Analysis results (JSON from cbc_analyzer)
+	cbc_analysis = models.JSONField(default=dict, blank=True)
+
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now=True)
+
+	def __str__(self):
+		return f"Diagnosis for patient #{self.patient_id}"

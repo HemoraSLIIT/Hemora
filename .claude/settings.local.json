@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python manage.py makemigrations analysis --name add_diagnosis_result)",
+      "Bash(python manage.py migrate)"
+    ]
+  }
+}
