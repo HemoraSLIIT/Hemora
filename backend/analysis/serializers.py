@@ -2,8 +2,7 @@
 import os
 from rest_framework import serializers
 from django.conf import settings
-from .models import AnalysisSession
-from .models import BloodSmearImage, Patient, PatientFeedback
+from .models import BloodSmearImage,AnalysisSession, DiagnosisResult, Patient, PatientFeedback
 
 
 class BloodSmearImageSerializer(serializers.ModelSerializer):
@@ -254,3 +253,54 @@ class AnalysisSessionSerializer(serializers.ModelSerializer):
             'error_message', 'created_at', 'updated_at',
         ]
         read_only_fields = fields
+
+
+class CBCParametersSerializer(serializers.Serializer):
+    """Accepts CBC parameter values for diagnosis."""
+
+    wbc = serializers.FloatField(required=False, allow_null=True, default=None)
+    rbc = serializers.FloatField(required=False, allow_null=True, default=None)
+    hemoglobin = serializers.FloatField(required=False, allow_null=True, default=None)
+    hematocrit = serializers.FloatField(required=False, allow_null=True, default=None)
+    mcv = serializers.FloatField(required=False, allow_null=True, default=None)
+    mch = serializers.FloatField(required=False, allow_null=True, default=None)
+    mchc = serializers.FloatField(required=False, allow_null=True, default=None)
+    rdw = serializers.FloatField(required=False, allow_null=True, default=None)
+    platelet_count = serializers.FloatField(required=False, allow_null=True, default=None)
+    neutrophils = serializers.FloatField(required=False, allow_null=True, default=None)
+    lymphocytes = serializers.FloatField(required=False, allow_null=True, default=None)
+    monocytes = serializers.FloatField(required=False, allow_null=True, default=None)
+    eosinophils = serializers.FloatField(required=False, allow_null=True, default=None)
+    basophils = serializers.FloatField(required=False, allow_null=True, default=None)
+
+
+class DiagnosisResultSerializer(serializers.ModelSerializer):
+    patientId = serializers.IntegerField(source="patient_id", read_only=True)
+    plateletCount = serializers.FloatField(source="platelet_count", allow_null=True)
+    cbcAnalysis = serializers.JSONField(source="cbc_analysis", read_only=True)
+    createdAt = serializers.DateTimeField(source="created_at", read_only=True)
+    updatedAt = serializers.DateTimeField(source="updated_at", read_only=True)
+
+    class Meta:
+        model = DiagnosisResult
+        fields = [
+            "id",
+            "patientId",
+            "wbc",
+            "rbc",
+            "hemoglobin",
+            "hematocrit",
+            "mcv",
+            "mch",
+            "mchc",
+            "rdw",
+            "plateletCount",
+            "neutrophils",
+            "lymphocytes",
+            "monocytes",
+            "eosinophils",
+            "basophils",
+            "cbcAnalysis",
+            "createdAt",
+            "updatedAt",
+        ]

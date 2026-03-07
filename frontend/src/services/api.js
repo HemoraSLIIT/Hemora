@@ -277,6 +277,24 @@ export const patientAPI = {
     const response = await api.post(`/patients/${id}/feedback/`, payload);
     return response.data;
   },
+
+  // Extract CBC parameters from uploaded report
+  extractCBC: async (id) => {
+    const response = await api.get(`/patients/${id}/extract-cbc/`);
+    return response.data;
+  },
+
+  // Run CBC diagnosis for a patient
+  diagnosePatient: async (id, cbcParams) => {
+    const response = await api.post(`/patients/${id}/diagnose/`, cbcParams);
+    return response.data;
+  },
+
+  // Get existing diagnosis result for a patient
+  getDiagnosisResult: async (id) => {
+    const response = await api.get(`/patients/${id}/diagnose/`);
+    return response.data;
+  },
 };
 
 export default api;

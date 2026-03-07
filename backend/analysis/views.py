@@ -8,8 +8,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
-
-from .models import AnalysisSession, BloodSmearImage, Patient, PatientFeedback
+from .cbc_analyzer import analyze_cbc_parameters
+from .cbc_extractor import extract_cbc_from_file
+from .models import AnalysisSession, BloodSmearImage, DiagnosisResult, Patient, PatientFeedback
 from .serializers import (
     AnalysisSessionSerializer,
     DiagnoseRequestSerializer,
@@ -19,6 +20,13 @@ from .serializers import (
     PatientSerializer,
     PatientStatusUpdateSerializer,
     PatientUpdateSerializer,
+	CBCParametersSerializer,
+	DiagnosisResultSerializer,
+	PatientFeedbackSerializer,
+	PatientCreateSerializer,
+	PatientUpdateSerializer,
+	PatientSerializer,
+	PatientStatusUpdateSerializer,
 )
 
 logger = logging.getLogger(__name__)
@@ -86,6 +94,88 @@ class PatientRetrieveUpdateAPIView(generics.RetrieveUpdateDestroyAPIView):
         if self.request.method == "PATCH":
             return PatientUpdateSerializer
         return PatientSerializer
+
+
+class PatientExtractCBCAPIView(APIView):
+	"""Extract CBC parameters from a patient's uploaded CBC report file."""
+
+	permission_classes = [IsAuthenticated]
+
+	def get(self, request, pk):
+		try:
+			patient = Patient.objects.get(pk=pk)
+		except Patient.DoesNotExist:
+			return Response({"detail": "Patient not found."}, status=status.HTTP_404_NOT_FOUND)
+
+		if not patient.cbc_report:
+			return Response(
+				{"detail": "No CBC report uploaded for this patient."},
+				status=status.HTTP_400_BAD_REQUEST,
+			)
+
+		file_path = patient.cbc_report.path
+		try:
+			result = extract_cbc_from_file(file_path)
+		except Exception as e:
+			return Response(
+				{"detail": f"Failed to extract CBC parameters: {str(e)}"},
+				status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+			)
+
+		return Response({
+			"patientId": patient.id,
+			"parameters": result["parameters"],
+			"source": result["source"],
+			"extractedCount": result["extractedCount"],
+		}, status=status.HTTP_200_OK)
+
+
+class PatientDiagnoseAPIView(APIView):
+	"""Run CBC parameter analysis for a patient and store results."""
+
+	permission_classes = [IsAuthenticated]
+
+	def post(self, request, pk):
+		"""Accept CBC parameters, run analysis, save and return results."""
+		try:
+			patient = Patient.objects.get(pk=pk)
+		except Patient.DoesNotExist:
+			return Response({"detail": "Patient not found."}, status=status.HTTP_404_NOT_FOUND)
+
+		param_serializer = CBCParametersSerializer(data=request.data)
+		param_serializer.is_valid(raise_exception=True)
+		cbc_params = {k: v for k, v in param_serializer.validated_data.items() if v is not None}
+
+		if not cbc_params:
+			return Response(
+				{"detail": "At least one CBC parameter is required."},
+				status=status.HTTP_400_BAD_REQUEST,
+			)
+
+		# Run analysis
+		analysis = analyze_cbc_parameters(cbc_params)
+
+		# Save or update diagnosis result
+		diagnosis, _ = DiagnosisResult.objects.update_or_create(
+			patient=patient,
+			defaults={**cbc_params, "cbc_analysis": analysis},
+		)
+
+		# Update patient status to In Progress
+		if patient.status == Patient.Status.PENDING:
+			patient.status = Patient.Status.IN_PROGRESS
+			patient.save(update_fields=["status", "updated_at"])
+
+		return Response(DiagnosisResultSerializer(diagnosis).data, status=status.HTTP_200_OK)
+
+	def get(self, request, pk):
+		"""Retrieve existing diagnosis result for a patient."""
+		try:
+			diagnosis = DiagnosisResult.objects.get(patient_id=pk)
+		except DiagnosisResult.DoesNotExist:
+			return Response({"detail": "No diagnosis found for this patient."}, status=status.HTTP_404_NOT_FOUND)
+
+		return Response(DiagnosisResultSerializer(diagnosis).data, status=status.HTTP_200_OK)
 
 
 class PatientFeedbackListCreateAPIView(generics.ListCreateAPIView):

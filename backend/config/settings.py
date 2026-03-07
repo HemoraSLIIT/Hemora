@@ -207,6 +207,8 @@ ML_MODEL_PATH = os.getenv('MODEL_PATH', str(BASE_DIR.parent / 'data' / 'models')
 ML_CONFIDENCE_THRESHOLD = float(os.getenv('CONFIDENCE_THRESHOLD', '0.8'))
 ML_MAX_UPLOAD_SIZE = int(os.getenv('MAX_UPLOAD_SIZE', '10485760'))  # 10 MB
 ML_ALLOWED_EXTENSIONS = os.getenv('ALLOWED_IMAGE_EXTENSIONS', 'jpg,jpeg,png,tif,tiff').split(',')
+# Tesseract OCR path (for CBC report extraction)
+TESSERACT_CMD = os.getenv('TESSERACT_CMD', r'C:\Program Files\Tesseract-OCR\tesseract.exe')
 
 # Logging configuration for Docker
 LOGGING = {
