@@ -56,3 +56,6 @@ python-dotenv==1.0.1
 
 # Additional dependencies
 django-filter==24.3
+
+# YOLO inference
+ultralytics==8.3.40
