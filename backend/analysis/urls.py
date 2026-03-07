@@ -2,6 +2,7 @@
 from django.urls import path
 
 from .views import (
+    MLModelStatusAPIView,
     PatientDiagnoseAPIView,
     PatientExtractCBCAPIView,
     PatientFeedbackListCreateAPIView,
@@ -19,4 +20,5 @@ urlpatterns = [
     path("patients/<int:pk>/extract-cbc/", PatientExtractCBCAPIView.as_view(), name="patient-extract-cbc"),
     path("patients/<int:pk>/diagnose/", PatientDiagnoseAPIView.as_view(), name="patient-diagnose"),
     path("patients/<int:pk>/feedback/", PatientFeedbackListCreateAPIView.as_view(), name="patient-feedback-list-create"),
+    path("ml-models/status/", MLModelStatusAPIView.as_view(), name="ml-model-status"),
 ]

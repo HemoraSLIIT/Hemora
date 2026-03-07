@@ -295,6 +295,12 @@ export const patientAPI = {
     const response = await api.get(`/patients/${id}/diagnose/`);
     return response.data;
   },
+
+  // Get ML model availability status
+  getMLModelStatus: async () => {
+    const response = await api.get('/ml-models/status/');
+    return response.data;
+  },
 };
 
 export default api;

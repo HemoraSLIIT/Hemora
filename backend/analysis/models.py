@@ -132,8 +132,38 @@ class DiagnosisResult(models.Model):
 	# Analysis results (JSON from cbc_analyzer)
 	cbc_analysis = models.JSONField(default=dict, blank=True)
 
+	# Image analysis results (per-disease ML scores)
+	image_analysis = models.JSONField(default=dict, blank=True)
+
+	# Combined hybrid analysis (CBC + image)
+	hybrid_analysis = models.JSONField(default=list, blank=True)
+
+	# Which method was used for this diagnosis
+	analysis_method = models.CharField(
+		max_length=20,
+		choices=[("cbc_only", "CBC Only"), ("hybrid", "Hybrid")],
+		default="cbc_only",
+	)
+
 	created_at = models.DateTimeField(auto_now_add=True)
 	updated_at = models.DateTimeField(auto_now=True)
 
 	def __str__(self):
 		return f"Diagnosis for patient #{self.patient_id}"
+
+
+class AnnotatedImage(models.Model):
+	"""Stores YOLO-annotated blood smear images with detected cell markings."""
+
+	diagnosis = models.ForeignKey(
+		DiagnosisResult,
+		on_delete=models.CASCADE,
+		related_name="annotated_images",
+	)
+	disease_name = models.CharField(max_length=100)
+	image = models.ImageField(upload_to="patients/annotated/%Y/%m/%d/")
+	detections_count = models.IntegerField(default=0)
+	created_at = models.DateTimeField(auto_now_add=True)
+
+	def __str__(self):
+		return f"Annotated image for {self.disease_name} (diagnosis #{self.diagnosis_id})"

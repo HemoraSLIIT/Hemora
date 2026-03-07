@@ -6,7 +6,11 @@ from rest_framework.views import APIView
 
 from .cbc_analyzer import analyze_cbc_parameters
 from .cbc_extractor import extract_cbc_from_file
-from .models import BloodSmearImage, DiagnosisResult, Patient, PatientFeedback
+import logging
+
+from .models import AnnotatedImage, BloodSmearImage, DiagnosisResult, Patient, PatientFeedback
+
+logger = logging.getLogger(__name__)
 from .serializers import (
 	CBCParametersSerializer,
 	DiagnosisResultSerializer,
@@ -122,7 +126,7 @@ class PatientDiagnoseAPIView(APIView):
 	permission_classes = [IsAuthenticated]
 
 	def post(self, request, pk):
-		"""Accept CBC parameters, run analysis, save and return results."""
+		"""Accept CBC parameters, run analysis + image analysis, save results."""
 		try:
 			patient = Patient.objects.get(pk=pk)
 		except Patient.DoesNotExist:
@@ -138,14 +142,68 @@ class PatientDiagnoseAPIView(APIView):
 				status=status.HTTP_400_BAD_REQUEST,
 			)
 
-		# Run analysis
-		analysis = analyze_cbc_parameters(cbc_params)
+		# Run CBC analysis
+		cbc_analysis = analyze_cbc_parameters(cbc_params)
+
+		# Run image analysis on blood smear images
+		image_results = {}
+		analysis_method = "cbc_only"
+		hybrid_analysis = cbc_analysis["diseaseAnalysis"]
+		image_analysis_data = {}
+
+		blood_smears = patient.blood_smear_images.all()
+		if blood_smears.exists():
+			try:
+				from ml_inference.registry import ModelRegistry
+				from ml_inference.hybrid_analyzer import compute_hybrid_analysis
+
+				smear = blood_smears.first()
+				image_results = ModelRegistry.run_all(smear.image.path)
+
+				if image_results:
+					hybrid_analysis = compute_hybrid_analysis(cbc_analysis, image_results)
+					analysis_method = "hybrid"
+					image_analysis_data = {
+						name: {
+							"probability": round(r.probability, 4),
+							"detectedCells": r.detected_cells,
+							"totalDetections": r.raw_detections,
+						}
+						for name, r in image_results.items()
+					}
+					logger.info(
+						"Hybrid analysis completed for patient %d: %d models ran",
+						pk, len(image_results),
+					)
+			except Exception as e:
+				logger.warning("Image analysis failed for patient %d: %s", pk, e)
 
 		# Save or update diagnosis result
 		diagnosis, _ = DiagnosisResult.objects.update_or_create(
 			patient=patient,
-			defaults={**cbc_params, "cbc_analysis": analysis},
+			defaults={
+				**cbc_params,
+				"cbc_analysis": cbc_analysis,
+				"image_analysis": image_analysis_data,
+				"hybrid_analysis": hybrid_analysis,
+				"analysis_method": analysis_method,
+			},
 		)
+
+		# Save annotated images from ML detectors
+		if image_results:
+			diagnosis.annotated_images.all().delete()
+			for disease_name, result in image_results.items():
+				if result.annotated_image_bytes:
+					from django.core.files.base import ContentFile
+
+					filename = f"{disease_name.replace(' ', '_').lower()}_annotated.png"
+					AnnotatedImage.objects.create(
+						diagnosis=diagnosis,
+						disease_name=disease_name,
+						image=ContentFile(result.annotated_image_bytes, name=filename),
+						detections_count=result.raw_detections,
+					)
 
 		# Update patient status to In Progress
 		if patient.status == Patient.Status.PENDING:
@@ -208,3 +266,22 @@ class PatientFeedbackListCreateAPIView(generics.ListCreateAPIView):
 			status=status.HTTP_201_CREATED,
 			headers=headers,
 		)
+
+
+class MLModelStatusAPIView(APIView):
+	"""Return status of available ML models."""
+
+	permission_classes = [IsAuthenticated]
+
+	def get(self, request):
+		try:
+			from ml_inference.registry import ModelRegistry
+
+			available = ModelRegistry.available_diseases()
+		except Exception:
+			available = []
+
+		return Response({
+			"availableModels": available,
+			"totalModels": 4,
+		})

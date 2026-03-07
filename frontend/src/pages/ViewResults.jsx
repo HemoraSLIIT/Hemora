@@ -10,6 +10,7 @@ import {
   CheckCircle,
   ChevronDown,
   ChevronUp,
+  Microscope,
 } from "lucide-react";
 import SideBar from "../components/SideBar";
 import toast from "react-hot-toast";
@@ -128,8 +129,13 @@ export default function ViewResultsPage() {
 
   const cbcAnalysis = diagnosis?.cbcAnalysis || {};
   const parameterReport = cbcAnalysis.parameterReport || [];
-  const diseaseAnalysis = cbcAnalysis.diseaseAnalysis || [];
   const overallStatus = cbcAnalysis.overallStatus || "normal";
+  const analysisMethod = diagnosis?.analysisMethod || "cbc_only";
+  const hybridAnalysis = diagnosis?.hybridAnalysis || [];
+  const diseaseAnalysis = hybridAnalysis.length > 0 ? hybridAnalysis : (cbcAnalysis.diseaseAnalysis || []);
+  const annotatedImages = diagnosis?.annotatedImages || [];
+
+  const MEDIA_BASE = `http://${window.location.hostname || "localhost"}:8000`;
 
   return (
     <div className="flex h-screen bg-gray-50">
@@ -187,7 +193,22 @@ export default function ViewResultsPage() {
             </div>
           ) : (
             <>
-              {/* Overall Status Banner */}
+              {/* Analysis Method Badge + Overall Status Banner */}
+              <div className="flex items-center gap-3 mb-6">
+                <span className={`px-3 py-1.5 rounded-full text-xs font-bold ${
+                  analysisMethod === "hybrid"
+                    ? "bg-purple-100 text-purple-800"
+                    : "bg-gray-100 text-gray-700"
+                }`}>
+                  {analysisMethod === "hybrid" ? "Hybrid Analysis (CBC + Image)" : "CBC Only Analysis"}
+                </span>
+                {analysisMethod === "hybrid" && (
+                  <span className="text-xs text-gray-500">
+                    CBC 40% + Image 60% weighting
+                  </span>
+                )}
+              </div>
+
               <div className={`mb-6 p-4 rounded-xl border flex items-center gap-3 ${
                 overallStatus === "suspicious"
                   ? "bg-amber-50 border-amber-200"
@@ -211,7 +232,12 @@ export default function ViewResultsPage() {
               <CBCParametersDisplay parameters={parameterReport} />
 
               {/* Disease Analysis */}
-              <DiseaseAnalysisDisplay diseases={diseaseAnalysis} />
+              <DiseaseAnalysisDisplay diseases={diseaseAnalysis} analysisMethod={analysisMethod} />
+
+              {/* Annotated Images */}
+              {annotatedImages.length > 0 && (
+                <AnnotatedImagesDisplay images={annotatedImages} mediaBase={MEDIA_BASE} />
+              )}
             </>
           )}
 
@@ -285,7 +311,7 @@ function CBCParametersDisplay({ parameters }) {
   );
 }
 
-function DiseaseAnalysisDisplay({ diseases }) {
+function DiseaseAnalysisDisplay({ diseases, analysisMethod }) {
   if (!diseases.length) return null;
 
   return (
@@ -296,16 +322,16 @@ function DiseaseAnalysisDisplay({ diseases }) {
       </h3>
       <div className="grid grid-cols-2 gap-4">
         {diseases.map((d) => (
-          <DiseaseCard key={d.disease} disease={d} />
+          <DiseaseCard key={d.disease} disease={d} isHybrid={analysisMethod === "hybrid"} />
         ))}
       </div>
     </div>
   );
 }
 
-function DiseaseCard({ disease }) {
+function DiseaseCard({ disease, isHybrid }) {
   const [expanded, setExpanded] = useState(false);
-  const score = disease.suspicionScore;
+  const score = disease.hybridScore ?? disease.suspicionScore ?? 0;
 
   const borderColor =
     score >= 60 ? "#dc2626" : score >= 35 ? "#f59e0b" : score > 0 ? "#3b82f6" : "#22c55e";
@@ -326,6 +352,11 @@ function DiseaseCard({ disease }) {
       ? "text-blue-600"
       : "text-green-600";
 
+  const cbcScore = disease.cbcScore ?? disease.suspicionScore ?? null;
+  const imageScore = disease.imageScore ?? null;
+  const detectedCells = disease.detectedCells || [];
+  const methodLabel = disease.analysisMethod === "hybrid" ? "Hybrid" : "CBC Only";
+
   return (
     <div
       className="p-5 bg-gray-50 rounded-lg border-l-4 transition hover:shadow-md"
@@ -340,10 +371,37 @@ function DiseaseCard({ disease }) {
             <span className={`font-semibold ${riskColor}`}>{disease.riskLevel}</span>
           </p>
         </div>
-        <span className={`px-3 py-1.5 rounded-full text-sm font-bold text-white ${badgeColor}`}>
-          {score}%
-        </span>
+        <div className="text-right flex-shrink-0">
+          <span className={`px-3 py-1.5 rounded-full text-sm font-bold text-white ${badgeColor}`}>
+            {score}%
+          </span>
+          {isHybrid && (
+            <p className={`text-[10px] mt-1 ${
+              disease.analysisMethod === "hybrid" ? "text-purple-600" : "text-gray-400"
+            }`}>
+              {methodLabel}
+            </p>
+          )}
+        </div>
       </div>
+
+      {/* Sub-scores for hybrid mode */}
+      {isHybrid && cbcScore !== null && (
+        <div className="flex gap-3 mb-3">
+          <div className="flex-1 bg-white rounded p-2 border border-gray-200">
+            <p className="text-[10px] text-gray-500 uppercase font-semibold">CBC Score</p>
+            <p className="text-sm font-bold text-gray-800">{cbcScore}%</p>
+          </div>
+          <div className={`flex-1 rounded p-2 border ${
+            imageScore !== null ? "bg-white border-purple-200" : "bg-gray-50 border-gray-200"
+          }`}>
+            <p className="text-[10px] text-gray-500 uppercase font-semibold">Image Score</p>
+            <p className="text-sm font-bold text-gray-800">
+              {imageScore !== null ? `${imageScore}%` : "N/A"}
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="w-full bg-gray-300 rounded-full h-2 overflow-hidden mb-3">
         <div
@@ -355,6 +413,17 @@ function DiseaseCard({ disease }) {
       <p className="text-xs text-gray-500 mb-2">
         {disease.matchedCount} of {disease.totalCriteria} criteria matched
       </p>
+
+      {/* Detected cells summary */}
+      {detectedCells.length > 0 && detectedCells.some((c) => c.count > 0) && (
+        <div className="flex flex-wrap gap-1.5 mb-2">
+          {detectedCells.filter((c) => c.count > 0).map((c, i) => (
+            <span key={i} className="px-2 py-0.5 bg-purple-50 text-purple-700 text-[10px] font-medium rounded-full border border-purple-200">
+              {c.class.replace(/_/g, " ")}: {c.count}
+            </span>
+          ))}
+        </div>
+      )}
 
       {disease.matchedCriteria && disease.matchedCriteria.length > 0 && (
         <div>
@@ -377,6 +446,58 @@ function DiseaseCard({ disease }) {
               ))}
             </div>
           )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AnnotatedImagesDisplay({ images, mediaBase }) {
+  const [lightboxImg, setLightboxImg] = useState(null);
+
+  return (
+    <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 mb-8">
+      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+        <Microscope className="text-gray-900 w-5 h-5" />
+        YOLO-Annotated Blood Smear Images
+      </h3>
+      <div className="grid grid-cols-2 gap-4">
+        {images.map((img) => {
+          const imgUrl = img.image?.startsWith("http")
+            ? img.image
+            : `${mediaBase}${img.image}`;
+          return (
+            <div
+              key={img.id}
+              className="cursor-pointer rounded-lg overflow-hidden border border-gray-200 hover:shadow-md transition"
+              onClick={() => setLightboxImg(imgUrl)}
+            >
+              <img
+                src={imgUrl}
+                alt={`Annotated - ${img.diseaseName}`}
+                className="w-full h-64 object-contain bg-gray-50"
+              />
+              <div className="px-4 py-2 bg-gray-50 flex items-center justify-between">
+                <span className="text-sm font-medium text-gray-800">{img.diseaseName}</span>
+                <span className="text-xs text-purple-600 font-semibold">
+                  {img.detectionsCount} cells detected
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {lightboxImg && (
+        <div
+          className="fixed inset-0 bg-black/90 flex items-center justify-center z-[1100]"
+          onClick={() => setLightboxImg(null)}
+        >
+          <img
+            src={lightboxImg}
+            alt="Annotated enlarged"
+            className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg"
+          />
         </div>
       )}
     </div>

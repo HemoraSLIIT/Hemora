@@ -1,7 +1,7 @@
 """Serializers for patient data and file uploads."""
 from rest_framework import serializers
 
-from .models import BloodSmearImage, DiagnosisResult, Patient, PatientFeedback
+from .models import AnnotatedImage, BloodSmearImage, DiagnosisResult, Patient, PatientFeedback
 
 
 class BloodSmearImageSerializer(serializers.ModelSerializer):
@@ -172,10 +172,26 @@ class CBCParametersSerializer(serializers.Serializer):
     basophils = serializers.FloatField(required=False, allow_null=True, default=None)
 
 
+class AnnotatedImageSerializer(serializers.ModelSerializer):
+    diseaseName = serializers.CharField(source="disease_name", read_only=True)
+    detectionsCount = serializers.IntegerField(source="detections_count", read_only=True)
+    createdAt = serializers.DateTimeField(source="created_at", read_only=True)
+
+    class Meta:
+        model = AnnotatedImage
+        fields = ["id", "diseaseName", "image", "detectionsCount", "createdAt"]
+
+
 class DiagnosisResultSerializer(serializers.ModelSerializer):
     patientId = serializers.IntegerField(source="patient_id", read_only=True)
     plateletCount = serializers.FloatField(source="platelet_count", allow_null=True)
     cbcAnalysis = serializers.JSONField(source="cbc_analysis", read_only=True)
+    imageAnalysis = serializers.JSONField(source="image_analysis", read_only=True)
+    hybridAnalysis = serializers.JSONField(source="hybrid_analysis", read_only=True)
+    analysisMethod = serializers.CharField(source="analysis_method", read_only=True)
+    annotatedImages = AnnotatedImageSerializer(
+        source="annotated_images", many=True, read_only=True
+    )
     createdAt = serializers.DateTimeField(source="created_at", read_only=True)
     updatedAt = serializers.DateTimeField(source="updated_at", read_only=True)
 
@@ -199,6 +215,10 @@ class DiagnosisResultSerializer(serializers.ModelSerializer):
             "eosinophils",
             "basophils",
             "cbcAnalysis",
+            "imageAnalysis",
+            "hybridAnalysis",
+            "analysisMethod",
+            "annotatedImages",
             "createdAt",
             "updatedAt",
         ]
