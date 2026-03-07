@@ -1,6 +1,8 @@
 """Serializers for patient data and file uploads."""
+import os
 from rest_framework import serializers
-
+from django.conf import settings
+from .models import AnalysisSession
 from .models import BloodSmearImage, Patient, PatientFeedback
 
 
@@ -151,3 +153,104 @@ class PatientFeedbackSerializer(serializers.ModelSerializer):
             "createdAt",
             "updatedAt",
         ]
+
+
+class CBCDataSerializer(serializers.Serializer):
+    """Validates Complete Blood Count fields (all optional but captured if present)."""
+    wbc = serializers.FloatField(required=False, help_text="White Blood Cell count (×10³/µL)")
+    rbc = serializers.FloatField(required=False, help_text="Red Blood Cell count (×10⁶/µL)")
+    hemoglobin = serializers.FloatField(required=False, help_text="Hemoglobin (g/dL)")
+    hematocrit = serializers.FloatField(required=False, help_text="Hematocrit (%)")
+    mcv = serializers.FloatField(required=False, help_text="Mean Corpuscular Volume (fL)")
+    mch = serializers.FloatField(required=False, help_text="Mean Corpuscular Hemoglobin (pg)")
+    mchc = serializers.FloatField(required=False, help_text="Mean Corpuscular Hemoglobin Concentration (g/dL)")
+    platelets = serializers.FloatField(required=False, help_text="Platelet count (×10³/µL)")
+    neutrophils = serializers.FloatField(required=False, help_text="Neutrophils (%)")
+    lymphocytes = serializers.FloatField(required=False, help_text="Lymphocytes (%)")
+    monocytes = serializers.FloatField(required=False, help_text="Monocytes (%)")
+    eosinophils = serializers.FloatField(required=False, help_text="Eosinophils (%)")
+    basophils = serializers.FloatField(required=False, help_text="Basophils (%)")
+
+
+class DiagnoseRequestSerializer(serializers.Serializer):
+    """Multipart request: blood smear image + optional CBC fields."""
+    image = serializers.ImageField(
+        required=True,
+        help_text="Blood smear microscopy image (JPG/PNG, max 10 MB)",
+    )
+    wbc = serializers.FloatField(required=False)
+    rbc = serializers.FloatField(required=False)
+    hemoglobin = serializers.FloatField(required=False)
+    hematocrit = serializers.FloatField(required=False)
+    mcv = serializers.FloatField(required=False)
+    mch = serializers.FloatField(required=False)
+    mchc = serializers.FloatField(required=False)
+    platelets = serializers.FloatField(required=False)
+    neutrophils = serializers.FloatField(required=False)
+    lymphocytes = serializers.FloatField(required=False)
+    monocytes = serializers.FloatField(required=False)
+    eosinophils = serializers.FloatField(required=False)
+    basophils = serializers.FloatField(required=False)
+
+    CBC_FIELDS = [
+        'wbc', 'rbc', 'hemoglobin', 'hematocrit', 'mcv', 'mch',
+        'mchc', 'platelets', 'neutrophils', 'lymphocytes',
+        'monocytes', 'eosinophils', 'basophils',
+    ]
+
+    def get_cbc_data(self) -> dict:
+        """Extract only the CBC fields that were actually provided."""
+        data = self.validated_data
+        return {field: data[field] for field in self.CBC_FIELDS if field in data}
+
+    def validate_image(self, value):
+        # --- file size check ---
+        max_size = getattr(settings, 'ML_MAX_UPLOAD_SIZE', 10485760)
+        if value.size > max_size:
+            max_mb = max_size / (1024 * 1024)
+            raise serializers.ValidationError(
+                f"Image too large. Maximum allowed size is {max_mb:.0f} MB "
+                f"(received {value.size / (1024*1024):.1f} MB)."
+            )
+
+        # --- file extension check ---
+        allowed = [e.lower() for e in getattr(settings, 'ML_ALLOWED_EXTENSIONS', ['jpg', 'jpeg', 'png', 'tiff'])]
+        ext = os.path.splitext(value.name)[1].lstrip('.').lower()
+        if ext not in allowed:
+            raise serializers.ValidationError(
+                f"Unsupported file type '.{ext}'. "
+                f"Allowed types: {', '.join(allowed)}."
+            )
+
+        return value
+
+
+class DiseaseResultSerializer(serializers.Serializer):
+    prediction = serializers.CharField()
+    confidence = serializers.FloatField()
+    probabilities = serializers.DictField(child=serializers.FloatField())
+
+
+class DiagnoseResponseSerializer(serializers.Serializer):
+    session_id = serializers.IntegerField()
+    status = serializers.CharField()
+    diseases = serializers.DictField(child=DiseaseResultSerializer())
+    errors = serializers.DictField(child=serializers.CharField())
+    cbc_data = serializers.DictField()
+    models_used = serializers.ListField(child=serializers.CharField())
+    processing_time_ms = serializers.FloatField()
+    created_at = serializers.DateTimeField()
+
+
+class AnalysisSessionSerializer(serializers.ModelSerializer):
+    """Read serializer for listing/retrieving past sessions."""
+    user = serializers.StringRelatedField()
+
+    class Meta:
+        model = AnalysisSession
+        fields = [
+            'id', 'user', 'status', 'cbc_data', 'results',
+            'models_used', 'inference_errors', 'processing_time_ms',
+            'error_message', 'created_at', 'updated_at',
+        ]
+        read_only_fields = fields

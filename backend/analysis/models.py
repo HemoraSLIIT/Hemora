@@ -102,3 +102,54 @@ class PatientFeedback(models.Model):
 
 	def __str__(self):
 		return f"Feedback #{self.id} for patient #{self.patient_id}"
+
+
+class AnalysisSession(models.Model):
+    """
+    Stores a blood disease analysis request and its ML results.
+    Images are NOT persisted; only CBC data and inference results are stored.
+    """
+
+    class Status(models.TextChoices):
+        PENDING = 'PENDING', 'Pending'
+        COMPLETED = 'COMPLETED', 'Completed'
+        FAILED = 'FAILED', 'Failed'
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='analysis_sessions',
+    )
+
+    # CBC values submitted with the request
+    cbc_data = models.JSONField(default=dict, blank=True)
+
+    # Inference output from all YOLO models: {disease: {prediction, confidence, probabilities}}
+    results = models.JSONField(default=dict, blank=True)
+
+    # List of disease types that were successfully run
+    models_used = models.JSONField(default=list, blank=True)
+
+    # Per-model inference errors
+    inference_errors = models.JSONField(default=dict, blank=True)
+
+    # Milliseconds taken by inference
+    processing_time_ms = models.FloatField(null=True, blank=True)
+
+    status = models.CharField(
+        max_length=16,
+        choices=Status.choices,
+        default=Status.PENDING,
+    )
+
+    # Human-readable error if status == FAILED
+    error_message = models.TextField(blank=True, default='')
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"AnalysisSession(user={self.user_id}, status={self.status}, id={self.pk})"
