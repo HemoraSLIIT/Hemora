@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import BloodSmearImage, Patient, PatientFeedback, AnalysisSession
+from .models import AnalysisSession, BloodSmearImage, DiagnosisResult, Patient, PatientFeedback
 
 
 @admin.register(Patient)
@@ -27,3 +27,10 @@ class AnalysisSessionAdmin(admin.ModelAdmin):
     list_filter = ('status',)
     readonly_fields = ('created_at', 'updated_at', 'processing_time_ms', 'results', 'inference_errors')
     search_fields = ('user__username', 'user__email')
+
+
+@admin.register(DiagnosisResult)
+class DiagnosisResultAdmin(admin.ModelAdmin):
+    list_display = ('id', 'patient', 'hemoglobin', 'wbc', 'rbc', 'platelet_count', 'created_at')
+    search_fields = ('patient__first_name', 'patient__last_name')
+    readonly_fields = ('cbc_analysis', 'created_at', 'updated_at')

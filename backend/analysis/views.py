@@ -13,20 +13,15 @@ from .cbc_extractor import extract_cbc_from_file
 from .models import AnalysisSession, BloodSmearImage, DiagnosisResult, Patient, PatientFeedback
 from .serializers import (
     AnalysisSessionSerializer,
+    CBCParametersSerializer,
     DiagnoseRequestSerializer,
     DiagnoseResponseSerializer,
+    DiagnosisResultSerializer,
     PatientCreateSerializer,
     PatientFeedbackSerializer,
     PatientSerializer,
     PatientStatusUpdateSerializer,
     PatientUpdateSerializer,
-	CBCParametersSerializer,
-	DiagnosisResultSerializer,
-	PatientFeedbackSerializer,
-	PatientCreateSerializer,
-	PatientUpdateSerializer,
-	PatientSerializer,
-	PatientStatusUpdateSerializer,
 )
 
 logger = logging.getLogger(__name__)

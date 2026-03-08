@@ -163,7 +163,8 @@ class CBCDataSerializer(serializers.Serializer):
     mcv = serializers.FloatField(required=False, help_text="Mean Corpuscular Volume (fL)")
     mch = serializers.FloatField(required=False, help_text="Mean Corpuscular Hemoglobin (pg)")
     mchc = serializers.FloatField(required=False, help_text="Mean Corpuscular Hemoglobin Concentration (g/dL)")
-    platelets = serializers.FloatField(required=False, help_text="Platelet count (×10³/µL)")
+    rdw = serializers.FloatField(required=False, help_text="Red Cell Distribution Width (%)")
+    platelet_count = serializers.FloatField(required=False, help_text="Platelet count (×10³/µL)")
     neutrophils = serializers.FloatField(required=False, help_text="Neutrophils (%)")
     lymphocytes = serializers.FloatField(required=False, help_text="Lymphocytes (%)")
     monocytes = serializers.FloatField(required=False, help_text="Monocytes (%)")
@@ -184,7 +185,8 @@ class DiagnoseRequestSerializer(serializers.Serializer):
     mcv = serializers.FloatField(required=False)
     mch = serializers.FloatField(required=False)
     mchc = serializers.FloatField(required=False)
-    platelets = serializers.FloatField(required=False)
+    rdw = serializers.FloatField(required=False)
+    platelet_count = serializers.FloatField(required=False)
     neutrophils = serializers.FloatField(required=False)
     lymphocytes = serializers.FloatField(required=False)
     monocytes = serializers.FloatField(required=False)
@@ -193,7 +195,7 @@ class DiagnoseRequestSerializer(serializers.Serializer):
 
     CBC_FIELDS = [
         'wbc', 'rbc', 'hemoglobin', 'hematocrit', 'mcv', 'mch',
-        'mchc', 'platelets', 'neutrophils', 'lymphocytes',
+        'mchc', 'rdw', 'platelet_count', 'neutrophils', 'lymphocytes',
         'monocytes', 'eosinophils', 'basophils',
     ]
 

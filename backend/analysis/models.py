@@ -153,6 +153,8 @@ class AnalysisSession(models.Model):
 
     def __str__(self):
         return f"AnalysisSession(user={self.user_id}, status={self.status}, id={self.pk})"
+
+
 class DiagnosisResult(models.Model):
 	"""Stores CBC parameter values and analysis results for a patient."""
 
