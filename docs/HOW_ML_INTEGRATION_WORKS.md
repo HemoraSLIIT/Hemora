@@ -38,8 +38,10 @@ On your local computer, you need to place your trained `.pt` files in this folde
 Hemora/
 └── data/
     └── models/
-        ├── all_yolo_model.pt           ← your ALL (Leukemia) model
-        └── thalassemia_yolo_model.pt   ← your Thalassemia model
+        ├── best.pt                     ← ALL (Leukemia) YOLO detection model
+        ├── best_smart_hybrid.pt        ← Thalassemia SmartHybridNet weights
+        ├── yolo11_scd_cls_best.pt      ← SCD YOLO classification model
+        └── resnet.pt                   ← IDA ResNet model
 ```
 
 That's the folder the API looks inside every time it needs to run a diagnosis.
@@ -87,22 +89,27 @@ and with what level of confidence.
 
 ---
 
-## The Two Model Files Explained
+## The Model Files Explained
 
-### all_yolo_model.pt
-This model was trained to detect Acute Lymphoblastic Leukemia (ALL).
-It looks at a blood smear image and says one of two things:
+### best.pt (ALL — Leukemia)
+This is a YOLO detection model trained to detect Acute Lymphoblastic Leukemia (ALL).
+It looks at a blood smear image and detects cells, classifying them as:
 - **ALLNeg** — No leukemia detected (negative)
 - **ALLPos** — Leukemia detected (positive)
 
-### thalassemia_yolo_model.pt
-This model was trained to detect Beta Thalassemia.
-It looks at the same image and says:
+### best_smart_hybrid.pt (Thalassemia)
+This contains the trained weights for a custom SmartHybridNet model.
+It uses a two-stage approach: YOLO detection finds abnormal cells, then
+statistical features are extracted and fed into this network to predict:
 - **Normal** — No thalassemia detected
 - **Thalassemia** — Thalassemia detected
 
-Both models run on every single image that is submitted. So you always get
-results for both diseases in one request.
+### yolo11_scd_cls_best.pt (SCD — Sickle Cell Disease)
+This is a YOLO classification model trained to detect Sickle Cell Disease.
+It classifies blood smear images directly.
+
+### resnet.pt (IDA — Iron Deficiency Anaemia)
+A ResNet model for IDA detection (provided by a teammate).
 
 ---
 
@@ -189,7 +196,7 @@ the prediction to the user. The image is never stored. Only the numbers are.
 - [ ] Your Django server is running (`python manage.py runserver`)
 - [ ] Your database is running (PostgreSQL via Docker or local install)
 - [ ] You have run `python manage.py migrate` at least once
-- [ ] You have placed `all_yolo_model.pt` in `data/models/`
-- [ ] You have placed `thalassemia_yolo_model.pt` in `data/models/`
+- [ ] You have placed your model `.pt` files in `data/models/` (e.g. `best.pt`, `yolo11_scd_cls_best.pt`)
+- [ ] You have placed `best_smart_hybrid.pt` in `data/models/` (if testing Thalassemia)
 - [ ] You have installed `ultralytics` (`pip install ultralytics`)
 - [ ] You have a user account and a valid JWT token from the login endpoint

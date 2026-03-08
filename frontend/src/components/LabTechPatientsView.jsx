@@ -10,7 +10,7 @@ import {
   Filter,
   Download,
 } from "lucide-react";
-import { authAPI, patientAPI, analysisAPI } from "../services/api";
+import api, { authAPI, patientAPI, analysisAPI } from "../services/api";
 import toast from "react-hot-toast";
 import DeleteConfirm from "./DeleteConfirm";
 import ViewPatient from "./ViewPatient";
@@ -167,8 +167,8 @@ export default function LabTechPatientsView() {
 
       if (images.length > 0) {
         const imageUrl = images[0].image;
-        const imageResponse = await fetch(imageUrl);
-        const imageBlob = await imageResponse.blob();
+        const imageResponse = await api.get(imageUrl, { responseType: 'blob' });
+        const imageBlob = imageResponse.data;
         const fileName = imageUrl.split('/').pop() || 'blood_smear.jpg';
         const imageFile = new File([imageBlob], fileName, { type: imageBlob.type });
 

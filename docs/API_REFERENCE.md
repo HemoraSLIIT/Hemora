@@ -559,7 +559,8 @@ hematocrit    = 41.0
 mcv           = 85.0
 mch           = 28.0
 mchc          = 33.0
-platelets     = 250.0
+rdw           = 14.0
+platelet_count = 250.0
 neutrophils   = 60.0
 lymphocytes   = 30.0
 monocytes     = 7.0
@@ -601,7 +602,7 @@ basophils     = 1.0
     "mcv": 85.0,
     "mch": 28.0,
     "mchc": 33.0,
-    "platelets": 250.0,
+    "platelet_count": 250.0,
     "neutrophils": 60.0,
     "lymphocytes": 30.0,
     "monocytes": 7.0,
@@ -727,7 +728,7 @@ Authorization: Bearer <access_token>
     "mcv": 85.0,
     "mch": 28.0,
     "mchc": 33.0,
-    "platelets": 250.0,
+    "platelet_count": 250.0,
     "neutrophils": 60.0,
     "lymphocytes": 30.0,
     "monocytes": 7.0,

@@ -243,8 +243,8 @@ def run_inference(image_bytes: bytes, cbc_data: dict | None = None) -> dict[str,
                 disease_results["Thalassemia"] = result
                 models_used.append("Thalassemia")
                 logger.info("Inference OK for Thalassemia (hybrid): %s", result.get("prediction"))
-            except FileNotFoundError as exc:
-                logger.warning("Thalassemia model not available: %s", exc)
+            except (FileNotFoundError, ImportError) as exc:
+                logger.warning("Thalassemia pipeline not available: %s", exc)
                 errors["Thalassemia"] = str(exc)
             except Exception as exc:
                 logger.error("Thalassemia inference error: %s", exc, exc_info=True)
@@ -258,8 +258,8 @@ def run_inference(image_bytes: bytes, cbc_data: dict | None = None) -> dict[str,
                 disease_results["SCD"] = result
                 models_used.append("SCD")
                 logger.info("Inference OK for SCD (%s): %s", result.get("pipeline"), result.get("prediction"))
-            except FileNotFoundError as exc:
-                logger.warning("SCD model not available: %s", exc)
+            except (FileNotFoundError, ImportError) as exc:
+                logger.warning("SCD pipeline not available: %s", exc)
                 errors["SCD"] = str(exc)
             except Exception as exc:
                 logger.error("SCD inference error: %s", exc, exc_info=True)

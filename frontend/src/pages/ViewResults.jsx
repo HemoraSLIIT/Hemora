@@ -28,13 +28,10 @@ export default function ViewResultsPage() {
   const [patient, setPatient] = useState(null);
   const [diagnosis, setDiagnosis] = useState(null);
   const [feedbackEntries, setFeedbackEntries] = useState([]);
-  const [diagnosisResults, setDiagnosisResults] = useState([]);
-  const [analysisSession, setAnalysisSession] = useState(null);
   const [pageError, setPageError] = useState("");
   const [loading, setLoading] = useState(true);
 
   const patientId = searchParams.get("patientId");
-  const sessionId = searchParams.get("sessionId");
 
   const patientDisplayName = useMemo(() => {
     if (!patient) return "-";
@@ -80,7 +77,7 @@ export default function ViewResultsPage() {
     };
 
     loadPageData();
-  }, [patientId, sessionId]);
+  }, [patientId]);
 
   const refreshPatientStatus = async () => {
     if (!patientId) return;
