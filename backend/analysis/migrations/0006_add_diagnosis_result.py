@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('analysis', '0005_remove_unique_feedback_per_patient'),
+        ('analysis', '0001_initial'),
     ]
 
     operations = [

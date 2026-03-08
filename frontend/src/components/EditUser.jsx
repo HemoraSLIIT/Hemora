@@ -81,20 +81,26 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
 
       onClose();
     } catch (error) {
-      console.error("Failed to update user:", error);
+      console.error("Failed to update user:", error.response?.data);
       const errorData = error.response?.data;
+      const fieldLabels = {
+        username: "Username", email: "Email", password: "Password",
+        firstName: "First Name", lastName: "Last Name", role: "Role",
+        specialization: "Specialization", hospitalAffiliation: "Hospital Affiliation",
+        medicalLicense: "Medical License", universityAffiliation: "University Affiliation",
+        phoneNumber: "Phone Number", non_field_errors: "Error", detail: "Error",
+      };
       if (errorData) {
         const errorMessages = Object.entries(errorData)
-          .map(
-            ([field, messages]) =>
-              `${field}: ${
-                Array.isArray(messages) ? messages.join(", ") : messages
-              }`
-          )
-          .join("\n");
+          .map(([field, messages]) => {
+            const label = fieldLabels[field] || field;
+            const msg = Array.isArray(messages) ? messages.join(", ") : messages;
+            return `${label}: ${msg}`;
+          })
+          .join(" | ");
         toast.error(errorMessages || "Failed to update user");
       } else {
-        toast.error("Failed to update user");
+        toast.error("Failed to update user. Check your connection.");
       }
     } finally {
       setLoading(false);

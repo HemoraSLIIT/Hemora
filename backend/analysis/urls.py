@@ -2,12 +2,15 @@
 from django.urls import path
 
 from .views import (
+    DiagnoseView,
     PatientDiagnoseAPIView,
     PatientExtractCBCAPIView,
     PatientFeedbackListCreateAPIView,
     PatientListCreateAPIView,
     PatientRetrieveUpdateAPIView,
     PatientStatusUpdateAPIView,
+    AnalysisSessionListView,
+    AnalysisSessionDetailView
 )
 
 app_name = "analysis"
@@ -19,4 +22,7 @@ urlpatterns = [
     path("patients/<int:pk>/extract-cbc/", PatientExtractCBCAPIView.as_view(), name="patient-extract-cbc"),
     path("patients/<int:pk>/diagnose/", PatientDiagnoseAPIView.as_view(), name="patient-diagnose"),
     path("patients/<int:pk>/feedback/", PatientFeedbackListCreateAPIView.as_view(), name="patient-feedback-list-create"),
+    path('analysis/diagnose/', DiagnoseView.as_view(), name='diagnose'),
+    path('analysis/sessions/', AnalysisSessionListView.as_view(), name='session-list'),
+    path('analysis/sessions/<int:pk>/', AnalysisSessionDetailView.as_view(), name='session-detail'),
 ]
