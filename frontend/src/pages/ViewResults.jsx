@@ -459,7 +459,7 @@ function AnnotatedImagesDisplay({ images, mediaBase }) {
     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 mb-8">
       <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
         <Microscope className="text-gray-900 w-5 h-5" />
-        YOLO-Annotated Blood Smear Images
+        Annotated Blood Smear Images
       </h3>
       <div className="grid grid-cols-2 gap-4">
         {images.map((img) => {
