@@ -20,99 +20,105 @@ logger = logging.getLogger(__name__)
 # Regex patterns
 # ---------------------------------------------------------------------------
 
-_SEP = r"[:\-\|\s]"
+# Flexible separator: optional spaces, colons, dashes, pipes, tabs — one or more
+_SEP = r"[\s:\-\|]*"
+# Separator that requires at least one non-space separator char (for short labels like Hb)
+_SEP_STRICT = r"[\s]*[:\-\|][\s]*"
+# Match a number: integer or decimal, possibly preceded by spaces
+_NUM = r"(\d+\.?\d*)"
 
 _PARAMETER_PATTERNS = {
     "wbc": {
         "patterns": [
-            rf"(?:WBC|White\s*Blood\s*Cell[s]?|W\.B\.C|Leucocyte[s]?|Leukocyte[s]?)\s*(?:Count)?\s*{_SEP}\s*(\d+\.?\d*)",
-            rf"(?:Total\s*White\s*Cell\s*Count)\s*{_SEP}?\s*(\d+\.?\d*)",
+            rf"(?:WBC|White\s*Blood\s*Cell[s]?|W\.?B\.?C\.?|Leucocyte[s]?|Leukocyte[s]?)\s*(?:Count)?{_SEP}{_NUM}",
+            rf"(?:Total\s*White\s*(?:Cell|Blood)\s*(?:Cell\s*)?Count){_SEP}{_NUM}",
         ],
         "plausible_range": (0.1, 500.0),
         "auto_convert": {"threshold": 100, "divisor": 1000},
     },
     "rbc": {
         "patterns": [
-            rf"(?:RBC|Red\s*Blood\s*Cell[s]?|R\.B\.C|Erythrocyte[s]?)\s*(?:Count)?\s*{_SEP}\s*(\d+\.?\d*)",
+            rf"(?:RBC|Red\s*Blood\s*Cell[s]?|R\.?B\.?C\.?|Erythrocyte[s]?)\s*(?:Count)?{_SEP}{_NUM}",
         ],
         "plausible_range": (0.5, 10.0),
     },
     "hemoglobin": {
         "patterns": [
-            rf"(?:Hemoglobin|Haemoglobin|Hgb|HGB)\s*{_SEP}\s*(\d+\.?\d*)",
-            rf"(?:Hb)\s*[:\-\|]\s*(\d+\.?\d*)",
+            rf"(?:Hemoglobin|Haemoglobin|Hgb|HGB){_SEP}{_NUM}",
+            rf"(?:Hb){_SEP_STRICT}{_NUM}",
+            rf"(?:Hb)\s+{_NUM}",
         ],
         "plausible_range": (2.0, 25.0),
     },
     "hematocrit": {
         "patterns": [
-            rf"(?:Hematocrit|Haematocrit|HCT|Hct|PCV)\s*{_SEP}\s*(\d+\.?\d*)",
-            rf"(?:Pack(?:ed)?\s*Cell\s*Volume)\s*{_SEP}?\s*(\d+\.?\d*)",
+            rf"(?:Hematocrit|Haematocrit|HCT|Hct|PCV){_SEP}{_NUM}",
+            rf"(?:Pack(?:ed)?\s*Cell\s*Volume){_SEP}{_NUM}",
         ],
         "plausible_range": (10.0, 70.0),
     },
     "mcv": {
         "patterns": [
-            rf"MCV\s*{_SEP}\s*(\d+\.?\d*)",
-            rf"Mean\s*(?:Corpuscular|Cell)\s*Volume\s*{_SEP}?\s*(\d+\.?\d*)",
+            rf"MCV{_SEP}{_NUM}",
+            rf"Mean\s*(?:Corpuscular|Cell)\s*Volume{_SEP}{_NUM}",
         ],
         "plausible_range": (50.0, 150.0),
     },
     "mch": {
         "patterns": [
-            rf"MCH\s*{_SEP}\s*(\d+\.?\d*)(?!\s*C)",
-            rf"Mean\s*(?:Corpuscular|Cell)\s*(?:Hb|Ha?emoglobin)\s*{_SEP}?\s*(\d+\.?\d*)(?!\s*(?:Conc|CONCENTRATION))",
+            rf"MCH{_SEP}{_NUM}(?!\s*C)",
+            rf"Mean\s*(?:Corpuscular|Cell)\s*(?:Hb|Ha?emoglobin){_SEP}{_NUM}(?!\s*(?:Conc|CONCENTRATION))",
         ],
         "plausible_range": (15.0, 45.0),
     },
     "mchc": {
         "patterns": [
-            rf"MCHC\s*{_SEP}\s*(\d+\.?\d*)",
-            rf"Mean\s*(?:Corpuscular|Cell)\s*(?:Hb|Ha?emoglobin)\s*(?:Conc[.\w]*|CONCENTRATION)\s*{_SEP}?\s*(\d+\.?\d*)",
-            rf"Mean\s*(?:Corpuscular|Cell)\s*(?:Hb|Ha?e[ae]moglobin)\s+(\d+\.?\d*)\s*\n\s*CONCENTRATION",
+            rf"MCHC{_SEP}{_NUM}",
+            rf"Mean\s*(?:Corpuscular|Cell)\s*(?:Hb|Ha?emoglobin)\s*(?:Conc[.\w]*|CONCENTRATION){_SEP}{_NUM}",
+            rf"Mean\s*(?:Corpuscular|Cell)\s*(?:Hb|Ha?e[ae]moglobin)\s+{_NUM}\s*\n\s*CONCENTRATION",
         ],
         "plausible_range": (25.0, 40.0),
     },
     "platelets": {
         "patterns": [
-            rf"(?:Platelet[s]?|PLT|Plt)\s*(?:Count)?\s*{_SEP}\s*(\d+\.?\d*)",
-            rf"(?:Thrombocyte[s]?)\s*(?:Count)?\s*{_SEP}\s*(\d+\.?\d*)",
+            rf"(?:Platelet[s]?|PLT|Plt)\s*(?:Count)?{_SEP}{_NUM}",
+            rf"(?:Thrombocyte[s]?)\s*(?:Count)?{_SEP}{_NUM}",
         ],
         "plausible_range": (5.0, 1500.0),
     },
     "rdw": {
         "patterns": [
-            rf"(?:RDW|R\.?D\.?W\.?|Red\s*Cell\s*Distribution(?:\s*Width)?|RDW[\s\-]*CV)\s*{_SEP}\s*(\d+\.?\d*)",
+            rf"(?:RDW|R\.?D\.?W\.?|Red\s*(?:Cell)?\s*Distribution(?:\s*Width)?|RDW[\s\-]*CV){_SEP}{_NUM}",
         ],
         "plausible_range": (8.0, 30.0),
     },
     "neutrophils": {
         "patterns": [
-            rf"(?:Neutrophil[s]?|Neut|NEUT|Segmented\s*Neutrophil[s]?)\s*{_SEP}\s*(\d+\.?\d*)",
+            rf"(?:Neutrophil[s]?|Neut|NEUT|Segmented\s*Neutrophil[s]?){_SEP}{_NUM}",
         ],
         "plausible_range": (0.0, 100.0),
     },
     "lymphocytes": {
         "patterns": [
-            rf"(?:Lymphocyte[s]?|Lymph|LYMPH)\s*{_SEP}\s*(\d+\.?\d*)",
+            rf"(?:Lymphocyte[s]?|Lymph|LYMPH){_SEP}{_NUM}",
         ],
         "plausible_range": (0.0, 100.0),
     },
     "monocytes": {
         "patterns": [
-            rf"(?:Monocyte[s]?|Mono|MONO)\s*{_SEP}\s*(\d+\.?\d*)",
+            rf"(?:Monocyte[s]?|Mono|MONO){_SEP}{_NUM}",
         ],
         "plausible_range": (0.0, 100.0),
     },
     "eosinophils": {
         "patterns": [
-            rf"(?:Eosinophil[s]?|Eos|EOS|Eosino)\s*{_SEP}\s*(\d+\.?\d*)",
+            rf"(?:Eosinophil[s]?|Eos|EOS|Eosino){_SEP}{_NUM}",
         ],
         "plausible_range": (0.0, 100.0),
     },
     "basophils": {
         "patterns": [
-            rf"(?:Basophil[s]?|Baso|BASO)\s*{_SEP}\s*(\d+\.?\d*)",
+            rf"(?:Basophil[s]?|Baso|BASO){_SEP}{_NUM}",
         ],
         "plausible_range": (0.0, 100.0),
     },
@@ -210,6 +216,10 @@ def _parse_cbc(raw_text):
     if not raw_text:
         return {}
 
+    # Normalize whitespace: collapse multiple spaces/tabs into single space per line
+    cleaned = "\n".join(" ".join(line.split()) for line in raw_text.splitlines())
+    logger.debug("CBC extracted text (first 2000 chars):\n%s", cleaned[:2000])
+
     extracted = {}
 
     for param_name, config in _PARAMETER_PATTERNS.items():
@@ -218,7 +228,7 @@ def _parse_cbc(raw_text):
         auto_convert = config.get("auto_convert")
 
         for pattern in patterns:
-            matches = re.findall(pattern, raw_text, re.IGNORECASE | re.MULTILINE)
+            matches = re.findall(pattern, cleaned, re.IGNORECASE | re.MULTILINE)
             found = False
             for match_str in matches:
                 try:
@@ -231,6 +241,7 @@ def _parse_cbc(raw_text):
                     if plausible_range[0] <= value <= plausible_range[1]:
                         field_name = _FIELD_MAP.get(param_name, param_name)
                         extracted[field_name] = value
+                        logger.debug("Extracted %s = %s (from pattern: %s)", field_name, value, param_name)
                         found = True
                         break
                 except ValueError:
@@ -238,6 +249,7 @@ def _parse_cbc(raw_text):
             if found:
                 break
 
+    logger.info("CBC parsing complete: extracted %d parameters: %s", len(extracted), list(extracted.keys()))
     return extracted
 
 

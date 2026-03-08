@@ -57,5 +57,10 @@ python-dotenv==1.0.1
 # Additional dependencies
 django-filter==24.3
 
+# CBC report extraction (OCR)
+pdfplumber==0.11.4
+PyMuPDF==1.24.14
+pytesseract==0.3.13
+
 # YOLO inference
 ultralytics==8.3.40
