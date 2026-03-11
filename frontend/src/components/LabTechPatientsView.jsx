@@ -399,9 +399,9 @@ export default function LabTechPatientsView() {
                     <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
                       Actions
                     </th>
-                    {/* <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
-                      Lab Actions
-                    </th> */}
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
+                      {/* Lab Actions */}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>

@@ -874,7 +874,7 @@ function DoctorSidebar({
                 checked={selectedAction === "Accept Results"}
                 onChange={(e) => setSelectedAction(e.target.value)}
                 disabled={submitted || submitting || isDiagnosed}
-                className="cursor-pointer"
+                className="h-4 w-4 shrink-0 cursor-pointer appearance-none rounded-full border border-gray-400 checked:border-[#0a0e3f] checked:bg-[#0a0e3f] checked:shadow-[inset_0_0_0_3px_white]"
               />
               <div>
                 <span className="font-semibold text-gray-900 block text-sm">Accept Results</span>
@@ -900,7 +900,7 @@ function DoctorSidebar({
                 checked={selectedAction === "Re-Diagnosis"}
                 onChange={(e) => setSelectedAction(e.target.value)}
                 disabled={submitted || submitting || isDiagnosed}
-                className="cursor-pointer"
+                className="h-4 w-4 shrink-0 cursor-pointer appearance-none rounded-full border border-gray-400 checked:border-[#0a0e3f] checked:bg-[#0a0e3f] checked:shadow-[inset_0_0_0_3px_white]"
               />
               <div>
                 <span className="font-semibold text-gray-900 block text-sm">Re-Diagnosis</span>

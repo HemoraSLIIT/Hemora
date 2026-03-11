@@ -276,9 +276,9 @@ export default function DocPatientsView() {
                     <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
                       Actions
                     </th>
-                    {/* <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
-                      Doctor Actions
-                    </th> */}
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
+                      {/* Doctor Actions */}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
