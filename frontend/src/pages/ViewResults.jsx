@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   TestTubeDiagonal,
   MessageSquareText,
@@ -13,8 +13,30 @@ import {
   Microscope,
 } from "lucide-react";
 import SideBar from "../components/SideBar";
+import ReDiagnoseUploadModal from "../components/ReDiagnoseUploadModal";
+import CBCInputModal from "../components/CBCInputModal";
 import toast from "react-hot-toast";
 import { patientAPI, userAPI } from "../services/api";
+
+const LAB_TECH_CLEARED_PATIENTS_KEY = "labTechClearedPatients";
+
+function getClearedPatientIds() {
+  return JSON.parse(localStorage.getItem(LAB_TECH_CLEARED_PATIENTS_KEY) || "[]");
+}
+
+function saveClearedPatientIds(patientIds) {
+  localStorage.setItem(
+    LAB_TECH_CLEARED_PATIENTS_KEY,
+    JSON.stringify(patientIds)
+  );
+}
+
+function removeClearedPatientId(patientId) {
+  const nextPatientIds = getClearedPatientIds().filter(
+    (id) => Number(id) !== Number(patientId)
+  );
+  saveClearedPatientIds(nextPatientIds);
+}
 
 const roleMap = {
   doctor: "Doctor",
@@ -25,12 +47,15 @@ const roleMap = {
 
 export default function ViewResultsPage() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [userRole, setUserRole] = useState(null);
   const [patient, setPatient] = useState(null);
   const [diagnosis, setDiagnosis] = useState(null);
   const [feedbackEntries, setFeedbackEntries] = useState([]);
   const [pageError, setPageError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [isReDiagnoseModalOpen, setIsReDiagnoseModalOpen] = useState(false);
+  const [isCbcModalOpen, setIsCbcModalOpen] = useState(false);
 
   const patientId = searchParams.get("patientId");
 
@@ -100,9 +125,41 @@ export default function ViewResultsPage() {
     };
 
     const feedback = await patientAPI.createPatientFeedback(patientId, payload);
+    await patientAPI.updatePatientStatus(patientId, "Diagnosed");
+
     setFeedbackEntries((prev) => [feedback, ...prev]);
     await refreshPatientStatus();
     return feedback;
+  };
+
+  const handleLabTechReDiagnoseSubmit = async (formData) => {
+    if (!patientId) throw new Error("Patient id missing");
+
+    await patientAPI.updatePatient(patientId, formData);
+    await patientAPI.updatePatientStatus(patientId, "In Progress");
+    removeClearedPatientId(patientId);
+    setDiagnosis(null);
+    await refreshPatientStatus();
+    setIsReDiagnoseModalOpen(false);
+    setIsCbcModalOpen(true);
+    toast.success("New files uploaded. Run diagnosis with the updated data.");
+  };
+
+  const handleCBCSubmit = async (cbcParams) => {
+    if (!patientId) return;
+
+    setIsCbcModalOpen(false);
+
+    try {
+      await patientAPI.diagnosePatient(patientId, cbcParams);
+      const diagnosisData = await patientAPI.getDiagnosisResult(patientId);
+      setDiagnosis(diagnosisData);
+      await refreshPatientStatus();
+      toast.success("Diagnosis completed with the updated data");
+    } catch (err) {
+      console.error("Diagnosis failed:", err);
+      toast.error(err?.response?.data?.detail || "Diagnosis failed");
+    }
   };
 
   if (loading) {
@@ -134,6 +191,7 @@ export default function ViewResultsPage() {
   const hybridAnalysis = diagnosis?.hybridAnalysis || [];
   const diseaseAnalysis = hybridAnalysis.length > 0 ? hybridAnalysis : (cbcAnalysis.diseaseAnalysis || []);
   const annotatedImages = diagnosis?.annotatedImages || [];
+  const isInProgress = patient?.status === "In Progress";
 
   const MEDIA_BASE = `http://${window.location.hostname || "localhost"}:8000`;
 
@@ -194,7 +252,7 @@ export default function ViewResultsPage() {
           ) : (
             <>
               {/* Analysis Method Badge + Overall Status Banner */}
-              <div className="flex items-center gap-3 mb-6">
+              {/* <div className="flex items-center gap-3 mb-6">
                 <span className={`px-3 py-1.5 rounded-full text-xs font-bold ${
                   analysisMethod === "hybrid"
                     ? "bg-purple-100 text-purple-800"
@@ -207,7 +265,7 @@ export default function ViewResultsPage() {
                     CBC 40% + Image 60% weighting
                   </span>
                 )}
-              </div>
+              </div> */}
 
               <div className={`mb-6 p-4 rounded-xl border flex items-center gap-3 ${
                 overallStatus === "suspicious"
@@ -242,19 +300,42 @@ export default function ViewResultsPage() {
           )}
 
           {/* Role-based Actions */}
-          <div className="mt-8">
-            {userRole === "Lab Technician" ? (
-              <LabTechSidebar feedbackEntries={feedbackEntries} />
-            ) : userRole === "Doctor" ? (
-              <DoctorSidebar
-                onSubmitFeedback={handleDoctorFeedbackSubmit}
-                feedbackEntries={feedbackEntries}
-                patientStatus={patient?.status}
-              />
-            ) : null}
-          </div>
+          {(userRole === "Lab Technician" || !isInProgress || userRole === "Doctor") && (
+            <div className="mt-8">
+              {userRole === "Lab Technician" ? (
+                <LabTechSidebar
+                  feedbackEntries={feedbackEntries}
+                  patientId={patientId}
+                  navigate={navigate}
+                  onRequestRediagnose={() => setIsReDiagnoseModalOpen(true)}
+                />
+              ) : userRole === "Doctor" ? (
+                <DoctorSidebar
+                  onSubmitFeedback={handleDoctorFeedbackSubmit}
+                  feedbackEntries={feedbackEntries}
+                  navigate={navigate}
+                  patientId={patientId}
+                  patientStatus={patient?.status}
+                />
+              ) : null}
+            </div>
+          )}
         </div>
       </div>
+
+      <ReDiagnoseUploadModal
+        isOpen={isReDiagnoseModalOpen}
+        onClose={() => setIsReDiagnoseModalOpen(false)}
+        onSubmit={handleLabTechReDiagnoseSubmit}
+        patientId={patientId}
+      />
+
+      <CBCInputModal
+        isOpen={isCbcModalOpen}
+        onClose={() => setIsCbcModalOpen(false)}
+        onSubmit={handleCBCSubmit}
+        patientId={patientId}
+      />
     </div>
   );
 }
@@ -504,8 +585,35 @@ function AnnotatedImagesDisplay({ images, mediaBase }) {
   );
 }
 
-function LabTechSidebar({ feedbackEntries }) {
-  const [isDone, setIsDone] = useState(false);
+function LabTechSidebar({
+  feedbackEntries,
+  patientId,
+  navigate,
+  onRequestRediagnose,
+}) {
+  const [isSubmittingDone, setIsSubmittingDone] = useState(false);
+  const hasAcceptedResults = feedbackEntries.some(
+    (entry) => entry.decision === "Accept Results"
+  );
+
+  const handleMarkAsDone = async () => {
+    if (!patientId || isSubmittingDone) return;
+
+    try {
+      setIsSubmittingDone(true);
+      const nextClearedPatients = Array.from(
+        new Set([...getClearedPatientIds(), Number(patientId)])
+      );
+      saveClearedPatientIds(nextClearedPatients);
+      toast.success("Patient marked as cleared");
+      navigate("/patients");
+    } catch (err) {
+      console.error("Failed to save cleared state:", err);
+      toast.error("Failed to mark patient as cleared");
+    } finally {
+      setIsSubmittingDone(false);
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -548,18 +656,20 @@ function LabTechSidebar({ feedbackEntries }) {
           </h3>
           <div className="flex flex-col gap-3 flex-1">
             <button
-              className={`flex-1 py-3 px-4 rounded-lg font-semibold transition duration-300 cursor-pointer ${
-                isDone
-                  ? "bg-green-900 text-white hover:opacity-90"
-                  : "bg-green-700 text-white hover:opacity-90"
-              }`}
-              onClick={() => setIsDone(true)}
+              className="flex-1 py-3 px-4 rounded-lg font-semibold transition duration-300 bg-green-700 text-white hover:opacity-90 cursor-pointer"
+              onClick={handleMarkAsDone}
+              disabled={isSubmittingDone}
             >
-              {isDone ? "Marked Done" : "Mark as Done"}
+              {isSubmittingDone ? "Saving..." : "Mark as Done"}
             </button>
             <button
-              className="flex-1 py-3 px-4 bg-yellow-500 text-white rounded-lg font-semibold hover:opacity-90 transition duration-300 cursor-pointer"
-              onClick={() => toast("Re-Diagnosis coming soon")}
+              className={`flex-1 py-3 px-4 rounded-lg font-semibold transition duration-300 ${
+                hasAcceptedResults
+                  ? "bg-yellow-500 text-white opacity-60 cursor-not-allowed"
+                  : "bg-yellow-500 text-white hover:opacity-90 cursor-pointer"
+              }`}
+              onClick={onRequestRediagnose}
+              disabled={hasAcceptedResults}
             >
               Re-Diagnose
             </button>
@@ -567,18 +677,17 @@ function LabTechSidebar({ feedbackEntries }) {
         </div>
       </div>
 
-      {isDone && (
-        <div className="p-4 bg-green-50 border border-green-300 rounded-lg">
-          <p className="text-green-800 text-sm font-semibold">
-            Results marked as complete
-          </p>
-        </div>
-      )}
     </div>
   );
 }
 
-function DoctorSidebar({ onSubmitFeedback, feedbackEntries, patientStatus }) {
+function DoctorSidebar({
+  onSubmitFeedback,
+  feedbackEntries,
+  navigate,
+  patientId,
+  patientStatus,
+}) {
   const [comments, setComments] = useState("");
   const [selectedAction, setSelectedAction] = useState(null);
   const [submitted, setSubmitted] = useState(false);
@@ -608,7 +717,8 @@ function DoctorSidebar({ onSubmitFeedback, feedbackEntries, patientStatus }) {
       setComments("");
       setSelectedAction(null);
       setSubmitted(true);
-      setTimeout(() => setSubmitted(false), 1000);
+      removeClearedPatientId(patientId);
+      navigate("/patients");
     } catch (err) {
       console.error("Failed to submit feedback:", err);
       toast.error(err?.response?.data?.detail || "Failed to submit feedback");
@@ -626,7 +736,11 @@ function DoctorSidebar({ onSubmitFeedback, feedbackEntries, patientStatus }) {
             Add Your Comments
           </h3>
           <textarea
-            className="flex-1 px-4 py-3 border border-gray-300 rounded-lg text-sm focus:outline-none focus:border-[#0a0e3f] focus:ring-1 focus:ring-[#0a0e3f] resize-none transition"
+            className={`flex-1 px-4 py-3 border border-gray-300 rounded-lg text-sm resize-none transition ${
+              isDiagnosed
+                ? "cursor-not-allowed bg-gray-100 text-gray-500"
+                : "focus:outline-none focus:border-[#0a0e3f] focus:ring-1 focus:ring-[#0a0e3f]"
+            }`}
             placeholder="Add your medical assessment and observations..."
             value={comments}
             onChange={(e) => setComments(e.target.value)}
@@ -640,10 +754,14 @@ function DoctorSidebar({ onSubmitFeedback, feedbackEntries, patientStatus }) {
           </h3>
           <div className="space-y-3 flex-1">
             <label
-              className={`flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition ${
+              className={`flex items-center gap-3 p-4 border-2 rounded-lg transition ${
                 selectedAction === "Accept Results"
                   ? "border-[#0a0e3f] bg-blue-50"
-                  : "border-gray-300 bg-white hover:border-gray-400"
+                  : "border-gray-300 bg-white"
+              } ${
+                isDiagnosed
+                  ? "cursor-not-allowed opacity-60"
+                  : "cursor-pointer hover:border-gray-400"
               }`}
             >
               <input
@@ -662,10 +780,14 @@ function DoctorSidebar({ onSubmitFeedback, feedbackEntries, patientStatus }) {
             </label>
 
             <label
-              className={`flex items-center gap-3 p-4 border-2 rounded-lg cursor-pointer transition ${
+              className={`flex items-center gap-3 p-4 border-2 rounded-lg transition ${
                 selectedAction === "Re-Diagnosis"
                   ? "border-[#0a0e3f] bg-blue-50"
-                  : "border-gray-300 bg-white hover:border-gray-400"
+                  : "border-gray-300 bg-white"
+              } ${
+                isDiagnosed
+                  ? "cursor-not-allowed opacity-60"
+                  : "cursor-pointer hover:border-gray-400"
               }`}
             >
               <input

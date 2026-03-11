@@ -102,6 +102,7 @@ class PatientUpdateSerializer(serializers.ModelSerializer):
     lastName = serializers.CharField(source="last_name", required=False)
     dateOfBirth = serializers.DateField(source="date_of_birth", required=False)
     bloodGroup = serializers.CharField(source="blood_group", required=False, allow_blank=True)
+    cbcReport = serializers.FileField(source="cbc_report", required=False)
     emergencyContact = serializers.CharField(
         source="emergency_contact", required=False, allow_blank=True
     )
@@ -118,6 +119,7 @@ class PatientUpdateSerializer(serializers.ModelSerializer):
             "age",
             "gender",
             "bloodGroup",
+            "cbcReport",
             "phone",
             "email",
             "address",

@@ -189,7 +189,7 @@ export default function AddPatient() {
 
       toast.success("Patient added successfully!");
       setTimeout(() => {
-        navigate("/dashboard");
+        navigate("/patients");
       }, 1500);
     } catch (error) {
       console.error("Error adding patient:", error);
@@ -615,7 +615,7 @@ export default function AddPatient() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-8 py-3 bg-green-800 text-white rounded-lg font-semibold hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                  className="px-8 py-3 bg-green-800 text-white rounded-lg font-semibold hover:opacity-90 transition-colors disabled:opacity-50 cursor-pointer flex items-center space-x-2"
                 >
                   {loading ? (
                     <>

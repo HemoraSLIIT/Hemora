@@ -7,6 +7,7 @@ from rest_framework.views import APIView
 from .cbc_analyzer import analyze_cbc_parameters
 from .cbc_extractor import extract_cbc_from_file
 import logging
+from collections import defaultdict
 
 from .models import AnnotatedImage, BloodSmearImage, DiagnosisResult, Patient, PatientFeedback
 
@@ -77,6 +78,7 @@ class PatientRetrieveUpdateAPIView(generics.RetrieveUpdateDestroyAPIView):
 	"""Return, update, or delete a single patient."""
 
 	permission_classes = [IsAuthenticated]
+	parser_classes = [MultiPartParser, FormParser]
 	queryset = Patient.objects.prefetch_related("blood_smear_images").all()
 	http_method_names = ["get", "patch", "delete"]
 
@@ -84,6 +86,35 @@ class PatientRetrieveUpdateAPIView(generics.RetrieveUpdateDestroyAPIView):
 		if self.request.method == "PATCH":
 			return PatientUpdateSerializer
 		return PatientSerializer
+
+	def patch(self, request, *args, **kwargs):
+		patient = self.get_object()
+		serializer = self.get_serializer(patient, data=request.data, partial=True)
+		serializer.is_valid(raise_exception=True)
+		serializer.save()
+
+		blood_smear_files = self._collect_blood_smear_files(request)
+		files_updated = bool(blood_smear_files) or "cbcReport" in request.FILES
+
+		if blood_smear_files:
+			patient.blood_smear_images.all().delete()
+			for smear_file in blood_smear_files:
+				BloodSmearImage.objects.create(patient=patient, image=smear_file)
+
+		if files_updated:
+			DiagnosisResult.objects.filter(patient=patient).delete()
+
+		patient.refresh_from_db()
+		return Response(PatientSerializer(patient).data, status=status.HTTP_200_OK)
+
+	def _collect_blood_smear_files(self, request):
+		blood_smear_files = list(request.FILES.getlist("bloodSmearImages"))
+
+		for key, uploaded_file in request.FILES.items():
+			if key.startswith("bloodSmearImage"):
+				blood_smear_files.append(uploaded_file)
+
+		return blood_smear_files
 
 
 class PatientExtractCBCAPIView(APIView):
@@ -154,11 +185,60 @@ class PatientDiagnoseAPIView(APIView):
 		blood_smears = patient.blood_smear_images.all()
 		if blood_smears.exists():
 			try:
+				from django.core.files.base import ContentFile
 				from ml_inference.registry import ModelRegistry
+				from ml_inference.base_detector import DetectionResult
 				from ml_inference.hybrid_analyzer import compute_hybrid_analysis
 
-				smear = blood_smears.first()
-				image_results = ModelRegistry.run_all(smear.image.path)
+				per_image_results = []
+				aggregated_results = {}
+				detection_totals = defaultdict(lambda: defaultdict(int))
+				probability_totals = defaultdict(float)
+				confidence_max = defaultdict(float)
+				detection_counts = defaultdict(int)
+				best_annotated_images = {}
+
+				for smear_index, smear in enumerate(blood_smears, start=1):
+					smear_results = ModelRegistry.run_all(smear.image.path)
+					if not smear_results:
+						continue
+
+					per_image_results.append((smear_index, smear_results))
+
+					for disease_name, result in smear_results.items():
+						probability_totals[disease_name] += result.probability
+						confidence_max[disease_name] = max(
+							confidence_max[disease_name], result.confidence
+						)
+						detection_counts[disease_name] += 1
+
+						for cell in result.detected_cells or []:
+							detection_totals[disease_name][cell["class"]] += cell.get("count", 0)
+
+						best_image = best_annotated_images.get(disease_name)
+						if (
+							best_image is None
+							or result.probability > best_image["probability"]
+						):
+							best_annotated_images[disease_name] = {
+								"probability": result.probability,
+								"image_bytes": result.annotated_image_bytes,
+							}
+
+				for disease_name, count in detection_counts.items():
+					aggregated_results[disease_name] = DetectionResult(
+						disease_name=disease_name,
+						probability=probability_totals[disease_name] / count,
+						confidence=confidence_max[disease_name],
+						detected_cells=[
+							{"class": cell_class, "count": total_count}
+							for cell_class, total_count in detection_totals[disease_name].items()
+						],
+						annotated_image_bytes=best_annotated_images.get(disease_name, {}).get("image_bytes"),
+						raw_detections=sum(detection_totals[disease_name].values()),
+					)
+
+				image_results = aggregated_results
 
 				if image_results:
 					hybrid_analysis = compute_hybrid_analysis(cbc_analysis, image_results)
@@ -168,6 +248,7 @@ class PatientDiagnoseAPIView(APIView):
 							"probability": round(r.probability, 4),
 							"detectedCells": r.detected_cells,
 							"totalDetections": r.raw_detections,
+							"imagesAnalyzed": detection_counts.get(name, 0),
 						}
 						for name, r in image_results.items()
 					}
@@ -193,17 +274,18 @@ class PatientDiagnoseAPIView(APIView):
 		# Save annotated images from ML detectors
 		if image_results:
 			diagnosis.annotated_images.all().delete()
-			for disease_name, result in image_results.items():
-				if result.annotated_image_bytes:
-					from django.core.files.base import ContentFile
-
-					filename = f"{disease_name.replace(' ', '_').lower()}_annotated.png"
-					AnnotatedImage.objects.create(
-						diagnosis=diagnosis,
-						disease_name=disease_name,
-						image=ContentFile(result.annotated_image_bytes, name=filename),
-						detections_count=result.raw_detections,
-					)
+			for smear_index, smear_results in per_image_results:
+				for disease_name, result in smear_results.items():
+					if result.annotated_image_bytes:
+						filename = (
+							f"{disease_name.replace(' ', '_').lower()}_smear_{smear_index}_annotated.png"
+						)
+						AnnotatedImage.objects.create(
+							diagnosis=diagnosis,
+							disease_name=f"{disease_name} - Smear {smear_index}",
+							image=ContentFile(result.annotated_image_bytes, name=filename),
+							detections_count=result.raw_detections,
+						)
 
 		# Update patient status to In Progress
 		if patient.status == Patient.Status.PENDING:

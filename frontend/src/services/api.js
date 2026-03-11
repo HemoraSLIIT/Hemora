@@ -250,7 +250,15 @@ export const patientAPI = {
 
   // Update single patient details
   updatePatient: async (id, patientData) => {
-    const response = await api.patch(`/patients/${id}/`, patientData);
+    const config =
+      typeof FormData !== 'undefined' && patientData instanceof FormData
+        ? {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          }
+        : undefined;
+    const response = await api.patch(`/patients/${id}/`, patientData, config);
     return response.data;
   },
 
