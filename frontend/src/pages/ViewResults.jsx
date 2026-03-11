@@ -8,6 +8,8 @@ import {
   Activity,
   AlertTriangle,
   CheckCircle,
+  ChevronLeft,
+  ChevronRight,
   ChevronDown,
   ChevronUp,
   Microscope,
@@ -535,6 +537,52 @@ function DiseaseCard({ disease, isHybrid }) {
 
 function AnnotatedImagesDisplay({ images, mediaBase }) {
   const [lightboxImg, setLightboxImg] = useState(null);
+  const [activeIndices, setActiveIndices] = useState({});
+
+  const groupedImages = useMemo(() => {
+    const getDiseaseKey = (name = "") =>
+      String(name).replace(/\s*-\s*Smear\s+\d+/i, "").trim();
+
+    const getSmearNumber = (name = "") => {
+      const match = String(name).match(/Smear\s+(\d+)/i);
+      return match ? Number(match[1]) : Number.MAX_SAFE_INTEGER;
+    };
+
+    const groups = [...images]
+      .sort((a, b) => String(a.diseaseName).localeCompare(String(b.diseaseName)))
+      .reduce((acc, image) => {
+        const key = getDiseaseKey(image.diseaseName);
+        if (!acc[key]) {
+          acc[key] = [];
+        }
+        acc[key].push(image);
+        return acc;
+      }, {});
+
+    return Object.entries(groups).map(([diseaseName, diseaseImages]) => ({
+      diseaseName,
+      images: diseaseImages.sort(
+        (a, b) => getSmearNumber(a.diseaseName) - getSmearNumber(b.diseaseName)
+      ),
+    }));
+  }, [images]);
+
+  useEffect(() => {
+    setActiveIndices((current) => {
+      const next = { ...current };
+
+      groupedImages.forEach((group) => {
+        const currentIndex = next[group.diseaseName] ?? 0;
+        if (currentIndex > group.images.length - 1) {
+          next[group.diseaseName] = 0;
+        }
+      });
+
+      return next;
+    });
+  }, [groupedImages]);
+
+  if (!groupedImages.length) return null;
 
   return (
     <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 mb-8">
@@ -543,26 +591,81 @@ function AnnotatedImagesDisplay({ images, mediaBase }) {
         Annotated Blood Smear Images
       </h3>
       <div className="grid grid-cols-2 gap-4">
-        {images.map((img) => {
-          const imgUrl = img.image?.startsWith("http")
-            ? img.image
-            : `${mediaBase}${img.image}`;
+        {groupedImages.map((group) => {
+          const activeIndex = activeIndices[group.diseaseName] ?? 0;
+          const activeImage = group.images[activeIndex];
+          const activeImageUrl = activeImage.image?.startsWith("http")
+            ? activeImage.image
+            : `${mediaBase}${activeImage.image}`;
+
+          const handleIndexChange = (nextIndex) => {
+            setActiveIndices((current) => ({
+              ...current,
+              [group.diseaseName]: nextIndex,
+            }));
+          };
+
           return (
             <div
-              key={img.id}
-              className="cursor-pointer rounded-lg overflow-hidden border border-gray-200 hover:shadow-md transition"
-              onClick={() => setLightboxImg(imgUrl)}
+              key={group.diseaseName}
+              className="rounded-lg overflow-hidden border border-gray-200 bg-gray-50"
             >
-              <img
-                src={imgUrl}
-                alt={`Annotated - ${img.diseaseName}`}
-                className="w-full h-64 object-contain bg-gray-50"
-              />
-              <div className="px-4 py-2 bg-gray-50 flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-800">{img.diseaseName}</span>
-                <span className="text-xs text-purple-600 font-semibold">
-                  {img.detectionsCount} cells detected
-                </span>
+              <div
+                className="cursor-pointer"
+                onClick={() => setLightboxImg(activeImageUrl)}
+              >
+                <img
+                  src={activeImageUrl}
+                  alt={`Annotated - ${activeImage.diseaseName}`}
+                  className="w-full h-64 object-contain bg-gray-50"
+                />
+              </div>
+              <div className="px-4 py-3 bg-gray-50 border-t border-gray-200">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-medium text-gray-800">
+                      {group.diseaseName}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {activeImage.diseaseName}
+                    </p>
+                  </div>
+                  <span className="text-xs text-purple-600 font-semibold">
+                    {activeImage.detectionsCount} cells detected
+                  </span>
+                </div>
+
+                {group.images.length > 1 && (
+                  <div className="mt-3 flex items-center justify-between gap-3">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleIndexChange(
+                          activeIndex === 0 ? group.images.length - 1 : activeIndex - 1
+                        )
+                      }
+                      className="h-8 w-8 flex items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+                      aria-label={`Show previous ${group.diseaseName} image`}
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </button>
+                    <div className="text-xs text-gray-500 text-center">
+                      Smear {activeIndex + 1} of {group.images.length}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleIndexChange(
+                          activeIndex === group.images.length - 1 ? 0 : activeIndex + 1
+                        )
+                      }
+                      className="h-8 w-8 flex items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+                      aria-label={`Show next ${group.diseaseName} image`}
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           );

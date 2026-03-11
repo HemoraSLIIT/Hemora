@@ -88,6 +88,8 @@ function buildContentStream(title, rows, pageNumber, totalPages, hasLogo) {
   const generatedLabel = `Generated: ${formatDateTime(new Date())}`;
   const generatedWidth = estimateTextWidth(generatedLabel, 10);
   const generatedX = 554 - generatedWidth;
+  const poweredByLabel = "Powered by CodeWave";
+  const poweredByX = 306 - estimateTextWidth(poweredByLabel, 10) / 2;
 
   if (hasLogo) {
     lines.push("q");
@@ -170,6 +172,14 @@ function buildContentStream(title, rows, pageNumber, totalPages, hasLogo) {
   lines.push("/F1 10 Tf");
   lines.push(
     `512 30 Td (${escapePdfText(`Page ${pageNumber} of ${totalPages}`)}) Tj`,
+  );
+  lines.push("ET");
+
+  lines.push("BT");
+  lines.push("/F1 10 Tf");
+  lines.push(`0.45 0.48 0.56 rg`);
+  lines.push(
+    `${poweredByX} 30 Td (${escapePdfText(poweredByLabel)}) Tj`,
   );
   lines.push("ET");
 
