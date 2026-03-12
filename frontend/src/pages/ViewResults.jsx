@@ -268,9 +268,6 @@ export default function ViewResultsPage() {
               <p className="text-sm text-gray-500">
                 Patient: {patientDisplayName} (P-{patient?.id || "-"})
               </p>
-              <p className="text-sm text-gray-500">
-                Current Status: {patient?.status || "-"}
-              </p>
             </div>
             {userRole === "Lab Technician" && (
               <button
