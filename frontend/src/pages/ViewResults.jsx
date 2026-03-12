@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   TestTubeDiagonal,
@@ -69,45 +69,58 @@ export default function ViewResultsPage() {
     return fullName || "Unknown";
   }, [patient]);
 
-  useEffect(() => {
-    const loadPageData = async () => {
-      if (!patientId) {
-        setPageError("Missing patient id in URL.");
-        setLoading(false);
-        return;
-      }
+  const loadPageData = useCallback(async (silent = false) => {
+    if (!patientId) {
+      setPageError("Missing patient id in URL.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const [userData, patientData, feedbackData] = await Promise.all([
+        userAPI.getCurrentUser(),
+        patientAPI.getPatientById(patientId),
+        patientAPI.getPatientFeedback(patientId),
+      ]);
+
+      setUserRole(roleMap[userData.role] || userData.role);
+      setPatient(patientData);
+      setFeedbackEntries(Array.isArray(feedbackData) ? feedbackData : []);
 
       try {
-        const [userData, patientData, feedbackData] = await Promise.all([
-          userAPI.getCurrentUser(),
-          patientAPI.getPatientById(patientId),
-          patientAPI.getPatientFeedback(patientId),
-        ]);
-
-        setUserRole(roleMap[userData.role] || userData.role);
-        setPatient(patientData);
-        setFeedbackEntries(Array.isArray(feedbackData) ? feedbackData : []);
-
-        // Fetch diagnosis result
-        try {
-          const diagnosisData = await patientAPI.getDiagnosisResult(patientId);
-          setDiagnosis(diagnosisData);
-        } catch {
-          setDiagnosis(null);
-        }
-
-        setPageError("");
-      } catch (err) {
-        console.error("Failed to load View Results page data:", err);
-        setPageError("Failed to load patient details.");
-        toast.error("Failed to load patient details");
-      } finally {
-        setLoading(false);
+        const diagnosisData = await patientAPI.getDiagnosisResult(patientId);
+        setDiagnosis(diagnosisData);
+      } catch {
+        setDiagnosis(null);
       }
-    };
 
-    loadPageData();
+      setPageError("");
+    } catch (err) {
+      console.error("Failed to load View Results page data:", err);
+      setPageError("Failed to load patient details.");
+      if (!silent) {
+        toast.error("Failed to load patient details");
+      }
+    } finally {
+      setLoading(false);
+    }
   }, [patientId]);
+
+  useEffect(() => {
+    void loadPageData();
+  }, [loadPageData]);
+
+  useEffect(() => {
+    if (!patientId) {
+      return undefined;
+    }
+
+    const intervalId = window.setInterval(() => {
+      void loadPageData(true);
+    }, 5000);
+
+    return () => window.clearInterval(intervalId);
+  }, [patientId, loadPageData]);
 
   const refreshPatientStatus = async () => {
     if (!patientId) return;
@@ -130,8 +143,8 @@ export default function ViewResultsPage() {
 
     const feedback = await patientAPI.createPatientFeedback(patientId, payload);
     await patientAPI.updatePatientStatus(patientId, "Diagnosed");
-
     setFeedbackEntries((prev) => [feedback, ...prev]);
+    window.dispatchEvent(new Event("notifications:refresh"));
     await refreshPatientStatus();
     return feedback;
   };
@@ -158,6 +171,7 @@ export default function ViewResultsPage() {
       await patientAPI.diagnosePatient(patientId, cbcParams);
       const diagnosisData = await patientAPI.getDiagnosisResult(patientId);
       setDiagnosis(diagnosisData);
+      window.dispatchEvent(new Event("notifications:refresh"));
       await refreshPatientStatus();
       toast.success("Diagnosis completed with the updated data");
     } catch (err) {

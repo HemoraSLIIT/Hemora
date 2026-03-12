@@ -1,3 +1,5 @@
+from django.contrib.auth import get_user_model
+from django.utils import timezone
 from rest_framework import generics, status
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated
@@ -9,18 +11,42 @@ from .cbc_extractor import extract_cbc_from_file
 import logging
 from collections import defaultdict
 
-from .models import AnnotatedImage, BloodSmearImage, DiagnosisResult, Patient, PatientFeedback
+from .models import (
+	AnnotatedImage,
+	BloodSmearImage,
+	DiagnosisResult,
+	Notification,
+	Patient,
+	PatientFeedback,
+)
 
 logger = logging.getLogger(__name__)
 from .serializers import (
 	CBCParametersSerializer,
 	DiagnosisResultSerializer,
+	NotificationSerializer,
 	PatientFeedbackSerializer,
 	PatientCreateSerializer,
 	PatientUpdateSerializer,
 	PatientSerializer,
 	PatientStatusUpdateSerializer,
 )
+
+User = get_user_model()
+
+
+def create_notification(*, recipient, notification_type, title, message, actor=None, patient=None):
+	if not recipient:
+		return None
+
+	return Notification.objects.create(
+		recipient=recipient,
+		actor=actor,
+		patient=patient,
+		notification_type=notification_type,
+		title=title,
+		message=message,
+	)
 
 
 class PatientListCreateAPIView(generics.ListCreateAPIView):
@@ -292,6 +318,18 @@ class PatientDiagnoseAPIView(APIView):
 			patient.status = Patient.Status.IN_PROGRESS
 			patient.save(update_fields=["status", "updated_at"])
 
+		patient_name = f"{patient.first_name} {patient.last_name}".strip() or f"Patient #{patient.id}"
+		doctors = User.objects.filter(role=User.Role.DOCTOR, is_active=True).exclude(id=request.user.id)
+		for doctor in doctors:
+			create_notification(
+				recipient=doctor,
+				actor=request.user,
+				patient=patient,
+				notification_type=Notification.NotificationType.DIAGNOSIS_READY,
+				title="Diagnosis ready for review",
+				message=f"{patient_name} has a completed diagnosis and is ready for doctor review.",
+			)
+
 		return Response(DiagnosisResultSerializer(diagnosis).data, status=status.HTTP_200_OK)
 
 	def get(self, request, pk):
@@ -342,11 +380,95 @@ class PatientFeedbackListCreateAPIView(generics.ListCreateAPIView):
 			patient.status = Patient.Status.DIAGNOSED
 			patient.save(update_fields=["status", "updated_at"])
 
+		patient_name = f"{patient.first_name} {patient.last_name}".strip() or f"Patient #{patient.id}"
+		lab_user = patient.created_by
+		if lab_user and lab_user.id != request.user.id:
+			create_notification(
+				recipient=lab_user,
+				actor=request.user,
+				patient=patient,
+				notification_type=Notification.NotificationType.DOCTOR_FEEDBACK,
+				title="Doctor submitted patient feedback",
+				message=f"Doctor feedback was submitted for {patient_name}: {feedback.decision}.",
+			)
+
 		headers = self.get_success_headers(serializer.data)
 		return Response(
 			PatientFeedbackSerializer(feedback).data,
 			status=status.HTTP_201_CREATED,
 			headers=headers,
+		)
+
+
+class NotificationListAPIView(generics.ListAPIView):
+	permission_classes = [IsAuthenticated]
+	serializer_class = NotificationSerializer
+
+	def get_queryset(self):
+		return Notification.objects.filter(recipient=self.request.user).select_related("actor", "patient")
+
+	def list(self, request, *args, **kwargs):
+		queryset = self.get_queryset()
+		serializer = self.get_serializer(queryset[:50], many=True)
+		return Response(
+			{
+				"count": queryset.count(),
+				"unreadCount": queryset.filter(is_read=False).count(),
+				"results": serializer.data,
+			},
+			status=status.HTTP_200_OK,
+		)
+
+
+class NotificationMarkReadAPIView(APIView):
+	permission_classes = [IsAuthenticated]
+
+	def post(self, request, pk):
+		try:
+			notification = Notification.objects.get(pk=pk, recipient=request.user)
+		except Notification.DoesNotExist:
+			return Response({"detail": "Notification not found."}, status=status.HTTP_404_NOT_FOUND)
+
+		if not notification.is_read:
+			notification.is_read = True
+			notification.read_at = timezone.now()
+			notification.save(update_fields=["is_read", "read_at"])
+
+		return Response(NotificationSerializer(notification).data, status=status.HTTP_200_OK)
+
+
+class NotificationMarkAllReadAPIView(APIView):
+	permission_classes = [IsAuthenticated]
+
+	def post(self, request):
+		Notification.objects.filter(recipient=request.user, is_read=False).update(
+			is_read=True,
+			read_at=timezone.now(),
+		)
+		return Response({"detail": "Notifications marked as read."}, status=status.HTTP_200_OK)
+
+
+class NotificationDeleteAPIView(APIView):
+	permission_classes = [IsAuthenticated]
+
+	def delete(self, request, pk):
+		try:
+			notification = Notification.objects.get(pk=pk, recipient=request.user)
+		except Notification.DoesNotExist:
+			return Response({"detail": "Notification not found."}, status=status.HTTP_404_NOT_FOUND)
+
+		notification.delete()
+		return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class NotificationDeleteAllAPIView(APIView):
+	permission_classes = [IsAuthenticated]
+
+	def delete(self, request):
+		deleted_count, _ = Notification.objects.filter(recipient=request.user).delete()
+		return Response(
+			{"detail": "Notifications deleted.", "deletedCount": deleted_count},
+			status=status.HTTP_200_OK,
 		)
 
 

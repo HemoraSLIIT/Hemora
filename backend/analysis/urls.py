@@ -3,6 +3,11 @@ from django.urls import path
 
 from .views import (
     MLModelStatusAPIView,
+    NotificationDeleteAllAPIView,
+    NotificationDeleteAPIView,
+    NotificationListAPIView,
+    NotificationMarkAllReadAPIView,
+    NotificationMarkReadAPIView,
     PatientDiagnoseAPIView,
     PatientExtractCBCAPIView,
     PatientFeedbackListCreateAPIView,
@@ -20,5 +25,10 @@ urlpatterns = [
     path("patients/<int:pk>/extract-cbc/", PatientExtractCBCAPIView.as_view(), name="patient-extract-cbc"),
     path("patients/<int:pk>/diagnose/", PatientDiagnoseAPIView.as_view(), name="patient-diagnose"),
     path("patients/<int:pk>/feedback/", PatientFeedbackListCreateAPIView.as_view(), name="patient-feedback-list-create"),
+    path("notifications/", NotificationListAPIView.as_view(), name="notification-list"),
+    path("notifications/delete-all/", NotificationDeleteAllAPIView.as_view(), name="notification-delete-all"),
+    path("notifications/mark-all-read/", NotificationMarkAllReadAPIView.as_view(), name="notification-mark-all-read"),
+    path("notifications/<int:pk>/", NotificationDeleteAPIView.as_view(), name="notification-delete"),
+    path("notifications/<int:pk>/read/", NotificationMarkReadAPIView.as_view(), name="notification-mark-read"),
     path("ml-models/status/", MLModelStatusAPIView.as_view(), name="ml-model-status"),
 ]

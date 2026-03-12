@@ -167,3 +167,43 @@ class AnnotatedImage(models.Model):
 
 	def __str__(self):
 		return f"Annotated image for {self.disease_name} (diagnosis #{self.diagnosis_id})"
+
+
+class Notification(models.Model):
+	"""Stores user notifications for diagnosis workflow updates."""
+
+	class NotificationType(models.TextChoices):
+		DIAGNOSIS_READY = "diagnosis_ready", "Diagnosis Ready"
+		DOCTOR_FEEDBACK = "doctor_feedback", "Doctor Feedback"
+
+	recipient = models.ForeignKey(
+		settings.AUTH_USER_MODEL,
+		on_delete=models.CASCADE,
+		related_name="notifications",
+	)
+	actor = models.ForeignKey(
+		settings.AUTH_USER_MODEL,
+		on_delete=models.SET_NULL,
+		blank=True,
+		null=True,
+		related_name="triggered_notifications",
+	)
+	patient = models.ForeignKey(
+		Patient,
+		on_delete=models.CASCADE,
+		blank=True,
+		null=True,
+		related_name="notifications",
+	)
+	notification_type = models.CharField(max_length=30, choices=NotificationType.choices)
+	title = models.CharField(max_length=200)
+	message = models.TextField()
+	is_read = models.BooleanField(default=False)
+	read_at = models.DateTimeField(blank=True, null=True)
+	created_at = models.DateTimeField(auto_now_add=True)
+
+	class Meta:
+		ordering = ["is_read", "-created_at"]
+
+	def __str__(self):
+		return f"Notification #{self.id} for user #{self.recipient_id}"

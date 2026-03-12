@@ -1,7 +1,14 @@
 """Serializers for patient data and file uploads."""
 from rest_framework import serializers
 
-from .models import AnnotatedImage, BloodSmearImage, DiagnosisResult, Patient, PatientFeedback
+from .models import (
+    AnnotatedImage,
+    BloodSmearImage,
+    DiagnosisResult,
+    Notification,
+    Patient,
+    PatientFeedback,
+)
 
 
 class BloodSmearImageSerializer(serializers.ModelSerializer):
@@ -224,3 +231,33 @@ class DiagnosisResultSerializer(serializers.ModelSerializer):
             "createdAt",
             "updatedAt",
         ]
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    patientId = serializers.IntegerField(source="patient_id", read_only=True)
+    actorId = serializers.IntegerField(source="actor_id", read_only=True)
+    actorName = serializers.SerializerMethodField()
+    notificationType = serializers.CharField(source="notification_type", read_only=True)
+    isRead = serializers.BooleanField(source="is_read", read_only=True)
+    readAt = serializers.DateTimeField(source="read_at", read_only=True)
+    createdAt = serializers.DateTimeField(source="created_at", read_only=True)
+
+    class Meta:
+        model = Notification
+        fields = [
+            "id",
+            "patientId",
+            "actorId",
+            "actorName",
+            "notificationType",
+            "title",
+            "message",
+            "isRead",
+            "readAt",
+            "createdAt",
+        ]
+
+    def get_actorName(self, obj):
+        if not obj.actor:
+            return ""
+        return obj.actor.get_full_name()

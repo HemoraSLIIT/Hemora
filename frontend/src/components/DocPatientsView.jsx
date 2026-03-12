@@ -72,6 +72,18 @@ export default function DocPatientsView() {
     loadPatients();
   }, [navigate, fetchPatients]);
 
+  useEffect(() => {
+    if (!authAPI.isAuthenticated()) {
+      return undefined;
+    }
+
+    const intervalId = window.setInterval(() => {
+      void fetchPatients();
+    }, 5000);
+
+    return () => window.clearInterval(intervalId);
+  }, [fetchPatients]);
+
   const filteredPatients = useMemo(() => {
     let filtered = patients;
 

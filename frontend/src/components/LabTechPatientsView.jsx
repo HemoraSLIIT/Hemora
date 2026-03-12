@@ -92,6 +92,18 @@ export default function LabTechPatientsView() {
     loadPatients();
   }, [navigate, fetchPatients]);
 
+  useEffect(() => {
+    if (!authAPI.isAuthenticated()) {
+      return undefined;
+    }
+
+    const intervalId = window.setInterval(() => {
+      void fetchPatients();
+    }, 5000);
+
+    return () => window.clearInterval(intervalId);
+  }, [fetchPatients]);
+
   const filteredPatients = useMemo(() => {
     let filtered = patients;
 
@@ -168,12 +180,12 @@ export default function LabTechPatientsView() {
       await patientAPI.diagnosePatient(pid, cbcParams);
       setPatients((prev) =>
         prev.map((patient) =>
-          patient.id === pid ? { ...patient, status: "Diagnosed" } : patient
+          patient.id === pid ? { ...patient, status: "In Progress" } : patient
         )
       );
       setDiagnosisStatus((prev) => ({ ...prev, [pid]: 'completed' }));
+      window.dispatchEvent(new Event("notifications:refresh"));
       toast.success(`Diagnosis completed for patient ${pid}`);
-      navigate(`/view-results?patientId=${pid}`);
     } catch (err) {
       console.error("Diagnosis failed:", err);
       setDiagnosisStatus((prev) => ({ ...prev, [pid]: 'pending' }));
@@ -407,9 +419,7 @@ export default function LabTechPatientsView() {
                 <tbody>
                   {filteredPatients.map((patient) => {
                     const isCleared = clearedPatientIds.includes(patient.id);
-                    const isDiagnosed =
-                      patient.status === "Diagnosed" ||
-                      diagnosisStatus[patient.id] === "completed";
+                    const isDiagnosed = patient.status === "Diagnosed";
                     const isInProgress = patient.status === "In Progress";
                     const isDiagnosing =
                       diagnosisStatus[patient.id] === "loading";
