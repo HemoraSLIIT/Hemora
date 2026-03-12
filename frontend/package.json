@@ -12,6 +12,9 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.1.17",
     "axios": "^1.13.2",
+    "html-to-image": "^1.11.13",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.2.0",
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.560.0",
     "pdfjs-dist": "^5.4.624",

@@ -161,6 +161,12 @@ function buildContentStream(title, rows, pageNumber, totalPages, hasLogo) {
     currentY -= 18;
   });
 
+  lines.push("0.85 0.87 0.91 RG");
+  lines.push("1 w");
+  lines.push(drawLine(42, 46, 570, 46));
+
+  lines.push("0.35 0.39 0.48 rg");
+
   lines.push("BT");
   lines.push("/F1 10 Tf");
   lines.push(
@@ -177,7 +183,6 @@ function buildContentStream(title, rows, pageNumber, totalPages, hasLogo) {
 
   lines.push("BT");
   lines.push("/F1 10 Tf");
-  lines.push(`0.45 0.48 0.56 rg`);
   lines.push(
     `${poweredByX} 30 Td (${escapePdfText(poweredByLabel)}) Tj`,
   );

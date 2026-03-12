@@ -19,6 +19,7 @@ import ReDiagnoseUploadModal from "../components/ReDiagnoseUploadModal";
 import CBCInputModal from "../components/CBCInputModal";
 import toast from "react-hot-toast";
 import { patientAPI, userAPI } from "../services/api";
+import { downloadDiagnosisReportPdf } from "../utils/diagnosisReportPdfExport";
 
 const LAB_TECH_CLEARED_PATIENTS_KEY = "labTechClearedPatients";
 
@@ -56,6 +57,7 @@ export default function ViewResultsPage() {
   const [feedbackEntries, setFeedbackEntries] = useState([]);
   const [pageError, setPageError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [isReDiagnoseModalOpen, setIsReDiagnoseModalOpen] = useState(false);
   const [isCbcModalOpen, setIsCbcModalOpen] = useState(false);
 
@@ -164,6 +166,46 @@ export default function ViewResultsPage() {
     }
   };
 
+  const handleGenerateReport = async () => {
+    if (!patient || !diagnosis || isGeneratingReport) {
+      if (!diagnosis) {
+        toast.error("No diagnosis results available to export");
+      }
+      return;
+    }
+
+    try {
+      setIsGeneratingReport(true);
+
+      const cbcAnalysis = diagnosis?.cbcAnalysis || {};
+      const analysisMethod = diagnosis?.analysisMethod || "cbc_only";
+      const hybridAnalysis = diagnosis?.hybridAnalysis || [];
+      const diseaseAnalysis =
+        hybridAnalysis.length > 0
+          ? hybridAnalysis
+          : (cbcAnalysis.diseaseAnalysis || []);
+
+      const safeName = patientDisplayName.replace(/[^a-z0-9]+/gi, "_").replace(/^_+|_+$/g, "") || `patient_${patient.id}`;
+
+      await downloadDiagnosisReportPdf(`${safeName}_diagnosis_report.pdf`, "Diagnosis Results", {
+        patient,
+        parameterReport: cbcAnalysis.parameterReport || [],
+        overallStatus: cbcAnalysis.overallStatus || "normal",
+        analysisMethod,
+        diseaseAnalysis,
+        annotatedImages,
+        feedbackEntries,
+      });
+
+      toast.success("Report generated successfully");
+    } catch (err) {
+      console.error("Failed to generate report:", err);
+      toast.error("Failed to generate report");
+    } finally {
+      setIsGeneratingReport(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex h-screen bg-gray-50">
@@ -218,11 +260,12 @@ export default function ViewResultsPage() {
             </div>
             {userRole === "Lab Technician" && (
               <button
-                onClick={() => toast("Report generation coming soon")}
+                onClick={handleGenerateReport}
                 className="flex items-center space-x-2 px-4 py-2 bg-[#0a0e3f] text-white rounded-lg hover:opacity-90 transition-colors cursor-pointer"
+                disabled={isGeneratingReport}
               >
                 <Download className="w-5 h-5" />
-                <span>Generate Report</span>
+                <span>{isGeneratingReport ? "Generating..." : "Generate Report"}</span>
               </button>
             )}
           </div>
@@ -342,7 +385,7 @@ export default function ViewResultsPage() {
   );
 }
 
-function CBCParametersDisplay({ parameters }) {
+function CBCParametersDisplay({ parameters, compactForExport = false }) {
   if (!parameters.length) return null;
 
   return (
@@ -372,7 +415,7 @@ function CBCParametersDisplay({ parameters }) {
                   : "bg-green-100 text-green-800";
 
               return (
-                <tr key={p.parameter} className="border-b border-gray-100 hover:bg-gray-50">
+                <tr key={p.parameter} className={`border-b border-gray-100 ${compactForExport ? "" : "hover:bg-gray-50"}`}>
                   <td className="px-4 py-3 text-sm font-medium text-gray-900 capitalize">
                     {p.parameter.replace(/_/g, " ")}
                   </td>
@@ -394,7 +437,7 @@ function CBCParametersDisplay({ parameters }) {
   );
 }
 
-function DiseaseAnalysisDisplay({ diseases, analysisMethod }) {
+function DiseaseAnalysisDisplay({ diseases, analysisMethod, exportMode = false }) {
   if (!diseases.length) return null;
 
   return (
@@ -403,16 +446,21 @@ function DiseaseAnalysisDisplay({ diseases, analysisMethod }) {
         <Activity className="text-gray-900 w-5 h-5" />
         Disease Suspicion Analysis
       </h3>
-      <div className="grid grid-cols-2 gap-4">
+      <div className={`grid gap-4 ${exportMode ? "grid-cols-2" : "grid-cols-2"}`}>
         {diseases.map((d) => (
-          <DiseaseCard key={d.disease} disease={d} isHybrid={analysisMethod === "hybrid"} />
+          <DiseaseCard
+            key={d.disease}
+            disease={d}
+            isHybrid={analysisMethod === "hybrid"}
+            exportMode={exportMode}
+          />
         ))}
       </div>
     </div>
   );
 }
 
-function DiseaseCard({ disease, isHybrid }) {
+function DiseaseCard({ disease, isHybrid, exportMode = false }) {
   const [expanded, setExpanded] = useState(false);
   const score = disease.hybridScore ?? disease.suspicionScore ?? 0;
 
@@ -439,6 +487,8 @@ function DiseaseCard({ disease, isHybrid }) {
   const imageScore = disease.imageScore ?? null;
   const detectedCells = disease.detectedCells || [];
   const methodLabel = disease.analysisMethod === "hybrid" ? "Hybrid" : "CBC Only";
+
+  const showExpanded = exportMode || expanded;
 
   return (
     <div
@@ -510,14 +560,16 @@ function DiseaseCard({ disease, isHybrid }) {
 
       {disease.matchedCriteria && disease.matchedCriteria.length > 0 && (
         <div>
-          <button
-            onClick={() => setExpanded(!expanded)}
-            className="flex items-center gap-1 text-xs text-gray-600 font-medium hover:text-gray-900 cursor-pointer"
-          >
-            {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-            {expanded ? "Hide" : "Show"} suspicious parameters
-          </button>
-          {expanded && (
+          {!exportMode && (
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="flex items-center gap-1 text-xs text-gray-600 font-medium hover:text-gray-900 cursor-pointer"
+            >
+              {expanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+              {expanded ? "Hide" : "Show"} suspicious parameters
+            </button>
+          )}
+          {showExpanded && (
             <div className="mt-2 space-y-1">
               {disease.matchedCriteria.map((c, i) => (
                 <div key={i} className="flex items-center justify-between text-xs bg-white rounded p-2 border border-gray-200">
@@ -535,7 +587,7 @@ function DiseaseCard({ disease, isHybrid }) {
   );
 }
 
-function AnnotatedImagesDisplay({ images, mediaBase }) {
+function AnnotatedImagesDisplay({ images, mediaBase, exportMode = false }) {
   const [lightboxImg, setLightboxImg] = useState(null);
   const [activeIndices, setActiveIndices] = useState({});
 
@@ -593,10 +645,7 @@ function AnnotatedImagesDisplay({ images, mediaBase }) {
       <div className="grid grid-cols-2 gap-4">
         {groupedImages.map((group) => {
           const activeIndex = activeIndices[group.diseaseName] ?? 0;
-          const activeImage = group.images[activeIndex];
-          const activeImageUrl = activeImage.image?.startsWith("http")
-            ? activeImage.image
-            : `${mediaBase}${activeImage.image}`;
+          const displayImages = exportMode ? group.images : [group.images[activeIndex]];
 
           const handleIndexChange = (nextIndex) => {
             setActiveIndices((current) => ({
@@ -606,73 +655,88 @@ function AnnotatedImagesDisplay({ images, mediaBase }) {
           };
 
           return (
-            <div
-              key={group.diseaseName}
-              className="rounded-lg overflow-hidden border border-gray-200 bg-gray-50"
-            >
-              <div
-                className="cursor-pointer"
-                onClick={() => setLightboxImg(activeImageUrl)}
-              >
-                <img
-                  src={activeImageUrl}
-                  alt={`Annotated - ${activeImage.diseaseName}`}
-                  className="w-full h-64 object-contain bg-gray-50"
-                />
-              </div>
-              <div className="px-4 py-3 bg-gray-50 border-t border-gray-200">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-medium text-gray-800">
-                      {group.diseaseName}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {activeImage.diseaseName}
-                    </p>
-                  </div>
-                  <span className="text-xs text-purple-600 font-semibold">
-                    {activeImage.detectionsCount} cells detected
-                  </span>
-                </div>
+            <div key={group.diseaseName} className="space-y-4">
+              {displayImages.map((image) => {
+                const imageUrl = image.image?.startsWith("http")
+                  ? image.image
+                  : `${mediaBase}${image.image}`;
 
-                {group.images.length > 1 && (
-                  <div className="mt-3 flex items-center justify-between gap-3">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        handleIndexChange(
-                          activeIndex === 0 ? group.images.length - 1 : activeIndex - 1
-                        )
-                      }
-                      className="h-8 w-8 flex items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
-                      aria-label={`Show previous ${group.diseaseName} image`}
+                return (
+                  <div
+                    key={image.id}
+                    className="rounded-lg overflow-hidden border border-gray-200 bg-gray-50"
+                  >
+                    <div
+                      className={exportMode ? "" : "cursor-pointer"}
+                      onClick={() => {
+                        if (!exportMode) {
+                          setLightboxImg(imageUrl);
+                        }
+                      }}
                     >
-                      <ChevronLeft className="h-4 w-4" />
-                    </button>
-                    <div className="text-xs text-gray-500 text-center">
-                      Smear {activeIndex + 1} of {group.images.length}
+                      <img
+                        src={imageUrl}
+                        alt={`Annotated - ${image.diseaseName}`}
+                        crossOrigin="anonymous"
+                        className="w-full h-64 object-contain bg-gray-50"
+                      />
                     </div>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        handleIndexChange(
-                          activeIndex === group.images.length - 1 ? 0 : activeIndex + 1
-                        )
-                      }
-                      className="h-8 w-8 flex items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
-                      aria-label={`Show next ${group.diseaseName} image`}
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
+                    <div className="px-4 py-3 bg-gray-50 border-t border-gray-200">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-sm font-medium text-gray-800">
+                            {group.diseaseName}
+                          </p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            {image.diseaseName}
+                          </p>
+                        </div>
+                        <span className="text-xs text-purple-600 font-semibold">
+                          {image.detectionsCount} cells detected
+                        </span>
+                      </div>
+
+                      {!exportMode && group.images.length > 1 && (
+                        <div className="mt-3 flex items-center justify-between gap-3">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleIndexChange(
+                                activeIndex === 0 ? group.images.length - 1 : activeIndex - 1
+                              )
+                            }
+                            className="h-8 w-8 flex items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+                            aria-label={`Show previous ${group.diseaseName} image`}
+                          >
+                            <ChevronLeft className="h-4 w-4" />
+                          </button>
+                          <div className="text-xs text-gray-500 text-center">
+                            Smear {activeIndex + 1} of {group.images.length}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              handleIndexChange(
+                                activeIndex === group.images.length - 1 ? 0 : activeIndex + 1
+                              )
+                            }
+                            className="h-8 w-8 flex items-center justify-center rounded-full border border-gray-200 bg-white text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+                            aria-label={`Show next ${group.diseaseName} image`}
+                          >
+                            <ChevronRight className="h-4 w-4" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                )}
-              </div>
+                );
+              })}
             </div>
           );
         })}
       </div>
 
-      {lightboxImg && (
+      {!exportMode && lightboxImg && (
         <div
           className="fixed inset-0 bg-black/90 flex items-center justify-center z-[1100]"
           onClick={() => setLightboxImg(null)}
