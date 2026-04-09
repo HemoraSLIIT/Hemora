@@ -250,7 +250,15 @@ export const patientAPI = {
 
   // Update single patient details
   updatePatient: async (id, patientData) => {
-    const response = await api.patch(`/patients/${id}/`, patientData);
+    const config =
+      typeof FormData !== 'undefined' && patientData instanceof FormData
+        ? {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          }
+        : undefined;
+    const response = await api.patch(`/patients/${id}/`, patientData, config);
     return response.data;
   },
 
@@ -293,6 +301,39 @@ export const patientAPI = {
   // Get existing diagnosis result for a patient
   getDiagnosisResult: async (id) => {
     const response = await api.get(`/patients/${id}/diagnose/`);
+    return response.data;
+  },
+
+  // Get ML model availability status
+  getMLModelStatus: async () => {
+    const response = await api.get('/ml-models/status/');
+    return response.data;
+  },
+};
+
+export const notificationAPI = {
+  getNotifications: async () => {
+    const response = await api.get('/notifications/');
+    return response.data;
+  },
+
+  deleteNotification: async (id) => {
+    const response = await api.delete(`/notifications/${id}/`);
+    return response.data;
+  },
+
+  deleteAllNotifications: async () => {
+    const response = await api.delete('/notifications/delete-all/');
+    return response.data;
+  },
+
+  markAsRead: async (id) => {
+    const response = await api.post(`/notifications/${id}/read/`);
+    return response.data;
+  },
+
+  markAllAsRead: async () => {
+    const response = await api.post('/notifications/mark-all-read/');
     return response.data;
   },
 };

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { VscEyeClosed, VscEye } from "react-icons/vsc";
 import toast, { Toaster } from "react-hot-toast";
@@ -16,6 +16,12 @@ export default function Login() {
     password: "",
   });
 
+  useEffect(() => {
+    localStorage.setItem("theme", "light");
+    document.documentElement.classList.remove("theme-dark");
+    window.dispatchEvent(new CustomEvent("themechange", { detail: "light" }));
+  }, []);
+
   const handleLoginChange = (e) => {
     const { name, value } = e.target;
     setlogindata((prev) => ({
@@ -31,6 +37,9 @@ export default function Login() {
 
     try {
       await authAPI.login(logindata.username, logindata.password);
+      localStorage.setItem("theme", "light");
+      document.documentElement.classList.remove("theme-dark");
+      window.dispatchEvent(new CustomEvent("themechange", { detail: "light" }));
 
       toast.success("Login Successful!");
       setLoading(false);

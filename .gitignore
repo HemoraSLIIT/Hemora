@@ -131,9 +131,12 @@ data/models/*
 
 # Model files
 *.pth
+*.pt
 *.pkl
 *.h5
 *.pb
+*.keras
+*.onnx
 
 # Logs
 logs/

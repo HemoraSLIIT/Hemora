@@ -1,6 +1,16 @@
 """Serializers for patient data and file uploads."""
 import os
 from rest_framework import serializers
+
+from .models import (
+    AnnotatedImage,
+    BloodSmearImage,
+    DiagnosisResult,
+    Notification,
+    Patient,
+    PatientFeedback,
+)
+
 from django.conf import settings
 from .models import BloodSmearImage,AnalysisSession, DiagnosisResult, Patient, PatientFeedback
 
@@ -103,6 +113,7 @@ class PatientUpdateSerializer(serializers.ModelSerializer):
     lastName = serializers.CharField(source="last_name", required=False)
     dateOfBirth = serializers.DateField(source="date_of_birth", required=False)
     bloodGroup = serializers.CharField(source="blood_group", required=False, allow_blank=True)
+    cbcReport = serializers.FileField(source="cbc_report", required=False)
     emergencyContact = serializers.CharField(
         source="emergency_contact", required=False, allow_blank=True
     )
@@ -119,6 +130,7 @@ class PatientUpdateSerializer(serializers.ModelSerializer):
             "age",
             "gender",
             "bloodGroup",
+            "cbcReport",
             "phone",
             "email",
             "address",
@@ -276,10 +288,26 @@ class CBCParametersSerializer(serializers.Serializer):
     basophils = serializers.FloatField(required=False, allow_null=True, default=None)
 
 
+class AnnotatedImageSerializer(serializers.ModelSerializer):
+    diseaseName = serializers.CharField(source="disease_name", read_only=True)
+    detectionsCount = serializers.IntegerField(source="detections_count", read_only=True)
+    createdAt = serializers.DateTimeField(source="created_at", read_only=True)
+
+    class Meta:
+        model = AnnotatedImage
+        fields = ["id", "diseaseName", "image", "detectionsCount", "createdAt"]
+
+
 class DiagnosisResultSerializer(serializers.ModelSerializer):
     patientId = serializers.IntegerField(source="patient_id", read_only=True)
     plateletCount = serializers.FloatField(source="platelet_count", allow_null=True)
     cbcAnalysis = serializers.JSONField(source="cbc_analysis", read_only=True)
+    imageAnalysis = serializers.JSONField(source="image_analysis", read_only=True)
+    hybridAnalysis = serializers.JSONField(source="hybrid_analysis", read_only=True)
+    analysisMethod = serializers.CharField(source="analysis_method", read_only=True)
+    annotatedImages = AnnotatedImageSerializer(
+        source="annotated_images", many=True, read_only=True
+    )
     createdAt = serializers.DateTimeField(source="created_at", read_only=True)
     updatedAt = serializers.DateTimeField(source="updated_at", read_only=True)
 
@@ -303,6 +331,40 @@ class DiagnosisResultSerializer(serializers.ModelSerializer):
             "eosinophils",
             "basophils",
             "cbcAnalysis",
+            "imageAnalysis",
+            "hybridAnalysis",
+            "analysisMethod",
+            "annotatedImages",
             "createdAt",
             "updatedAt",
         ]
+
+
+class NotificationSerializer(serializers.ModelSerializer):
+    patientId = serializers.IntegerField(source="patient_id", read_only=True)
+    actorId = serializers.IntegerField(source="actor_id", read_only=True)
+    actorName = serializers.SerializerMethodField()
+    notificationType = serializers.CharField(source="notification_type", read_only=True)
+    isRead = serializers.BooleanField(source="is_read", read_only=True)
+    readAt = serializers.DateTimeField(source="read_at", read_only=True)
+    createdAt = serializers.DateTimeField(source="created_at", read_only=True)
+
+    class Meta:
+        model = Notification
+        fields = [
+            "id",
+            "patientId",
+            "actorId",
+            "actorName",
+            "notificationType",
+            "title",
+            "message",
+            "isRead",
+            "readAt",
+            "createdAt",
+        ]
+
+    def get_actorName(self, obj):
+        if not obj.actor:
+            return ""
+        return obj.actor.get_full_name()
