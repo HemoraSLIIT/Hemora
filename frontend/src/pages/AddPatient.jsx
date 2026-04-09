@@ -106,14 +106,14 @@ export default function AddPatient() {
     const files = Array.from(e.target.files);
     const validFiles = files.filter((file) => {
       const isImage = file.type.startsWith("image/");
-      const isUnder5MB = file.size <= 5 * 1024 * 1024;
+      const isUnder10MB = file.size <= 10 * 1024 * 1024;
       if (!isImage) {
         toast.error(`${file.name} is not an image file`);
       }
-      if (!isUnder5MB) {
-        toast.error(`${file.name} is larger than 5MB`);
+      if (!isUnder10MB) {
+        toast.error(`${file.name} is larger than 10MB`);
       }
-      return isImage && isUnder5MB;
+      return isImage && isUnder10MB;
     });
 
     if (bloodSmearImages.length + validFiles.length > 10) {
@@ -489,7 +489,7 @@ export default function AddPatient() {
                         or drag and drop
                       </p>
                       <p className="text-xs text-gray-400">
-                        PNG, JPG, JPEG (MAX. 5MB per image, up to 10 images)
+                        PNG, JPG, JPEG (MAX. 10MB per image, up to 10 images)
                       </p>
                     </div>
                     <input

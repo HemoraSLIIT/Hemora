@@ -338,4 +338,37 @@ export const notificationAPI = {
   },
 };
 
+// Analysis / ML Diagnosis API functions
+export const analysisAPI = {
+  // Run diagnosis on a blood smear image (multipart/form-data)
+  diagnose: async (imageFile, cbcData = {}) => {
+    const formData = new FormData();
+    formData.append('image', imageFile);
+
+    // Append any CBC fields that have values
+    Object.entries(cbcData).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        formData.append(key, value);
+      }
+    });
+
+    const response = await api.post('/analysis/diagnose/', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  // Get all analysis sessions for the current user
+  getSessions: async (params = {}) => {
+    const response = await api.get('/analysis/sessions/', { params });
+    return response.data?.results || response.data;
+  },
+
+  // Get a single analysis session by ID
+  getSessionById: async (id) => {
+    const response = await api.get(`/analysis/sessions/${id}/`);
+    return response.data;
+  },
+};
+
 export default api;

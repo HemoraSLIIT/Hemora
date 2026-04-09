@@ -8,12 +8,15 @@ from .views import (
     NotificationListAPIView,
     NotificationMarkAllReadAPIView,
     NotificationMarkReadAPIView,
+    DiagnoseView,
     PatientDiagnoseAPIView,
     PatientExtractCBCAPIView,
     PatientFeedbackListCreateAPIView,
     PatientListCreateAPIView,
     PatientRetrieveUpdateAPIView,
     PatientStatusUpdateAPIView,
+    AnalysisSessionListView,
+    AnalysisSessionDetailView
 )
 
 app_name = "analysis"
@@ -31,4 +34,7 @@ urlpatterns = [
     path("notifications/<int:pk>/", NotificationDeleteAPIView.as_view(), name="notification-delete"),
     path("notifications/<int:pk>/read/", NotificationMarkReadAPIView.as_view(), name="notification-mark-read"),
     path("ml-models/status/", MLModelStatusAPIView.as_view(), name="ml-model-status"),
+    path('analysis/diagnose/', DiagnoseView.as_view(), name='diagnose'),
+    path('analysis/sessions/', AnalysisSessionListView.as_view(), name='session-list'),
+    path('analysis/sessions/<int:pk>/', AnalysisSessionDetailView.as_view(), name='session-detail'),
 ]

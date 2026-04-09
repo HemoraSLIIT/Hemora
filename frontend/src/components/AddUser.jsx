@@ -27,44 +27,109 @@ export default function AddUser({ isOpen, onClose, onUserCreated }) {
     }));
   };
 
+  // Map backend field names to user-friendly labels
+  const fieldLabels = {
+    username: "Username",
+    email: "Email",
+    password: "Password",
+    confirmPassword: "Confirm Password",
+    firstName: "First Name",
+    lastName: "Last Name",
+    role: "Role",
+    specialization: "Specialization",
+    hospitalAffiliation: "Hospital Affiliation",
+    medicalLicense: "Medical License",
+    universityAffiliation: "University Affiliation",
+    phoneNumber: "Phone Number",
+    non_field_errors: "Error",
+    detail: "Error",
+  };
+
+  const formatBackendErrors = (errorData) => {
+    return Object.entries(errorData)
+      .map(([field, messages]) => {
+        const label = fieldLabels[field] || field;
+        const msg = Array.isArray(messages) ? messages.join(", ") : messages;
+        return `${label}: ${msg}`;
+      })
+      .join(" | ");
+  };
+
+  const validateForm = () => {
+    // Password length (Django MinimumLengthValidator requires 8)
+    if (formData.password.length < 8) {
+      toast.error("Password must be at least 8 characters long.");
+      return false;
+    }
+
+    // Password match
+    if (formData.password !== formData.confirmPassword) {
+      toast.error("Passwords do not match.");
+      return false;
+    }
+
+    // Password not entirely numeric (Django NumericPasswordValidator)
+    if (/^\d+$/.test(formData.password)) {
+      toast.error("Password cannot be entirely numeric.");
+      return false;
+    }
+
+    // Role-specific required fields
+    if (formData.role === "Doctor") {
+      if (!formData.specialization.trim()) {
+        toast.error("Specialization is required for doctors.");
+        return false;
+      }
+      if (!formData.hospitalAffiliation.trim()) {
+        toast.error("Hospital affiliation is required for doctors.");
+        return false;
+      }
+      if (!formData.medicalLicense.trim()) {
+        toast.error("Medical license number is required for doctors.");
+        return false;
+      }
+    } else if (formData.role === "Lab Technician" || formData.role === "Admin") {
+      if (!formData.hospitalAffiliation.trim()) {
+        toast.error("Hospital/Lab affiliation is required.");
+        return false;
+      }
+    }
+
+    return true;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!validateForm()) return;
+
     setLoading(true);
 
     try {
-      // Build payload with camelCase field names matching backend
       const payload = {
         username: formData.username,
         email: formData.email,
         password: formData.password,
         confirmPassword: formData.confirmPassword,
         role: formData.role,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
       };
 
       // Add role-specific fields
       if (formData.role === "Doctor") {
-        payload.firstName = formData.firstName;
-        payload.lastName = formData.lastName;
         payload.specialization = formData.specialization;
         payload.hospitalAffiliation = formData.hospitalAffiliation;
         payload.medicalLicense = formData.medicalLicense;
-        if (formData.phone) payload.phoneNumber = formData.phone;
-      } else if (formData.role === "Lab Technician") {
-        payload.firstName = formData.firstName;
-        payload.lastName = formData.lastName;
+      } else if (formData.role === "Lab Technician" || formData.role === "Admin") {
         payload.hospitalAffiliation = formData.hospitalAffiliation;
-        if (formData.phone) payload.phoneNumber = formData.phone;
-      } else if (formData.role === "Admin") {
-        payload.firstName = formData.firstName;
-        payload.lastName = formData.lastName;
-        payload.hospitalAffiliation = formData.hospitalAffiliation;
-        if (formData.phone) payload.phoneNumber = formData.phone;
       }
+
+      if (formData.phone) payload.phoneNumber = formData.phone;
 
       await userAPI.createUser(payload);
       toast.success("User created successfully!");
 
-      // Reset form
       setFormData({
         role: "Doctor",
         username: "",
@@ -79,28 +144,18 @@ export default function AddUser({ isOpen, onClose, onUserCreated }) {
         phone: "",
       });
 
-      // Notify parent to refresh user list
       if (onUserCreated) {
         onUserCreated();
       }
 
       onClose();
     } catch (error) {
-      console.error("Failed to create user:", error);
+      console.error("Failed to create user:", error.response?.data);
       const errorData = error.response?.data;
       if (errorData) {
-        // Show specific field errors
-        const errorMessages = Object.entries(errorData)
-          .map(
-            ([field, messages]) =>
-              `${field}: ${
-                Array.isArray(messages) ? messages.join(", ") : messages
-              }`
-          )
-          .join("\n");
-        toast.error(errorMessages || "Failed to create user");
+        toast.error(formatBackendErrors(errorData) || "Failed to create user");
       } else {
-        toast.error("Failed to create user");
+        toast.error("Failed to create user. Check your connection.");
       }
     } finally {
       setLoading(false);

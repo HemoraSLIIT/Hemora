@@ -10,7 +10,7 @@ import {
   Filter,
   Download,
 } from "lucide-react";
-import { authAPI, patientAPI } from "../services/api";
+import api, { authAPI, patientAPI, analysisAPI } from "../services/api";
 import toast from "react-hot-toast";
 import DeleteConfirm from "./DeleteConfirm";
 import ViewPatient from "./ViewPatient";
@@ -166,15 +166,19 @@ export default function LabTechPatientsView() {
     toast.success("Patient deleted successfully");
   };
 
+  const [diagnosisResults, setDiagnosisResults] = useState({}); // { patientId: apiResponse }
+
   const handleDiagnose = (patientId) => {
+    // Open CBC modal — extraction + review happens there.
+    // When user clicks "Run Diagnosis" inside the modal, handleCBCSubmit runs.
     setCbcPatientId(patientId);
     setCbcModalOpen(true);
   };
 
   const handleCBCSubmit = async (cbcParams) => {
+    const patientId = cbcPatientId;
     setCbcModalOpen(false);
-    const pid = cbcPatientId;
-    setDiagnosisStatus((prev) => ({ ...prev, [pid]: 'loading' }));
+    setDiagnosisStatus((prev) => ({ ...prev, [patientId]: 'loading' }));
 
     try {
       await patientAPI.diagnosePatient(pid, cbcParams);
@@ -186,15 +190,54 @@ export default function LabTechPatientsView() {
       setDiagnosisStatus((prev) => ({ ...prev, [pid]: 'completed' }));
       window.dispatchEvent(new Event("notifications:refresh"));
       toast.success(`Diagnosis completed for patient ${pid}`);
+      // 1. Run rule-based CBC analysis (saves DiagnosisResult on backend)
+      await patientAPI.diagnosePatient(patientId, cbcParams);
+
+      // 2. Also run YOLO image inference with the same CBC params
+      const patient = await patientAPI.getPatientById(patientId);
+      const images = patient.bloodSmearImages || [];
+
+      if (images.length > 0) {
+        const imageUrl = images[0].image;
+        const imageResponse = await api.get(imageUrl, { responseType: 'blob' });
+        const imageBlob = imageResponse.data;
+        const fileName = imageUrl.split('/').pop() || 'blood_smear.jpg';
+        const imageFile = new File([imageBlob], fileName, { type: imageBlob.type });
+
+        try {
+          const mlResult = await analysisAPI.diagnose(imageFile, cbcParams);
+          console.log('[ML INFERENCE RESULT]', JSON.stringify(mlResult, null, 2));
+          setDiagnosisResults((prev) => ({ ...prev, [patientId]: mlResult }));
+        } catch (mlErr) {
+          console.warn('ML image inference failed (CBC analysis still saved):', mlErr);
+        }
+      }
+
+      setDiagnosisStatus((prev) => ({ ...prev, [patientId]: 'completed' }));
+
+      // Update patient status to In Progress if still Pending
+      const currentPatient = patients.find((p) => p.id === patientId);
+      if (currentPatient?.status === 'Pending') {
+        await patientAPI.updatePatientStatus(patientId, 'In Progress');
+        setPatients((prev) =>
+          prev.map((p) => (p.id === patientId ? { ...p, status: 'In Progress' } : p))
+        );
+      }
+
+      toast.success('Diagnosis completed');
     } catch (err) {
-      console.error("Diagnosis failed:", err);
-      setDiagnosisStatus((prev) => ({ ...prev, [pid]: 'pending' }));
-      toast.error(err?.response?.data?.detail || "Diagnosis failed");
+      console.error('Diagnosis failed:', err);
+      const detail = err.response?.data?.detail || err.response?.data?.error || 'Diagnosis failed';
+      toast.error(detail);
+      setDiagnosisStatus((prev) => ({ ...prev, [patientId]: undefined }));
     }
   };
 
   const handleViewResults = (patientId) => {
-    navigate(`/view-results?patientId=${patientId}`);
+    const sessionId = diagnosisResults[patientId]?.session_id;
+    const params = new URLSearchParams({ patientId });
+    if (sessionId) params.set('sessionId', sessionId);
+    navigate(`/view-results?${params.toString()}`);
   };
 
   const handleExportData = async () => {
