@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { VscEyeClosed, VscEye } from "react-icons/vsc";
 import toast, { Toaster } from "react-hot-toast";
@@ -16,6 +16,12 @@ export default function Login() {
     password: "",
   });
 
+  useEffect(() => {
+    localStorage.setItem("theme", "light");
+    document.documentElement.classList.remove("theme-dark");
+    window.dispatchEvent(new CustomEvent("themechange", { detail: "light" }));
+  }, []);
+
   const handleLoginChange = (e) => {
     const { name, value } = e.target;
     setlogindata((prev) => ({
@@ -31,6 +37,9 @@ export default function Login() {
 
     try {
       await authAPI.login(logindata.username, logindata.password);
+      localStorage.setItem("theme", "light");
+      document.documentElement.classList.remove("theme-dark");
+      window.dispatchEvent(new CustomEvent("themechange", { detail: "light" }));
 
       toast.success("Login Successful!");
       setLoading(false);
@@ -123,12 +132,12 @@ export default function Login() {
             </p>
 
             {/* SIGN UP LINK */}
-            <p className="text-center text-gray-700">
+            {/* <p className="text-center text-gray-700">
               New user?
               <a href="/" className="text-[#0a0e3f] font-semibold ml-1">
                 create a account
               </a>
-            </p>
+            </p> */}
           </form>
         </div>
       </div>

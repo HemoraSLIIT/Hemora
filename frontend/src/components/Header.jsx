@@ -5,6 +5,7 @@ import { Bell, Search } from "lucide-react";
 
 export default function Header() {
   const [user, setUser] = useState(null);
+  const [theme, setTheme] = useState(localStorage.getItem("theme") || "light");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -33,6 +34,22 @@ export default function Header() {
     fetchUserData();
   }, [navigate]);
 
+  useEffect(() => {
+    const syncTheme = () => {
+      setTheme(localStorage.getItem("theme") || "light");
+    };
+
+    window.addEventListener("storage", syncTheme);
+    window.addEventListener("themechange", syncTheme);
+    return () => {
+      window.removeEventListener("storage", syncTheme);
+      window.removeEventListener("themechange", syncTheme);
+    };
+  }, []);
+
+  const avatarBackground = theme === "dark" ? "e5e7eb" : "0a0e3f";
+  const avatarColor = theme === "dark" ? "111827" : "fff";
+
   return (
     <div className="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-end">
       <div className="flex items-center space-x-4">
@@ -47,7 +64,7 @@ export default function Header() {
         {/* <Bell className="text-gray-600 w-6 h-6 cursor-pointer hover:text-blue-600" /> */}
         <div className="relative">
           <img
-            src={`https://ui-avatars.com/api/?name=${user?.username?.[0]}&background=0a0e3f&color=fff`}
+            src={`https://ui-avatars.com/api/?name=${user?.username?.[0]}&background=${avatarBackground}&color=${avatarColor}`}
             alt="Profile"
             title="View Profile"
             className="w-10 h-10 rounded-full cursor-pointer"

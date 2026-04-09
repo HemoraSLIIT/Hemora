@@ -1,7 +1,14 @@
 import axios from 'axios';
 
-// API Base URL - Use environment variable or fallback to localhost
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api';
+// API base URL: accept only absolute http(s) URLs from env, otherwise fallback.
+const configuredApiBaseUrl = (import.meta.env.VITE_API_BASE_URL || '').trim();
+const fallbackApiBaseUrl = `http://${window.location.hostname || 'localhost'}:8000/api`;
+const API_BASE_URL = /^https?:\/\//i.test(configuredApiBaseUrl)
+  ? configuredApiBaseUrl.replace(/\/+$/, '')
+  : fallbackApiBaseUrl;
+
+const LOCALHOST_API_BASE_URL = 'http://localhost:8000/api';
+const LOOPBACK_API_BASE_URL = 'http://127.0.0.1:8000/api';
 
 // Create axios instance
 const api = axios.create({
@@ -32,6 +39,23 @@ api.interceptors.response.use(
   },
   async (error) => {
     const originalRequest = error.config;
+
+    // Recover from local dev networking edge cases where localhost fails.
+    if (
+      error.code === 'ERR_NETWORK' &&
+      originalRequest &&
+      !originalRequest._networkRetry
+    ) {
+      originalRequest._networkRetry = true;
+
+      if ((originalRequest.baseURL || API_BASE_URL).includes('localhost:8000')) {
+        originalRequest.baseURL = LOOPBACK_API_BASE_URL;
+      } else if ((originalRequest.baseURL || API_BASE_URL).includes('127.0.0.1:8000')) {
+        originalRequest.baseURL = LOCALHOST_API_BASE_URL;
+      }
+
+      return api(originalRequest);
+    }
 
     // If 401 error and we haven't tried to refresh yet
     if (error.response?.status === 401 && !originalRequest._retry) {
@@ -100,6 +124,7 @@ export const authAPI = {
   logout: () => {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user_role');
   },
 
   // Check if user is authenticated
@@ -131,6 +156,9 @@ export const userAPI = {
   // Get current user
   getCurrentUser: async () => {
     const response = await api.get('/users/me/');
+    if (response.data?.role) {
+      localStorage.setItem('user_role', response.data.role);
+    }
     return response.data;
   },
 
@@ -191,6 +219,121 @@ export const userAPI = {
   // Deactivate user (admin only)
   deactivateUser: async (id) => {
     const response = await api.post(`/users/${id}/deactivate/`);
+    return response.data;
+  },
+};
+
+// Patient API functions
+export const patientAPI = {
+  // Create a patient with CBC report and blood smear images
+  createPatient: async (formData) => {
+    const response = await api.post('/patients/', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    return response.data;
+  },
+
+  // Get all patients
+  getPatients: async (params = {}) => {
+    const response = await api.get('/patients/', { params });
+    return response.data?.results || response.data;
+  },
+
+  // Get single patient details
+  getPatientById: async (id) => {
+    const response = await api.get(`/patients/${id}/`);
+    return response.data;
+  },
+
+  // Update single patient details
+  updatePatient: async (id, patientData) => {
+    const config =
+      typeof FormData !== 'undefined' && patientData instanceof FormData
+        ? {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          }
+        : undefined;
+    const response = await api.patch(`/patients/${id}/`, patientData, config);
+    return response.data;
+  },
+
+  // Delete single patient
+  deletePatient: async (id) => {
+    const response = await api.delete(`/patients/${id}/`);
+    return response.data;
+  },
+
+  // Update patient status
+  updatePatientStatus: async (id, status) => {
+    const response = await api.patch(`/patients/${id}/status/`, { status });
+    return response.data;
+  },
+
+  // Get feedback entries for a patient (latest first)
+  getPatientFeedback: async (id) => {
+    const response = await api.get(`/patients/${id}/feedback/`);
+    return response.data?.results || response.data;
+  },
+
+  // Create feedback entry for a patient
+  createPatientFeedback: async (id, payload) => {
+    const response = await api.post(`/patients/${id}/feedback/`, payload);
+    return response.data;
+  },
+
+  // Extract CBC parameters from uploaded report
+  extractCBC: async (id) => {
+    const response = await api.get(`/patients/${id}/extract-cbc/`);
+    return response.data;
+  },
+
+  // Run CBC diagnosis for a patient
+  diagnosePatient: async (id, cbcParams) => {
+    const response = await api.post(`/patients/${id}/diagnose/`, cbcParams);
+    return response.data;
+  },
+
+  // Get existing diagnosis result for a patient
+  getDiagnosisResult: async (id) => {
+    const response = await api.get(`/patients/${id}/diagnose/`);
+    return response.data;
+  },
+
+  // Get ML model availability status
+  getMLModelStatus: async () => {
+    const response = await api.get('/ml-models/status/');
+    return response.data;
+  },
+};
+
+export const notificationAPI = {
+  getNotifications: async () => {
+    const response = await api.get('/notifications/');
+    return response.data;
+  },
+
+  deleteNotification: async (id) => {
+    const response = await api.delete(`/notifications/${id}/`);
+    return response.data;
+  },
+
+  deleteAllNotifications: async () => {
+    const response = await api.delete('/notifications/delete-all/');
+    return response.data;
+  },
+
+  markAsRead: async (id) => {
+    const response = await api.post(`/notifications/${id}/read/`);
+    return response.data;
+  },
+
+  markAllAsRead: async () => {
+    const response = await api.post('/notifications/mark-all-read/');
     return response.data;
   },
 };

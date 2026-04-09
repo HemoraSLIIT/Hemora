@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import toast, { Toaster } from "react-hot-toast";
 import SideBar from "../components/SideBar";
+import { patientAPI } from "../services/api";
 
 export default function AddPatient() {
   const navigate = useNavigate();
@@ -184,11 +185,11 @@ export default function AddPatient() {
         formData.append("cbcReport", cbcReport.file);
       }
 
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      await patientAPI.createPatient(formData);
 
       toast.success("Patient added successfully!");
       setTimeout(() => {
-        navigate("/dashboard");
+        navigate("/patients");
       }, 1500);
     } catch (error) {
       console.error("Error adding patient:", error);
@@ -232,7 +233,7 @@ export default function AddPatient() {
         <div className="bg-white border-b border-gray-200 px-8 py-6">
           <div className="max-w-4xl mx-auto">
             <div className="flex items-center mb-6 mx-12">
-              {[1, 2, 3].map((step, index) => (
+              {[1, 2, 3].map((step) => (
                 <React.Fragment key={step}>
                   <div className="flex flex-col items-center">
                     <div
@@ -614,7 +615,7 @@ export default function AddPatient() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-8 py-3 bg-green-800 text-white rounded-lg font-semibold hover:opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                  className="px-8 py-3 bg-green-800 text-white rounded-lg font-semibold hover:opacity-90 transition-colors disabled:opacity-50 cursor-pointer flex items-center space-x-2"
                 >
                   {loading ? (
                     <>

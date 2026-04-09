@@ -196,6 +196,9 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
 ]
 
+# Tesseract OCR path (for CBC report extraction)
+TESSERACT_CMD = os.getenv('TESSERACT_CMD', r'C:\Program Files\Tesseract-OCR\tesseract.exe')
+
 # Logging configuration for Docker
 LOGGING = {
     'version': 1,
