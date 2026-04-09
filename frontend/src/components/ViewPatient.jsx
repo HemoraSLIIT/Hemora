@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   X,
   User,
@@ -17,48 +17,14 @@ import {
   Microscope,
   ExternalLink,
 } from "lucide-react";
-import { getDocument, GlobalWorkerOptions } from "pdfjs-dist";
-import pdfWorker from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 
-GlobalWorkerOptions.workerSrc = pdfWorker;
-
-const configuredApiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "").trim();
-const fallbackApiBaseUrl = `http://${window.location.hostname || "localhost"}:8000/api`;
-const apiBaseUrl = /^https?:\/\//i.test(configuredApiBaseUrl)
-  ? configuredApiBaseUrl.replace(/\/+$/, "")
-  : fallbackApiBaseUrl;
-const MEDIA_BASE = apiBaseUrl.replace(/\/api$/, "");
-
-function resolveMediaUrl(fileUrl) {
-  if (!fileUrl) return null;
-  if (/^https?:\/\//i.test(fileUrl)) return fileUrl;
-
-  try {
-    return new URL(fileUrl, `${MEDIA_BASE}/`).toString();
-  } catch {
-    return null;
-  }
-}
-
-function isPdfFile(fileUrl) {
-  if (!fileUrl) return false;
-
-  try {
-    return new URL(fileUrl).pathname.toLowerCase().endsWith(".pdf");
-  } catch {
-    return fileUrl.toLowerCase().endsWith(".pdf");
-  }
-}
+const MEDIA_BASE = `http://${window.location.hostname || "localhost"}:8000`;
 
 export default function ViewPatient({ isOpen, onClose, patient }) {
   const [activeTab, setActiveTab] = useState("details");
   const [lightboxImg, setLightboxImg] = useState(null);
-  const [cbcPreviewImage, setCbcPreviewImage] = useState(null);
-  const [cbcPreviewLoading, setCbcPreviewLoading] = useState(false);
-  const [cbcPreviewError, setCbcPreviewError] = useState(false);
-  const bloodSmearImages = patient?.bloodSmearImages || [];
-  const cbcReportUrl = resolveMediaUrl(patient?.cbcReport);
-  const isPdf = isPdfFile(cbcReportUrl);
+
+  if (!isOpen || !patient) return null;
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -79,71 +45,13 @@ export default function ViewPatient({ isOpen, onClose, patient }) {
     { id: "smear", label: "Blood Smear", icon: Microscope },
   ];
 
-  useEffect(() => {
-    let cancelled = false;
+  const cbcReportUrl = patient.cbcReport
+    ? (patient.cbcReport.startsWith("http") ? patient.cbcReport : `${MEDIA_BASE}${patient.cbcReport}`)
+    : null;
 
-    if (!isOpen || !isPdf || !cbcReportUrl) {
-      setCbcPreviewImage(null);
-      setCbcPreviewLoading(false);
-      setCbcPreviewError(false);
-      return undefined;
-    }
+  const isPdf = cbcReportUrl?.toLowerCase().endsWith(".pdf");
 
-    const renderPdfSnapshot = async () => {
-      try {
-        setCbcPreviewLoading(true);
-        setCbcPreviewError(false);
-        setCbcPreviewImage(null);
-
-        const response = await fetch(cbcReportUrl);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch PDF: ${response.status}`);
-        }
-
-        const pdfData = await response.arrayBuffer();
-        const pdf = await getDocument({ data: pdfData }).promise;
-        const page = await pdf.getPage(1);
-        const viewport = page.getViewport({ scale: 1.5 });
-        const canvas = document.createElement("canvas");
-        const context = canvas.getContext("2d");
-
-        if (!context) {
-          throw new Error("Canvas context unavailable");
-        }
-
-        canvas.width = viewport.width;
-        canvas.height = viewport.height;
-
-        await page.render({
-          canvasContext: context,
-          viewport,
-        }).promise;
-
-        if (cancelled) {
-          return;
-        }
-
-        setCbcPreviewImage(canvas.toDataURL("image/png"));
-      } catch (error) {
-        if (!cancelled) {
-          console.error("Failed to render CBC PDF preview:", error);
-          setCbcPreviewError(true);
-        }
-      } finally {
-        if (!cancelled) {
-          setCbcPreviewLoading(false);
-        }
-      }
-    };
-
-    renderPdfSnapshot();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [cbcReportUrl, isOpen, isPdf]);
-
-  if (!isOpen || !patient) return null;
+  const bloodSmearImages = patient.bloodSmearImages || [];
 
   return (
     <div
@@ -279,33 +187,16 @@ export default function ViewPatient({ isOpen, onClose, patient }) {
                   </a>
                 </div>
                 {isPdf ? (
-                  <div className="w-full min-h-[60vh] rounded-lg border border-gray-200 bg-gray-50 p-4 flex items-center justify-center">
-                    {cbcPreviewLoading ? (
-                      <p className="text-sm text-gray-500">Loading PDF snapshot...</p>
-                    ) : cbcPreviewImage ? (
-                      <img
-                        src={cbcPreviewImage}
-                        alt="CBC Report preview"
-                        className="w-full max-h-[60vh] object-contain rounded-lg cursor-pointer"
-                        onClick={() => setLightboxImg(cbcPreviewImage)}
-                      />
-                    ) : (
-                      <div className="text-center">
-                        <FileText className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                        <p className="text-gray-500">
-                          {cbcPreviewError
-                            ? "Could not generate a PDF snapshot for this report."
-                            : "No PDF preview available."}
-                        </p>
-                      </div>
-                    )}
-                  </div>
+                  <iframe
+                    src={cbcReportUrl}
+                    className="w-full h-[60vh] rounded-lg border border-gray-200"
+                    title="CBC Report"
+                  />
                 ) : (
                   <img
                     src={cbcReportUrl}
                     alt="CBC Report"
-                    className="w-full max-h-[60vh] object-contain rounded-lg border border-gray-200 cursor-pointer"
-                    onClick={() => setLightboxImg(cbcReportUrl)}
+                    className="w-full max-h-[60vh] object-contain rounded-lg border border-gray-200"
                   />
                 )}
               </div>
@@ -327,7 +218,9 @@ export default function ViewPatient({ isOpen, onClose, patient }) {
                 </h4>
                 <div className="grid grid-cols-3 gap-4">
                   {bloodSmearImages.map((img) => {
-                    const imgUrl = resolveMediaUrl(img.image);
+                    const imgUrl = img.image?.startsWith("http")
+                      ? img.image
+                      : `${MEDIA_BASE}${img.image}`;
                     return (
                       <div
                         key={img.id}

@@ -4,8 +4,6 @@ import { Users, Search, Eye, Filter, Download } from "lucide-react";
 import { authAPI, patientAPI } from "../services/api";
 import toast from "react-hot-toast";
 import ViewPatient from "./ViewPatient";
-import { downloadPatientsPdf } from "../utils/patientPdfExport";
-import { getTopDiseaseLabel } from "../utils/diagnosisSummary";
 
 const VISIBLE_STATUSES = ["In Progress", "Diagnosed"];
 
@@ -15,7 +13,7 @@ export default function DocPatientsView() {
   const [patients, setPatients] = useState([]);
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState("All Status");
+  const [filterStatus, setFilterStatus] = useState("All Visible");
   const [isViewPatientOpen, setIsViewPatientOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const navigate = useNavigate();
@@ -72,18 +70,6 @@ export default function DocPatientsView() {
     loadPatients();
   }, [navigate, fetchPatients]);
 
-  useEffect(() => {
-    if (!authAPI.isAuthenticated()) {
-      return undefined;
-    }
-
-    const intervalId = window.setInterval(() => {
-      void fetchPatients();
-    }, 5000);
-
-    return () => window.clearInterval(intervalId);
-  }, [fetchPatients]);
-
   const filteredPatients = useMemo(() => {
     let filtered = patients;
 
@@ -96,7 +82,7 @@ export default function DocPatientsView() {
       );
     }
 
-    if (filterStatus !== "All Status") {
+    if (filterStatus !== "All Visible") {
       filtered = filtered.filter((patient) => patient.status === filterStatus);
     }
 
@@ -124,28 +110,44 @@ export default function DocPatientsView() {
     navigate(`/view-results?patientId=${patientId}`);
   };
 
-  const handleExportData = async () => {
-    try {
-      const exportRows = await Promise.all(
-        filteredPatients.map(async (patient) => {
-          try {
-            const diagnosis = await patientAPI.getDiagnosisResult(patient.id);
-            return {
-              ...patient,
-              disease: getTopDiseaseLabel(diagnosis, patient.status, patient.disease),
-            };
-          } catch {
-            return patient;
-          }
-        })
-      );
+  const handleExportData = () => {
+    // Convert patients data to CSV
+    const headers = [
+      "ID",
+      "Name",
+      "Age",
+      "Gender",
+      "Blood Group",
+      "Status",
+      "Disease",
+      "Phone",
+      "Date Added",
+    ];
+    const csvContent = [
+      headers.join(","),
+      ...filteredPatients.map((p) =>
+        [
+          p.id,
+          p.name,
+          p.age,
+          p.gender,
+          p.bloodGroup,
+          p.status,
+          p.disease,
+          p.phone,
+          p.dateAdded,
+        ].join(",")
+      ),
+    ].join("\n");
 
-      downloadPatientsPdf("patients_export.pdf", "Patients List", exportRows);
-      toast.success("PDF exported successfully");
-    } catch (err) {
-      console.error("Failed to export PDF:", err);
-      toast.error("Failed to export PDF");
-    }
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "patients_export.csv";
+    a.click();
+    window.URL.revokeObjectURL(url);
+    toast.success("Data exported successfully");
   };
 
   const getStatusColor = (status) => {
@@ -207,7 +209,7 @@ export default function DocPatientsView() {
                 onChange={(e) => setFilterStatus(e.target.value)}
                 className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0a0e3f] focus:border-transparent cursor-pointer"
               >
-                <option value="All Status">All Status</option>
+                <option value="All Visible">All Visible</option>
                 <option value="In Progress">In Progress</option>
                 <option value="Diagnosed">Diagnosed</option>
               </select>
@@ -289,7 +291,7 @@ export default function DocPatientsView() {
                       Actions
                     </th>
                     <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
-                      {/* Doctor Actions */}
+                      Doctor Actions
                     </th>
                   </tr>
                 </thead>
@@ -340,13 +342,9 @@ export default function DocPatientsView() {
 
                           <button
                             onClick={() => handleViewResults(patient.id)}
-                            className={`px-6 py-2 rounded-lg transition-colors text-sm font-medium cursor-pointer whitespace-nowrap min-w-[130px] ${
-                              patient.status === "In Progress"
-                                ? "bg-gray-500 text-white hover:opacity-90"
-                                : "bg-[#b91c1c] text-white hover:opacity-90"
-                            }`}
+                            className="px-4 py-2 bg-orange-700 text-white rounded-lg hover:opacity-90 transition-colors text-sm font-medium cursor-pointer whitespace-nowrap"
                           >
-                            {patient.status === "In Progress" ? "Review" : "View Results"}
+                            View Results
                           </button>
 
                           {/* <button className="px-4 py-2 bg-[#32C527] text-white rounded-lg hover:opacity-90 transition-colors text-sm font-medium cursor-pointer">

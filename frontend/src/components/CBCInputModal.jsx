@@ -109,20 +109,21 @@ export default function CBCInputModal({ isOpen, onClose, onSubmit, patientId }) 
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="mb-6">
-          <div className="space-y-1">
-              <h2 className="text-2xl font-semibold text-gray-900 flex items-center gap-2">
-                <FlaskConical className="text-[#0a0e3f] w-6 h-6" />
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center gap-2">
+            <FlaskConical className="text-[#0a0e3f] w-6 h-6" />
+            <div>
+              <h2 className="text-xl font-semibold text-gray-900">
                 CBC Report Extraction
               </h2>
               <p className="text-sm text-gray-500">
                 Patient ID: {patientId} — Parameters extracted from uploaded CBC report
               </p>
+            </div>
           </div>
           <button
-            className="absolute top-4 right-4 p-1 bg-none border-none cursor-pointer text-gray-400 hover:text-gray-700 transition-colors duration-200 rounded hover:scale-110"
+            className="p-1 text-gray-400 hover:text-gray-700 transition-colors rounded hover:scale-110 cursor-pointer"
             onClick={onClose}
-            aria-label="Close"
           >
             <X size={24} />
           </button>
@@ -155,8 +156,7 @@ export default function CBCInputModal({ isOpen, onClose, onSubmit, patientId }) 
             <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
             <div>
               <p className="text-sm text-green-800 font-medium">
-                {/* {filledCount} parameters extracted from {extractionSource} report. Review and click Run Diagnosis. */}
-                {filledCount} parameters extracted. Review and click Run Diagnosis.
+                {filledCount} parameters extracted from {extractionSource} report. Review and click Run Diagnosis.
               </p>
               {filledCount < CBC_FIELDS.length && (
                 <p className="text-xs text-green-600 mt-1">

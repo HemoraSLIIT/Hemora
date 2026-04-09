@@ -16,7 +16,6 @@ import AddUser from "./AddUser";
 import DeleteConfirm from "./DeleteConfirm";
 import ViewUser from "./ViewUser";
 import EditUser from "./EditUser";
-import { downloadUsersPdf } from "../utils/userPdfExport";
 
 export default function UserView() {
   const [user, setUser] = useState(null);
@@ -144,22 +143,24 @@ export default function UserView() {
     fetchUsers();
   };
 
-  const handleExportData = async () => {
-    try {
-      const exportRows = filteredUsers.map((entry) => ({
-        id: entry.id,
-        name: entry.fullName || entry.username || entry.name || "Unknown",
-        email: entry.email || "-",
-        role: entry.role || "-",
-        dateAdded: entry.createdAt || entry.dateJoined || "-",
-      }));
+  const handleExportData = () => {
+    // Convert users data to CSV
+    const headers = ["ID", "Name", "Email", "Role", "Date Added"];
+    const csvContent = [
+      headers.join(","),
+      ...filteredUsers.map((u) =>
+        [u.id, u.fullName || u.username, u.email, u.role, u.createdAt].join(",")
+      ),
+    ].join("\n");
 
-      await downloadUsersPdf("users_export.pdf", "Users List", exportRows);
-      toast.success("PDF exported successfully");
-    } catch (err) {
-      console.error("Failed to export PDF:", err);
-      toast.error("Failed to export PDF");
-    }
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "users_export.csv";
+    a.click();
+    window.URL.revokeObjectURL(url);
+    toast.success("Data exported successfully");
   };
 
   const getRoleColor = (role) => {
