@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Users, Activity, Database, ClipboardMinus } from "lucide-react";
 import { authAPI, userAPI } from "../services/api";
+import toast from "react-hot-toast";
 import AddUser from "../components/AddUser";
+import { downloadUsersPdf } from "../utils/userPdfExport";
 
 export default function AdminDashBody() {
   const [user, setUser] = useState(null);
@@ -56,6 +58,24 @@ export default function AdminDashBody() {
 
   const handleViewUsers = () => {
     navigate("/users");
+  };
+
+  const handleGenerateReports = async () => {
+    try {
+      const exportRows = users.map((entry) => ({
+        id: entry.id,
+        name: entry.fullName || entry.username || entry.name || "Unknown",
+        email: entry.email || "-",
+        role: entry.role || "-",
+        dateAdded: entry.createdAt || entry.dateJoined || "-",
+      }));
+
+      await downloadUsersPdf("users_report.pdf", "Users Report", exportRows);
+      toast.success("User PDF exported successfully");
+    } catch (err) {
+      console.error("Failed to generate user report:", err);
+      toast.error("Failed to generate user report");
+    }
   };
 
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
@@ -153,7 +173,10 @@ export default function AdminDashBody() {
               <Users className="w-5 h-5" />
               <span>View All Users</span>
             </button>
-            <button className="cursor-pointer w-full py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition duration-300 flex items-center justify-center space-x-2">
+            <button
+              onClick={handleGenerateReports}
+              className="cursor-pointer w-full py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition duration-300 flex items-center justify-center space-x-2"
+            >
               <ClipboardMinus className="w-5 h-5" />
               <span>Generate Reports</span>
             </button>
@@ -182,7 +205,7 @@ export default function AdminDashBody() {
           <p className="text-2xl font-bold text-green-600">Operational</p>
           <p className="text-xs text-gray-500 mt-2">All systems running</p>
           {/* <p className="text-2xl font-bold text-red-600">Offline</p>
-          <p className="text-xs text-gray-500 mt-2">All systems down</p> */}
+          <p className="text-xs text-gray-500 mt-2">All systems down</p> */}     
         </div>
       </div>
     </div>
