@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { authAPI } from "../services/api";
 import { Toaster } from "react-hot-toast";
 import SideBar from "../components/SideBar";
@@ -7,12 +7,14 @@ import LabTechPatientsView from "../components/LabTechPatientsView";
 import DocPatientsView from "../components/DocPatientsView";
 
 export default function Patients() {
+  const [searchParams] = useSearchParams();
   const [userRole, setUserRole] = useState(
     localStorage.getItem("user_role") || "Lab Technician"
   );
   const [loading, setLoading] = useState(true);
 
   const navigate = useNavigate();
+  const initialStatusFilter = searchParams.get("status") || "All";
 
   useEffect(() => {
     if (!authAPI.isAuthenticated()) {
@@ -44,7 +46,11 @@ export default function Patients() {
 
       {/* Main Content */}
       {/* For Doctors */}
-      {userRole === "Doctor" ? <DocPatientsView /> : <LabTechPatientsView />}
+      {userRole === "Doctor" ? (
+        <DocPatientsView />
+      ) : (
+        <LabTechPatientsView initialStatusFilter={initialStatusFilter} />
+      )}
     </div>
   );
 }

@@ -25,6 +25,12 @@ api.interceptors.request.use(
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
     }
+
+    // Let the browser set the multipart boundary for FormData uploads.
+    if (typeof FormData !== 'undefined' && config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
+    }
+
     return config;
   },
   (error) => {
@@ -308,6 +314,28 @@ export const patientAPI = {
   getMLModelStatus: async () => {
     const response = await api.get('/ml-models/status/');
     return response.data;
+  },
+};
+
+export const diagnosisReportAPI = {
+  listReports: async () => {
+    const response = await api.get('/diagnosis-reports/');
+    return response.data?.results || response.data;
+  },
+
+  saveReport: async (formData) => {
+    try {
+      const response = await api.post('/diagnosis-reports/', formData);
+      return response.data;
+    } catch (error) {
+      const detail =
+        error?.response?.data?.detail ||
+        (typeof error?.response?.data === 'string'
+          ? error.response.data
+          : JSON.stringify(error?.response?.data || {})) ||
+        error?.message;
+      throw new Error(detail || 'Failed to save report');
+    }
   },
 };
 
