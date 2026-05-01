@@ -10,6 +10,7 @@ import HemNewLogo from "/assets/loginhemoranew2.svg";
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showForgotPasswordPopup, setShowForgotPasswordPopup] = useState(false);
   const navigate = useNavigate();
   const [logindata, setlogindata] = useState({
     username: "",
@@ -127,9 +128,13 @@ export default function Login() {
             </button>
 
             {/* FORGOT PASSWORD */}
-            <p className="text-right text-sm mt-3 text-[#0a0e3f] cursor-pointer mb-25">
+            <button
+              type="button"
+              onClick={() => setShowForgotPasswordPopup(true)}
+              className="block ml-auto text-right text-sm mt-3 text-[#0a0e3f] cursor-pointer mb-25 hover:underline"
+            >
               Forgot password ?
-            </p>
+            </button>
 
             {/* SIGN UP LINK */}
             {/* <p className="text-center text-gray-700">
@@ -141,6 +146,29 @@ export default function Login() {
           </form>
         </div>
       </div>
+
+      {showForgotPasswordPopup && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4">
+          <div className="bg-white w-full max-w-md rounded-2xl shadow-xl p-6">
+            <h3 className="text-xl font-bold text-[#0a0e3f] mb-3">
+              Password Help
+            </h3>
+            <p className="text-sm text-gray-600 leading-relaxed mb-6">
+              Please ask your domain administrator or system administrator for
+              help resetting your password.
+            </p>
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowForgotPasswordPopup(false)}
+                className="px-5 py-2 bg-[#0a0e3f] text-white rounded-xl hover:opacity-90 transition cursor-pointer"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

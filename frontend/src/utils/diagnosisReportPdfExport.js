@@ -705,7 +705,7 @@ async function prepareAnnotatedImages(images) {
   );
 }
 
-export async function downloadDiagnosisReportPdf(filename, title, report) {
+async function buildDiagnosisReportPdf(title, report) {
   const pdf = new jsPDF("p", "mm", [PAGE_WIDTH, PAGE_HEIGHT]);
   const generatedAt = `Generated: ${formatDateTime(new Date())}`;
   const logoDataUrl = await loadBrandLogo();
@@ -743,6 +743,17 @@ export async function downloadDiagnosisReportPdf(filename, title, report) {
       logoDataUrl,
     });
   }
+
+  return pdf;
+}
+
+export async function generateDiagnosisReportPdfBlob(title, report) {
+  const pdf = await buildDiagnosisReportPdf(title, report);
+  return pdf.output("blob");
+}
+
+export async function downloadDiagnosisReportPdf(filename, title, report) {
+  const pdf = await buildDiagnosisReportPdf(title, report);
 
   pdf.save(filename);
 }

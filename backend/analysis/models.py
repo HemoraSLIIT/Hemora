@@ -169,6 +169,39 @@ class AnnotatedImage(models.Model):
 		return f"Annotated image for {self.disease_name} (diagnosis #{self.diagnosis_id})"
 
 
+class DiagnosisReport(models.Model):
+	"""Stores generated diagnosis report PDFs for later viewing/downloading."""
+
+	patient = models.ForeignKey(
+		Patient,
+		on_delete=models.CASCADE,
+		related_name="diagnosis_reports",
+	)
+	diagnosis = models.ForeignKey(
+		DiagnosisResult,
+		on_delete=models.SET_NULL,
+		blank=True,
+		null=True,
+		related_name="saved_reports",
+	)
+	title = models.CharField(max_length=200, blank=True)
+	report_file = models.FileField(upload_to="patients/diagnosis_reports/%Y/%m/%d/")
+	created_by = models.ForeignKey(
+		settings.AUTH_USER_MODEL,
+		on_delete=models.SET_NULL,
+		blank=True,
+		null=True,
+		related_name="diagnosis_reports_created",
+	)
+	created_at = models.DateTimeField(auto_now_add=True)
+
+	class Meta:
+		ordering = ["-created_at"]
+
+	def __str__(self):
+		return self.title or f"Diagnosis report #{self.id} for patient #{self.patient_id}"
+
+
 class Notification(models.Model):
 	"""Stores user notifications for diagnosis workflow updates."""
 

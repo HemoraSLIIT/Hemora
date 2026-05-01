@@ -4,6 +4,7 @@ from rest_framework import serializers
 from .models import (
     AnnotatedImage,
     BloodSmearImage,
+    DiagnosisReport,
     DiagnosisResult,
     Notification,
     Patient,
@@ -261,3 +262,36 @@ class NotificationSerializer(serializers.ModelSerializer):
         if not obj.actor:
             return ""
         return obj.actor.get_full_name()
+
+
+class DiagnosisReportSerializer(serializers.ModelSerializer):
+    patientId = serializers.IntegerField(source="patient_id", read_only=True)
+    diagnosisId = serializers.IntegerField(source="diagnosis_id", read_only=True)
+    patientName = serializers.SerializerMethodField()
+    createdBy = serializers.IntegerField(source="created_by_id", read_only=True)
+    createdAt = serializers.DateTimeField(source="created_at", read_only=True)
+    reportFile = serializers.FileField(source="report_file")
+
+    class Meta:
+        model = DiagnosisReport
+        fields = [
+            "id",
+            "patientId",
+            "diagnosisId",
+            "patientName",
+            "title",
+            "reportFile",
+            "createdBy",
+            "createdAt",
+        ]
+        read_only_fields = [
+            "id",
+            "diagnosisId",
+            "patientName",
+            "createdBy",
+            "createdAt",
+        ]
+
+    def get_patientName(self, obj):
+        full_name = f"{obj.patient.first_name} {obj.patient.last_name}".strip()
+        return full_name or f"Patient #{obj.patient_id}"

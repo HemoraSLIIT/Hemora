@@ -18,8 +18,8 @@ import SideBar from "../components/SideBar";
 import ReDiagnoseUploadModal from "../components/ReDiagnoseUploadModal";
 import CBCInputModal from "../components/CBCInputModal";
 import toast from "react-hot-toast";
-import { patientAPI, userAPI } from "../services/api";
-import { downloadDiagnosisReportPdf } from "../utils/diagnosisReportPdfExport";
+import { diagnosisReportAPI, patientAPI, userAPI } from "../services/api";
+import { generateDiagnosisReportPdfBlob } from "../utils/diagnosisReportPdfExport";
 
 const LAB_TECH_CLEARED_PATIENTS_KEY = "labTechClearedPatients";
 
@@ -47,6 +47,17 @@ const roleMap = {
   researcher: "Researcher",
   admin: "Admin",
 };
+
+function downloadBlob(blob, filename) {
+  const objectUrl = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = objectUrl;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(objectUrl);
+}
 
 export default function ViewResultsPage() {
   const [searchParams] = useSearchParams();
@@ -200,8 +211,8 @@ export default function ViewResultsPage() {
           : (cbcAnalysis.diseaseAnalysis || []);
 
       const safeName = patientDisplayName.replace(/[^a-z0-9]+/gi, "_").replace(/^_+|_+$/g, "") || `patient_${patient.id}`;
-
-      await downloadDiagnosisReportPdf(`${safeName}_diagnosis_report.pdf`, "Diagnosis Results", {
+      const fileName = `${safeName}_diagnosis_report.pdf`;
+      const reportPayload = {
         patient,
         parameterReport: cbcAnalysis.parameterReport || [],
         overallStatus: cbcAnalysis.overallStatus || "normal",
@@ -209,9 +220,29 @@ export default function ViewResultsPage() {
         diseaseAnalysis,
         annotatedImages,
         feedbackEntries,
-      });
+      };
 
-      toast.success("Report generated successfully");
+      const reportBlob = await generateDiagnosisReportPdfBlob(
+        "Diagnosis Results",
+        reportPayload
+      );
+
+      const formData = new FormData();
+      formData.append("patientId", String(patient.id));
+      formData.append("title", `${patientDisplayName} Diagnosis Report`);
+      formData.append("reportFile", reportBlob, fileName);
+
+      try {
+        await diagnosisReportAPI.saveReport(formData);
+        downloadBlob(reportBlob, fileName);
+        toast.success("Report generated and saved successfully");
+      } catch (saveError) {
+        console.error("Failed to save diagnosis report:", saveError);
+        downloadBlob(reportBlob, fileName);
+        toast.error(
+          saveError?.message || "Report downloaded, but saving to the archive failed"
+        );
+      }
     } catch (err) {
       console.error("Failed to generate report:", err);
       toast.error("Failed to generate report");

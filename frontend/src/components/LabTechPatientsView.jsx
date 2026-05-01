@@ -21,7 +21,7 @@ import { getTopDiseaseLabel } from "../utils/diagnosisSummary";
 
 const LAB_TECH_CLEARED_PATIENTS_KEY = "labTechClearedPatients";
 
-export default function LabTechPatientsView() {
+export default function LabTechPatientsView({ initialStatusFilter = "All" }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [patients, setPatients] = useState([]);
@@ -59,6 +59,10 @@ export default function LabTechPatientsView() {
     const records = await patientAPI.getPatients();
     setPatients(formatPatients(records));
   }, []);
+
+  useEffect(() => {
+    setFilterStatus(initialStatusFilter || "All");
+  }, [initialStatusFilter]);
 
   useEffect(() => {
     setClearedPatientIds(

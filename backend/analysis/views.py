@@ -14,6 +14,7 @@ from collections import defaultdict
 from .models import (
 	AnnotatedImage,
 	BloodSmearImage,
+	DiagnosisReport,
 	DiagnosisResult,
 	Notification,
 	Patient,
@@ -23,6 +24,7 @@ from .models import (
 logger = logging.getLogger(__name__)
 from .serializers import (
 	CBCParametersSerializer,
+	DiagnosisReportSerializer,
 	DiagnosisResultSerializer,
 	NotificationSerializer,
 	PatientFeedbackSerializer,
@@ -397,6 +399,48 @@ class PatientFeedbackListCreateAPIView(generics.ListCreateAPIView):
 			PatientFeedbackSerializer(feedback).data,
 			status=status.HTTP_201_CREATED,
 			headers=headers,
+		)
+
+
+class DiagnosisReportListCreateAPIView(generics.ListCreateAPIView):
+	"""List saved diagnosis reports or store a newly generated PDF."""
+
+	permission_classes = [IsAuthenticated]
+	parser_classes = [MultiPartParser, FormParser]
+	serializer_class = DiagnosisReportSerializer
+
+	def get_queryset(self):
+		return DiagnosisReport.objects.select_related("patient", "diagnosis")
+
+	def create(self, request, *args, **kwargs):
+		patient_id = request.data.get("patientId")
+		if not patient_id:
+			return Response(
+				{"detail": "patientId is required."},
+				status=status.HTTP_400_BAD_REQUEST,
+			)
+
+		try:
+			patient = Patient.objects.get(pk=patient_id)
+		except Patient.DoesNotExist:
+			return Response(
+				{"detail": "Patient not found."},
+				status=status.HTTP_404_NOT_FOUND,
+			)
+
+		diagnosis = DiagnosisResult.objects.filter(patient=patient).first()
+		payload = request.data.copy()
+		payload.pop("patientId", None)
+		serializer = self.get_serializer(data=payload)
+		serializer.is_valid(raise_exception=True)
+		report = serializer.save(
+			patient=patient,
+			diagnosis=diagnosis,
+			created_by=request.user,
+		)
+		return Response(
+			DiagnosisReportSerializer(report, context=self.get_serializer_context()).data,
+			status=status.HTTP_201_CREATED,
 		)
 
 
