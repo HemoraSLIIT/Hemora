@@ -185,7 +185,7 @@ export default function AdminDashBody() {
       </div>
 
       {/* Additional Analytics Section */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
           <p className="text-gray-600 text-sm mb-2">Next Payment Date</p>
           <p className="text-2xl font-bold text-[#0a0e3f]">2026/02/01</p>
@@ -204,10 +204,10 @@ export default function AdminDashBody() {
           <p className="text-gray-600 text-sm mb-2">System Status</p>
           <p className="text-2xl font-bold text-green-600">Operational</p>
           <p className="text-xs text-gray-500 mt-2">All systems running</p>
-          {/* <p className="text-2xl font-bold text-red-600">Offline</p>
-          <p className="text-xs text-gray-500 mt-2">All systems down</p> */}     
+          <p className="text-2xl font-bold text-red-600">Offline</p>
+          <p className="text-xs text-gray-500 mt-2">All systems down</p>     
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }
