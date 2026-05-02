@@ -43,6 +43,16 @@ export default function AddPatient() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+
+    if (name === "phone" || name === "emergencyPhone") {
+      const digitsOnly = value.replace(/\D/g, "").slice(0, 10);
+      setPatientData((prev) => ({
+        ...prev,
+        [name]: digitsOnly,
+      }));
+      return;
+    }
+
     setPatientData((prev) => ({
       ...prev,
       [name]: value,
@@ -69,6 +79,17 @@ export default function AddPatient() {
       toast.error("Please fill in all required fields");
       return false;
     }
+
+    if (patientData.phone && !/^\d{10}$/.test(patientData.phone)) {
+      toast.error("Phone Number must be exactly 10 digits.");
+      return false;
+    }
+
+    if (patientData.emergencyPhone && !/^\d{10}$/.test(patientData.emergencyPhone)) {
+      toast.error("Emergency Phone must be exactly 10 digits.");
+      return false;
+    }
+
     return true;
   };
 
@@ -165,6 +186,17 @@ export default function AddPatient() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (patientData.phone && !/^\d{10}$/.test(patientData.phone)) {
+      toast.error("Phone Number must be exactly 10 digits.");
+      return;
+    }
+
+    if (patientData.emergencyPhone && !/^\d{10}$/.test(patientData.emergencyPhone)) {
+      toast.error("Emergency Phone must be exactly 10 digits.");
+      return;
+    }
+
     if (currentStage !== 3 || !validateStage3()) {
       return;
     }
@@ -407,6 +439,11 @@ export default function AddPatient() {
                       onChange={handleInputChange}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0a0e3f] focus:border-transparent"
                       placeholder="Enter phone number"
+                      inputMode="numeric"
+                      minLength={10}
+                      maxLength={10}
+                      pattern="\\d{10}"
+                      title="Phone Number must be exactly 10 digits"
                     />
                   </div>
 
@@ -463,6 +500,11 @@ export default function AddPatient() {
                       onChange={handleInputChange}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0a0e3f] focus:border-transparent"
                       placeholder="Enter emergency phone number"
+                      inputMode="numeric"
+                      minLength={10}
+                      maxLength={10}
+                      pattern="\\d{10}"
+                      title="Emergency Phone must be exactly 10 digits"
                     />
                   </div>
                 </div>

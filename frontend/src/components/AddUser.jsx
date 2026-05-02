@@ -21,6 +21,16 @@ export default function AddUser({ isOpen, onClose, onUserCreated }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    if (name === "phone") {
+      const digitsOnly = value.replace(/\D/g, "").slice(0, 10);
+      setFormData((prev) => ({
+        ...prev,
+        [name]: digitsOnly,
+      }));
+      return;
+    }
+
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -71,6 +81,12 @@ export default function AddUser({ isOpen, onClose, onUserCreated }) {
     // Password not entirely numeric (Django NumericPasswordValidator)
     if (/^\d+$/.test(formData.password)) {
       toast.error("Password cannot be entirely numeric.");
+      return false;
+    }
+
+    // Optional phone number must be exactly 10 digits
+    if (formData.phone && !/^\d{10}$/.test(formData.phone)) {
+      toast.error("Phone Number must be exactly 10 digits.");
       return false;
     }
 
@@ -226,6 +242,11 @@ export default function AddUser({ isOpen, onClose, onUserCreated }) {
                   placeholder="Enter phone number"
                   value={formData.phone}
                   onChange={handleChange}
+                  inputMode="numeric"
+                  minLength={10}
+                  maxLength={10}
+                  pattern="\\d{10}"
+                  title="Phone Number must be exactly 10 digits"
                 />
               </div>
             </div>
@@ -261,6 +282,11 @@ export default function AddUser({ isOpen, onClose, onUserCreated }) {
                   placeholder="Enter phone number"
                   value={formData.phone}
                   onChange={handleChange}
+                  inputMode="numeric"
+                  minLength={10}
+                  maxLength={10}
+                  pattern="\\d{10}"
+                  title="Phone Number must be exactly 10 digits"
                 />
               </div>
             </div>
@@ -310,6 +336,11 @@ export default function AddUser({ isOpen, onClose, onUserCreated }) {
                   placeholder="Enter phone number"
                   value={formData.phone}
                   onChange={handleChange}
+                  inputMode="numeric"
+                  minLength={10}
+                  maxLength={10}
+                  pattern="\\d{10}"
+                  title="Phone Number must be exactly 10 digits"
                 />
               </div>
             </div>

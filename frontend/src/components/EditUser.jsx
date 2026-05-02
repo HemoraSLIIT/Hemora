@@ -36,6 +36,16 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    if (name === "phoneNumber") {
+      const digitsOnly = value.replace(/\D/g, "").slice(0, 10);
+      setFormData((prev) => ({
+        ...prev,
+        [name]: digitsOnly,
+      }));
+      return;
+    }
+
     setFormData((prev) => ({
       ...prev,
       [name]: value,
@@ -44,6 +54,12 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (formData.phoneNumber && !/^\d{10}$/.test(formData.phoneNumber)) {
+      toast.error("Phone Number must be exactly 10 digits.");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -170,6 +186,11 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
                   placeholder="Enter phone number"
                   value={formData.phoneNumber}
                   onChange={handleChange}
+                  inputMode="numeric"
+                  minLength={10}
+                  maxLength={10}
+                  pattern="\\d{10}"
+                  title="Phone Number must be exactly 10 digits"
                 />
               </div>
             </div>
@@ -204,6 +225,11 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
                 placeholder="Enter phone number"
                 value={formData.phoneNumber}
                 onChange={handleChange}
+                inputMode="numeric"
+                minLength={10}
+                maxLength={10}
+                pattern="\\d{10}"
+                title="Phone Number must be exactly 10 digits"
               />
             </div>
           </div>
@@ -237,6 +263,11 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
                 placeholder="Enter phone number"
                 value={formData.phoneNumber}
                 onChange={handleChange}
+                inputMode="numeric"
+                minLength={10}
+                maxLength={10}
+                pattern="\\d{10}"
+                title="Phone Number must be exactly 10 digits"
               />
             </div>
           </div>
@@ -270,6 +301,11 @@ export default function EditUser({ isOpen, onClose, user, onUserUpdated }) {
                 placeholder="Enter phone number"
                 value={formData.phoneNumber}
                 onChange={handleChange}
+                inputMode="numeric"
+                minLength={10}
+                maxLength={10}
+                pattern="\\d{10}"
+                title="Phone Number must be exactly 10 digits"
               />
             </div>
           </div>

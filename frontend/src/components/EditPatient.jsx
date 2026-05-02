@@ -61,9 +61,14 @@ export default function EditPatient({
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    const normalizedValue =
+      name === "phoneNumber" || name === "emergencyPhone"
+        ? value.replace(/\D/g, "").slice(0, 10)
+        : value;
+
     const updatedData = {
       ...formData,
-      [name]: value,
+      [name]: normalizedValue,
     };
 
     // Auto-calculate age if date of birth changes
@@ -76,6 +81,17 @@ export default function EditPatient({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (formData.phoneNumber && !/^\d{10}$/.test(formData.phoneNumber)) {
+      toast.error("Phone Number must be exactly 10 digits.");
+      return;
+    }
+
+    if (formData.emergencyPhone && !/^\d{10}$/.test(formData.emergencyPhone)) {
+      toast.error("Emergency Phone must be exactly 10 digits.");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -274,6 +290,11 @@ export default function EditPatient({
                 placeholder="Enter phone number"
                 value={formData.phoneNumber}
                 onChange={handleChange}
+                inputMode="numeric"
+                minLength={10}
+                maxLength={10}
+                pattern="\\d{10}"
+                title="Phone Number must be exactly 10 digits"
               />
             </div>
             <div>
@@ -332,6 +353,11 @@ export default function EditPatient({
                 placeholder="Enter emergency phone number"
                 value={formData.emergencyPhone}
                 onChange={handleChange}
+                inputMode="numeric"
+                minLength={10}
+                maxLength={10}
+                pattern="\\d{10}"
+                title="Emergency Phone must be exactly 10 digits"
               />
             </div>
           </div>
