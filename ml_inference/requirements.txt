@@ -1,0 +1,27 @@
+# ML Inference Service Dependencies
+
+# FastAPI
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+pydantic==2.5.0
+python-multipart==0.0.6
+
+# ML frameworks (TODO: verify versions match existing models)
+torch==2.1.0
+torchvision==0.16.0
+ultralytics==8.0.0  # YOLO
+opencv-python==4.8.1.78
+
+# Utilities
+numpy==1.24.3
+Pillow==10.1.0
+python-dotenv==1.0.0
+requests==2.31.0
+
+# Optional: S3 storage support
+boto3==1.28.0
+
+# Development/testing
+pytest==7.4.0
+pytest-asyncio==0.21.0
+black==23.11.0

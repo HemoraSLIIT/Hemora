@@ -1,6 +1,6 @@
 # Multi-stage Dockerfile for Django backend
 # Stage 1: Builder
-FROM python:3.13-slim as builder
+FROM python:3.11-slim AS builder
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
@@ -9,7 +9,8 @@ ENV PYTHONUNBUFFERED=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
 # Install system dependencies required for Python packages
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN sed -i 's|http://deb.debian.org|https://deb.debian.org|g' /etc/apt/sources.list.d/debian.sources && \
+    apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     g++ \
     libpq-dev \
@@ -21,13 +22,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # Copy requirements file
-COPY requirements.txt .
+COPY requirements.docker.txt .
 
 # Install Python dependencies
-RUN pip install --user -r requirements.txt
+RUN pip install --user --upgrade pip setuptools wheel && \
+    pip install --user --prefer-binary -r requirements.docker.txt
 
 # Stage 2: Runtime
-FROM python:3.13-slim
+FROM python:3.11-slim
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
@@ -35,7 +37,8 @@ ENV PYTHONUNBUFFERED=1 \
     PATH=/root/.local/bin:$PATH
 
 # Install runtime dependencies only
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN sed -i 's|http://deb.debian.org|https://deb.debian.org|g' /etc/apt/sources.list.d/debian.sources && \
+    apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
     libgl1 \
     libglib2.0-0 \

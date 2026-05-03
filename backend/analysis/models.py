@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+import uuid
 
 
 class Patient(models.Model):
@@ -240,3 +241,84 @@ class Notification(models.Model):
 
 	def __str__(self):
 		return f"Notification #{self.id} for user #{self.recipient_id}"
+
+
+class DiagnosisJob(models.Model):
+	"""Tracks async diagnosis job status and results.
+
+	Job lifecycle:
+	  pending → running → succeeded (or failed)
+
+	Allows frontend to poll status and retrieve results asynchronously.
+	"""
+
+	class Status(models.TextChoices):
+		PENDING = "pending", "Pending"
+		RUNNING = "running", "Running"
+		SUCCEEDED = "succeeded", "Succeeded"
+		FAILED = "failed", "Failed"
+
+	id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+	patient = models.ForeignKey(
+		Patient,
+		on_delete=models.CASCADE,
+		related_name="diagnosis_jobs",
+	)
+	status = models.CharField(
+		max_length=20,
+		choices=Status.choices,
+		default=Status.PENDING,
+	)
+
+	# Job request context
+	cbc_parameters = models.JSONField(default=dict)  # {key: value, ...}
+	analysis_method = models.CharField(
+		max_length=20,
+		choices=[("cbc_only", "CBC Only"), ("hybrid", "Hybrid")],
+		default="hybrid",
+	)
+
+	# Job result (populated on success)
+	result_json = models.JSONField(default=dict, blank=True)
+
+	# Job error tracking (populated on failure)
+	error_message = models.TextField(blank=True)
+	error_code = models.CharField(max_length=50, blank=True)
+
+	# Job timing
+	requested_at = models.DateTimeField(auto_now_add=True)
+	started_at = models.DateTimeField(blank=True, null=True)
+	finished_at = models.DateTimeField(blank=True, null=True)
+
+	# Retry tracking
+	retry_count = models.PositiveIntegerField(default=0, db_index=True)
+	max_retries = models.PositiveIntegerField(default=3)
+	next_retry_at = models.DateTimeField(blank=True, null=True)
+
+	# Correlation ID for tracing across services
+	correlation_id = models.CharField(max_length=100, blank=True, db_index=True)
+
+	# Created/updated timestamps
+	created_at = models.DateTimeField(auto_now_add=True)
+	updated_at = models.DateTimeField(auto_now=True)
+
+	class Meta:
+		ordering = ["-requested_at"]
+		indexes = [
+			models.Index(fields=["status", "updated_at"]),
+			models.Index(fields=["patient", "status"]),
+			models.Index(fields=["retry_count", "status"]),
+		]
+
+	def __str__(self):
+		return f"DiagnosisJob {self.id} for patient #{self.patient_id}: {self.status}"
+
+	@property
+	def is_terminal(self) -> bool:
+		"""Job has finished (succeeded or failed)."""
+		return self.status in (self.Status.SUCCEEDED, self.Status.FAILED)
+
+	@property
+	def can_retry(self) -> bool:
+		"""Job can be retried (failed and under max retries)."""
+		return self.status == self.Status.FAILED and self.retry_count < self.max_retries

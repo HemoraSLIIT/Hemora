@@ -17,9 +17,9 @@ from dotenv import load_dotenv # type: ignore
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Load environment variables from the backend-local .env first so
-# runserver behaves consistently regardless of the shell cwd.
-load_dotenv(BASE_DIR / ".env", override=True)
+# Load backend-local .env defaults without overriding real environment values.
+# This allows Docker Compose env vars (e.g. DB_HOST=postgres) to take precedence.
+load_dotenv(BASE_DIR / ".env", override=False)
 
 
 # Quick-start development settings - unsuitable for production

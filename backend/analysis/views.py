@@ -10,22 +10,27 @@ from .cbc_analyzer import analyze_cbc_parameters
 from .cbc_extractor import extract_cbc_from_file
 import logging
 from collections import defaultdict
+import uuid
 
 from .models import (
 	AnnotatedImage,
 	BloodSmearImage,
 	DiagnosisReport,
 	DiagnosisResult,
+	DiagnosisJob,
 	Notification,
 	Patient,
 	PatientFeedback,
 )
+from .jobs import create_diagnosis_job
+from shared.logging_utils import setup_logging, correlation_context
 
 logger = logging.getLogger(__name__)
 from .serializers import (
 	CBCParametersSerializer,
 	DiagnosisReportSerializer,
 	DiagnosisResultSerializer,
+	DiagnosisJobSerializer,
 	NotificationSerializer,
 	PatientFeedbackSerializer,
 	PatientCreateSerializer,
@@ -180,12 +185,15 @@ class PatientExtractCBCAPIView(APIView):
 
 
 class PatientDiagnoseAPIView(APIView):
-	"""Run CBC parameter analysis for a patient and store results."""
+	"""Async diagnosis endpoint - creates job and returns 202 Accepted."""
 
 	permission_classes = [IsAuthenticated]
 
 	def post(self, request, pk):
-		"""Accept CBC parameters, run analysis + image analysis, save results."""
+		"""Submit CBC parameters for async analysis.
+
+		Returns 202 Accepted with job ID for client to poll.
+		"""
 		try:
 			patient = Patient.objects.get(pk=pk)
 		except Patient.DoesNotExist:
@@ -201,147 +209,85 @@ class PatientDiagnoseAPIView(APIView):
 				status=status.HTTP_400_BAD_REQUEST,
 			)
 
-		# Run CBC analysis
-		cbc_analysis = analyze_cbc_parameters(cbc_params)
+		# Create correlation ID for tracing
+		correlation_id = request.META.get("HTTP_X_CORRELATION_ID") or str(uuid.uuid4())
 
-		# Run image analysis on blood smear images
-		image_results = {}
-		analysis_method = "cbc_only"
-		hybrid_analysis = cbc_analysis["diseaseAnalysis"]
-		image_analysis_data = {}
-
-		blood_smears = patient.blood_smear_images.all()
-		if blood_smears.exists():
-			try:
-				from django.core.files.base import ContentFile
-				from ml_inference.registry import ModelRegistry
-				from ml_inference.base_detector import DetectionResult
-				from ml_inference.hybrid_analyzer import compute_hybrid_analysis
-
-				per_image_results = []
-				aggregated_results = {}
-				detection_totals = defaultdict(lambda: defaultdict(int))
-				probability_totals = defaultdict(float)
-				confidence_max = defaultdict(float)
-				detection_counts = defaultdict(int)
-				best_annotated_images = {}
-
-				for smear_index, smear in enumerate(blood_smears, start=1):
-					smear_results = ModelRegistry.run_all(smear.image.path)
-					if not smear_results:
-						continue
-
-					per_image_results.append((smear_index, smear_results))
-
-					for disease_name, result in smear_results.items():
-						probability_totals[disease_name] += result.probability
-						confidence_max[disease_name] = max(
-							confidence_max[disease_name], result.confidence
-						)
-						detection_counts[disease_name] += 1
-
-						for cell in result.detected_cells or []:
-							detection_totals[disease_name][cell["class"]] += cell.get("count", 0)
-
-						best_image = best_annotated_images.get(disease_name)
-						if (
-							best_image is None
-							or result.probability > best_image["probability"]
-						):
-							best_annotated_images[disease_name] = {
-								"probability": result.probability,
-								"image_bytes": result.annotated_image_bytes,
-							}
-
-				for disease_name, count in detection_counts.items():
-					aggregated_results[disease_name] = DetectionResult(
-						disease_name=disease_name,
-						probability=probability_totals[disease_name] / count,
-						confidence=confidence_max[disease_name],
-						detected_cells=[
-							{"class": cell_class, "count": total_count}
-							for cell_class, total_count in detection_totals[disease_name].items()
-						],
-						annotated_image_bytes=best_annotated_images.get(disease_name, {}).get("image_bytes"),
-						raw_detections=sum(detection_totals[disease_name].values()),
-					)
-
-				image_results = aggregated_results
-
-				if image_results:
-					hybrid_analysis = compute_hybrid_analysis(cbc_analysis, image_results)
-					analysis_method = "hybrid"
-					image_analysis_data = {
-						name: {
-							"probability": round(r.probability, 4),
-							"detectedCells": r.detected_cells,
-							"totalDetections": r.raw_detections,
-							"imagesAnalyzed": detection_counts.get(name, 0),
-						}
-						for name, r in image_results.items()
-					}
-					logger.info(
-						"Hybrid analysis completed for patient %d: %d models ran",
-						pk, len(image_results),
-					)
-			except Exception as e:
-				logger.warning("Image analysis failed for patient %d: %s", pk, e)
-
-		# Save or update diagnosis result
-		diagnosis, _ = DiagnosisResult.objects.update_or_create(
-			patient=patient,
-			defaults={
-				**cbc_params,
-				"cbc_analysis": cbc_analysis,
-				"image_analysis": image_analysis_data,
-				"hybrid_analysis": hybrid_analysis,
-				"analysis_method": analysis_method,
-			},
-		)
-
-		# Save annotated images from ML detectors
-		if image_results:
-			diagnosis.annotated_images.all().delete()
-			for smear_index, smear_results in per_image_results:
-				for disease_name, result in smear_results.items():
-					if result.annotated_image_bytes:
-						filename = (
-							f"{disease_name.replace(' ', '_').lower()}_smear_{smear_index}_annotated.png"
-						)
-						AnnotatedImage.objects.create(
-							diagnosis=diagnosis,
-							disease_name=f"{disease_name} - Smear {smear_index}",
-							image=ContentFile(result.annotated_image_bytes, name=filename),
-							detections_count=result.raw_detections,
-						)
-
-		# Update patient status to In Progress
-		if patient.status == Patient.Status.PENDING:
-			patient.status = Patient.Status.IN_PROGRESS
-			patient.save(update_fields=["status", "updated_at"])
-
-		patient_name = f"{patient.first_name} {patient.last_name}".strip() or f"Patient #{patient.id}"
-		doctors = User.objects.filter(role=User.Role.DOCTOR, is_active=True).exclude(id=request.user.id)
-		for doctor in doctors:
-			create_notification(
-				recipient=doctor,
-				actor=request.user,
-				patient=patient,
-				notification_type=Notification.NotificationType.DIAGNOSIS_READY,
-				title="Diagnosis ready for review",
-				message=f"{patient_name} has a completed diagnosis and is ready for doctor review.",
+		with correlation_context(correlation_id):
+			# Create diagnosis job
+			job = create_diagnosis_job(
+				patient_id=patient.id,
+				cbc_parameters=cbc_params,
+				analysis_method="hybrid",
+				correlation_id=correlation_id,
 			)
 
-		return Response(DiagnosisResultSerializer(diagnosis).data, status=status.HTTP_200_OK)
+			# Update patient status to In Progress
+			if patient.status == Patient.Status.PENDING:
+				patient.status = Patient.Status.IN_PROGRESS
+				patient.save(update_fields=["status", "updated_at"])
+
+			logger.info(f"Created diagnosis job {job.id} for patient {patient.id}")
+
+		# Return 202 Accepted with job ID
+		serializer = DiagnosisJobSerializer(job)
+		return Response(
+			serializer.data,
+			status=status.HTTP_202_ACCEPTED,
+			headers={"Location": f"/api/patients/{pk}/diagnosis-jobs/{job.id}/"},
+		)
 
 	def get(self, request, pk):
-		"""Retrieve existing diagnosis result for a patient."""
+		"""Retrieve existing diagnosis result for a patient (legacy endpoint).
+
+		For backward compatibility, returns the latest diagnosis if it exists.
+		"""
 		try:
 			diagnosis = DiagnosisResult.objects.get(patient_id=pk)
 		except DiagnosisResult.DoesNotExist:
 			return Response({"detail": "No diagnosis found for this patient."}, status=status.HTTP_404_NOT_FOUND)
 
 		return Response(DiagnosisResultSerializer(diagnosis).data, status=status.HTTP_200_OK)
+
+
+class DiagnosisJobAPIView(APIView):
+	"""Retrieve status and result of a specific diagnosis job."""
+
+	permission_classes = [IsAuthenticated]
+
+	def get(self, request, pk, job_id):
+		"""Get diagnosis job status and results.
+
+		Returns 200 with full result if job succeeded.
+		Returns 202 with job details if job still running.
+		Returns 200 with error if job failed.
+		"""
+		try:
+			job = DiagnosisJob.objects.get(id=job_id, patient_id=pk)
+		except DiagnosisJob.DoesNotExist:
+			return Response(
+				{"detail": "Diagnosis job not found."},
+				status=status.HTTP_404_NOT_FOUND,
+			)
+
+		serializer = DiagnosisJobSerializer(job)
+		response_status = status.HTTP_200_OK
+
+		# Return 202 if job is still running
+		if job.status == DiagnosisJob.Status.RUNNING:
+			response_status = status.HTTP_202_ACCEPTED
+
+		return Response(serializer.data, status=response_status)
+
+
+class DiagnosisJobListAPIView(generics.ListAPIView):
+	"""List all diagnosis jobs for a patient."""
+
+	permission_classes = [IsAuthenticated]
+	serializer_class = DiagnosisJobSerializer
+
+	def get_queryset(self):
+		patient_id = self.kwargs.get("pk")
+		return DiagnosisJob.objects.filter(patient_id=patient_id).order_by("-requested_at")
 
 
 class PatientFeedbackListCreateAPIView(generics.ListCreateAPIView):

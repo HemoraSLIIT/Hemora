@@ -6,6 +6,7 @@ from .models import (
     BloodSmearImage,
     DiagnosisReport,
     DiagnosisResult,
+    DiagnosisJob,
     Notification,
     Patient,
     PatientFeedback,
@@ -295,3 +296,59 @@ class DiagnosisReportSerializer(serializers.ModelSerializer):
     def get_patientName(self, obj):
         full_name = f"{obj.patient.first_name} {obj.patient.last_name}".strip()
         return full_name or f"Patient #{obj.patient_id}"
+
+
+class DiagnosisJobSerializer(serializers.ModelSerializer):
+	"""Serializer for async diagnosis job status and results."""
+
+	jobId = serializers.UUIDField(source="id", read_only=True)
+	patientId = serializers.IntegerField(source="patient_id", read_only=True)
+	cbcParameters = serializers.JSONField(source="cbc_parameters", read_only=True)
+	analysisMethod = serializers.CharField(source="analysis_method", read_only=True)
+	resultJson = serializers.JSONField(source="result_json", read_only=True)
+	errorMessage = serializers.CharField(source="error_message", read_only=True)
+	errorCode = serializers.CharField(source="error_code", read_only=True)
+	requestedAt = serializers.DateTimeField(source="requested_at", read_only=True)
+	startedAt = serializers.DateTimeField(source="started_at", read_only=True)
+	finishedAt = serializers.DateTimeField(source="finished_at", read_only=True)
+	retryCount = serializers.IntegerField(source="retry_count", read_only=True)
+	correlationId = serializers.CharField(source="correlation_id", read_only=True)
+	createdAt = serializers.DateTimeField(source="created_at", read_only=True)
+	updatedAt = serializers.DateTimeField(source="updated_at", read_only=True)
+
+	class Meta:
+		model = DiagnosisJob
+		fields = [
+			"jobId",
+			"patientId",
+			"status",
+			"cbcParameters",
+			"analysisMethod",
+			"resultJson",
+			"errorMessage",
+			"errorCode",
+			"requestedAt",
+			"startedAt",
+			"finishedAt",
+			"retryCount",
+			"correlationId",
+			"createdAt",
+			"updatedAt",
+		]
+		read_only_fields = [
+			"jobId",
+			"patientId",
+			"status",
+			"cbcParameters",
+			"analysisMethod",
+			"resultJson",
+			"errorMessage",
+			"errorCode",
+			"requestedAt",
+			"startedAt",
+			"finishedAt",
+			"retryCount",
+			"correlationId",
+			"createdAt",
+			"updatedAt",
+		]
