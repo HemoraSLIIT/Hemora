@@ -1,84 +1,13 @@
-import { useState } from "react";
+import DiseaseDistributionCard from "./DiseaseDistributionCard";
 import { useNavigate } from "react-router-dom";
 import { Plus, Users, Activity, Database, ClipboardMinus } from "lucide-react";
+import toast from "react-hot-toast";
+import { patientAPI } from "../services/api";
+import { downloadPatientsPdf } from "../utils/patientPdfExport";
+import { getTopDiseaseLabel } from "../utils/diagnosisSummary";
 
 export default function LabTechDashBody() {
   const navigate = useNavigate();
-
-  // Dashboard statistics
-  const [dashboardStats] = useState({
-    totalPatients: 156,
-    todayPatients: 12,
-    pendingDiagnosis: 8,
-    completedToday: 4,
-    diseases: [
-      { name: "Acute Lymphoblastic Leukemia", count: 23, color: "bg-red-500" },
-      { name: "Beta Thalassemia", count: 45, color: "bg-blue-500" },
-      { name: "Iron Deficiency Anemia", count: 67, color: "bg-yellow-500" },
-      { name: "Sickle Cell Disease", count: 21, color: "bg-purple-500" },
-      { name: "Healthy", count: 10, color: "bg-green-500" },
-    ],
-    recentPatients: [
-      {
-        id: "P001",
-        name: "John Doe",
-        age: 34,
-        status: "Pending",
-        disease: "IDA",
-        date: "2024-12-11",
-      },
-      {
-        id: "P002",
-        name: "Jane Smith",
-        age: 28,
-        status: "Diagnosed",
-        disease: "Beta Thalassemia",
-        date: "2024-12-11",
-      },
-      {
-        id: "P003",
-        name: "Robert Johnson",
-        age: 45,
-        status: "In Progress",
-        disease: "ALL",
-        date: "2024-12-10",
-      },
-      {
-        id: "P004",
-        name: "Maria Garcia",
-        age: 52,
-        status: "Pending",
-        disease: "SCD",
-        date: "2024-12-10",
-      },
-      {
-        id: "P005",
-        name: "David Lee",
-        age: 39,
-        status: "Diagnosed",
-        disease: "IDA",
-        date: "2024-12-09",
-      },
-      {
-        id: "P006",
-        name: "Sarah Wilson",
-        age: 31,
-        status: "In Progress",
-        disease: "Beta Thalassemia",
-        date: "2024-12-09",
-      },
-    ],
-    pendingTests: [
-      { patient: "John Doe", test: "Blood Smear Analysis", priority: "High" },
-      { patient: "Maria Garcia", test: "CBC Report Upload", priority: "High" },
-      {
-        patient: "Robert Johnson",
-        test: "Blood Smear Analysis",
-        priority: "Medium",
-      },
-      { patient: "Sarah Wilson", test: "Final Diagnosis", priority: "Low" },
-    ],
-  });
 
   const handleAddPatient = () => {
     navigate("/addpatient");
@@ -87,39 +16,64 @@ export default function LabTechDashBody() {
   const handleViewPatients = () => {
     navigate("/patients");
   };
+
+  const handleDiagnosisReports = () => {
+    navigate("/diagnosis-reports");
+  };
+
+  const handleDatabaseExport = async () => {
+    try {
+      const records = await patientAPI.getPatients();
+
+      const exportRows = await Promise.all(
+        records.map(async (patient) => {
+          const fullName = `${patient.firstName || ""} ${patient.lastName || ""}`.trim();
+          const formattedPatient = {
+            id: patient.id,
+            name: fullName || "Unknown",
+            ageGender: `${patient.age || "-"} / ${patient.gender || "-"}`,
+            status: patient.status || "Pending",
+            disease: patient.suspectedDisease || "Not specified",
+            dateAdded: patient.createdAt ? patient.createdAt.split("T")[0] : "-",
+          };
+
+          try {
+            const diagnosis = await patientAPI.getDiagnosisResult(patient.id);
+            return {
+              ...formattedPatient,
+              disease: getTopDiseaseLabel(
+                diagnosis,
+                formattedPatient.status,
+                formattedPatient.disease
+              ),
+            };
+          } catch {
+            return formattedPatient;
+          }
+        })
+      );
+
+      await downloadPatientsPdf(
+        "patients_database_export.pdf",
+        "Patients Database Export",
+        exportRows
+      );
+      toast.success("Database exported successfully");
+    } catch (error) {
+      console.error("Failed to export patient database:", error);
+      toast.error("Failed to export database");
+    }
+  };
+
+  const handleGenerateReports = () => {
+    navigate("/patients?status=Diagnosed");
+    toast("Open a patient from the diagnosed list to generate the full report.");
+  };
+
   return (
     <div>
       <div className="grid grid-cols-3 gap-6 mb-8">
-        {/* Disease Distribution */}
-        <div className="col-span-2 bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-          <h3 className="text-lg font-bold text-gray-800 mb-4">
-            Disease Distribution
-          </h3>
-          <div className="space-y-4">
-            {dashboardStats.diseases.map((disease, index) => (
-              <div key={index}>
-                <div className="flex justify-between mb-2">
-                  <span className="text-gray-700 font-medium">
-                    {disease.name}
-                  </span>
-                  <span className="text-gray-600 font-semibold">
-                    {disease.count} patients
-                  </span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-3">
-                  <div
-                    className={`${disease.color} h-3 rounded-full transition-all duration-500`}
-                    style={{
-                      width: `${
-                        (disease.count / dashboardStats.totalPatients) * 100
-                      }%`,
-                    }}
-                  ></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <DiseaseDistributionCard includedStatuses={["Diagnosed", "In Progress"]} />
 
         {/* Quick Actions */}
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
@@ -141,15 +95,24 @@ export default function LabTechDashBody() {
               <Users className="w-5 h-5" />
               <span>View All Patients</span>
             </button>
-            <button className="cursor-pointer w-full py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition duration-300 flex items-center justify-center space-x-2">
+            <button
+              onClick={handleDiagnosisReports}
+              className="cursor-pointer w-full py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition duration-300 flex items-center justify-center space-x-2"
+            >
               <Activity className="w-5 h-5" />
               <span>Diagnosis Reports</span>
             </button>
-            <button className="cursor-pointer w-full py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition duration-300 flex items-center justify-center space-x-2">
+            <button
+              onClick={handleDatabaseExport}
+              className="cursor-pointer w-full py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition duration-300 flex items-center justify-center space-x-2"
+            >
               <Database className="w-5 h-5" />
               <span>Database Export</span>
             </button>
-            <button className="cursor-pointer w-full py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition duration-300 flex items-center justify-center space-x-2">
+            <button
+              onClick={handleGenerateReports}
+              className="cursor-pointer w-full py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition duration-300 flex items-center justify-center space-x-2"
+            >
               <ClipboardMinus className="w-5 h-5" />
               <span>Generate Reports</span>
             </button>

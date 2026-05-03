@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Users,
@@ -10,134 +10,82 @@ import {
   Filter,
   Download,
 } from "lucide-react";
-import { authAPI, userAPI } from "../services/api";
+import { authAPI, patientAPI } from "../services/api";
 import toast from "react-hot-toast";
 import DeleteConfirm from "./DeleteConfirm";
 import ViewPatient from "./ViewPatient";
 import EditPatient from "./EditPatient";
+import CBCInputModal from "./CBCInputModal";
+import { downloadPatientsPdf } from "../utils/patientPdfExport";
+import { getTopDiseaseLabel } from "../utils/diagnosisSummary";
 
-export default function LabTechPatientsView() {
-  const [user, setUser] = useState(null);
+const LAB_TECH_CLEARED_PATIENTS_KEY = "labTechClearedPatients";
+
+export default function LabTechPatientsView({ initialStatusFilter = "All" }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-  const [patients, setPatients] = useState([
-    {
-      id: "P001",
-      name: "John Doe",
-      age: 34,
-      gender: "Male",
-      status: "Pending",
-      disease: "Iron Deficiency Anemia",
-      dateAdded: "2024-12-11",
-      bloodGroup: "O+",
-      phone: "555-0101",
-    },
-    {
-      id: "P002",
-      name: "Jane Smith",
-      age: 28,
-      gender: "Female",
-      status: "Diagnosed",
-      disease: "Beta Thalassemia",
-      dateAdded: "2024-12-11",
-      bloodGroup: "A+",
-      phone: "555-0102",
-    },
-    {
-      id: "P003",
-      name: "Robert Johnson",
-      age: 45,
-      gender: "Male",
-      status: "In Progress",
-      disease: "Acute Lymphoblastic Leukemia",
-      dateAdded: "2024-12-10",
-      bloodGroup: "B+",
-      phone: "555-0103",
-    },
-    {
-      id: "P004",
-      name: "Maria Garcia",
-      age: 52,
-      gender: "Female",
-      status: "Pending",
-      disease: "Sickle Cell Disease",
-      dateAdded: "2024-12-10",
-      bloodGroup: "O-",
-      phone: "555-0104",
-    },
-    {
-      id: "P005",
-      name: "David Lee",
-      age: 39,
-      gender: "Male",
-      status: "Diagnosed",
-      disease: "Iron Deficiency Anemia",
-      dateAdded: "2024-12-09",
-      bloodGroup: "A-",
-      phone: "555-0105",
-    },
-    {
-      id: "P006",
-      name: "Sarah Wilson",
-      age: 31,
-      gender: "Female",
-      status: "In Progress",
-      disease: "Beta Thalassemia",
-      dateAdded: "2024-12-09",
-      bloodGroup: "B-",
-      phone: "555-0106",
-    },
-    {
-      id: "P007",
-      name: "Michael Brown",
-      age: 55,
-      gender: "Male",
-      status: "Diagnosed",
-      disease: "Healthy",
-      dateAdded: "2024-12-08",
-      bloodGroup: "AB+",
-      phone: "555-0107",
-    },
-    {
-      id: "P008",
-      name: "Emily Davis",
-      age: 26,
-      gender: "Female",
-      status: "Pending",
-      disease: "Iron Deficiency Anemia",
-      dateAdded: "2024-12-08",
-      bloodGroup: "O+",
-      phone: "555-0108",
-    },
-  ]);
+  const [patients, setPatients] = useState([]);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("All");
-  const [filteredPatients, setFilteredPatients] = useState(patients);
   const [isViewPatientOpen, setIsViewPatientOpen] = useState(false);
   const [isEditPatientOpen, setIsEditPatientOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(null);
+  const [diagnosisStatus, setDiagnosisStatus] = useState({}); // { patientId: 'pending' | 'loading' | 'completed' }
+  const [cbcModalOpen, setCbcModalOpen] = useState(false);
+  const [cbcPatientId, setCbcPatientId] = useState(null);
+  const [clearedPatientIds, setClearedPatientIds] = useState([]);
   const navigate = useNavigate();
 
+  const formatPatients = (records) => {
+    return records.map((patient) => {
+      const fullName = `${patient.firstName || ""} ${patient.lastName || ""}`.trim();
+
+      return {
+        id: patient.id,
+        name: fullName || "Unknown",
+        age: patient.age || "-",
+        gender: patient.gender || "-",
+        status: patient.status || "Pending",
+        disease: patient.suspectedDisease || "Not specified",
+        dateAdded: patient.createdAt ? patient.createdAt.split("T")[0] : "-",
+        bloodGroup: patient.bloodGroup || "-",
+        phone: patient.phone || "-",
+      };
+    });
+  };
+
+  const fetchPatients = useCallback(async () => {
+    const records = await patientAPI.getPatients();
+    setPatients(formatPatients(records));
+  }, []);
+
   useEffect(() => {
-    // Check if user is authenticated
+    setFilterStatus(initialStatusFilter || "All");
+  }, [initialStatusFilter]);
+
+  useEffect(() => {
+    setClearedPatientIds(
+      JSON.parse(localStorage.getItem(LAB_TECH_CLEARED_PATIENTS_KEY) || "[]")
+    );
+  }, []);
+
+  useEffect(() => {
     if (!authAPI.isAuthenticated()) {
       navigate("/login");
       return;
     }
 
-    // Fetch current user data
-    const fetchUserData = async () => {
+    const loadPatients = async () => {
       try {
-        const userData = await userAPI.getCurrentUser();
-        setUser(userData);
+        await fetchPatients();
+        setError("");
         setLoading(false);
       } catch (err) {
-        console.error("Failed to fetch user data:", err);
-        setError("Failed to fetch user data.");
+        console.error("Failed to fetch patients:", err);
+        setError("Failed to fetch patients.");
         setLoading(false);
 
-        // If unauthorized, redirect to login
         if (err.response?.status === 401) {
           authAPI.logout();
           navigate("/login");
@@ -145,19 +93,30 @@ export default function LabTechPatientsView() {
       }
     };
 
-    fetchUserData();
-  }, [navigate]);
+    loadPatients();
+  }, [navigate, fetchPatients]);
 
   useEffect(() => {
-    // Filter patients based on search and status filter
+    if (!authAPI.isAuthenticated()) {
+      return undefined;
+    }
+
+    const intervalId = window.setInterval(() => {
+      void fetchPatients();
+    }, 5000);
+
+    return () => window.clearInterval(intervalId);
+  }, [fetchPatients]);
+
+  const filteredPatients = useMemo(() => {
     let filtered = patients;
 
     if (searchTerm) {
       filtered = filtered.filter(
         (patient) =>
           patient.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          patient.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          patient.phone.includes(searchTerm)
+          String(patient.id).toLowerCase().includes(searchTerm.toLowerCase()) ||
+          String(patient.phone).includes(searchTerm)
       );
     }
 
@@ -165,78 +124,105 @@ export default function LabTechPatientsView() {
       filtered = filtered.filter((patient) => patient.status === filterStatus);
     }
 
-    setFilteredPatients(filtered);
+    return filtered;
   }, [searchTerm, filterStatus, patients]);
 
   const handleAddPatient = () => {
     navigate("/addpatient");
   };
 
-  const handleViewPatient = (patientId) => {
-    const patient = patients.find((p) => p.id === patientId);
-    setSelectedPatient(patient);
-    setIsViewPatientOpen(true);
+  const handleViewPatient = async (patientId) => {
+    try {
+      const patient = await patientAPI.getPatientById(patientId);
+      const fullName = `${patient.firstName || ""} ${patient.lastName || ""}`.trim();
+
+      setSelectedPatient({
+        ...patient,
+        name: fullName || "Unknown",
+        dateAdded: patient.createdAt ? patient.createdAt.split("T")[0] : "-",
+      });
+      setIsViewPatientOpen(true);
+    } catch (err) {
+      console.error("Failed to fetch patient details:", err);
+      toast.error("Failed to load patient details");
+    }
   };
 
-  const handleEditPatient = (patientId) => {
-    const patient = patients.find((p) => p.id === patientId);
-    setSelectedPatient(patient);
-    setIsEditPatientOpen(true);
+  const handleEditPatient = async (patientId) => {
+    try {
+      const patient = await patientAPI.getPatientById(patientId);
+      const fullName = `${patient.firstName || ""} ${patient.lastName || ""}`.trim();
+
+      setSelectedPatient({
+        ...patient,
+        name: fullName || "Unknown",
+      });
+      setIsEditPatientOpen(true);
+    } catch (err) {
+      console.error("Failed to fetch patient details for edit:", err);
+      toast.error("Failed to load patient details");
+    }
   };
 
-  const handleDeletePatient = (patientId) => {
+  const handleDeletePatient = async (patientId) => {
+    await patientAPI.deletePatient(patientId);
     setPatients((prev) => prev.filter((p) => p.id !== patientId));
     toast.success("Patient deleted successfully");
   };
 
   const handleDiagnose = (patientId) => {
-    toast.success(`Starting diagnosis for patient ${patientId}`);
-    // Navigate to diagnosis page when implemented
-    // navigate(`/diagnosis/${patientId}`);
+    setCbcPatientId(patientId);
+    setCbcModalOpen(true);
+  };
+
+  const handleCBCSubmit = async (cbcParams) => {
+    setCbcModalOpen(false);
+    const pid = cbcPatientId;
+    setDiagnosisStatus((prev) => ({ ...prev, [pid]: 'loading' }));
+
+    try {
+      await patientAPI.diagnosePatient(pid, cbcParams);
+      setPatients((prev) =>
+        prev.map((patient) =>
+          patient.id === pid ? { ...patient, status: "In Progress" } : patient
+        )
+      );
+      setDiagnosisStatus((prev) => ({ ...prev, [pid]: 'completed' }));
+      window.dispatchEvent(new Event("notifications:refresh"));
+      toast.success(`Diagnosis completed for patient ${pid}`);
+    } catch (err) {
+      console.error("Diagnosis failed:", err);
+      setDiagnosisStatus((prev) => ({ ...prev, [pid]: 'pending' }));
+      toast.error(err?.response?.data?.detail || "Diagnosis failed");
+    }
   };
 
   const handleViewResults = (patientId) => {
-    navigate("/view-results");
+    navigate(`/view-results?patientId=${patientId}`);
   };
 
-  const handleExportData = () => {
-    // Convert patients data to CSV
-    const headers = [
-      "ID",
-      "Name",
-      "Age",
-      "Gender",
-      "Blood Group",
-      "Status",
-      "Disease",
-      "Phone",
-      "Date Added",
-    ];
-    const csvContent = [
-      headers.join(","),
-      ...filteredPatients.map((p) =>
-        [
-          p.id,
-          p.name,
-          p.age,
-          p.gender,
-          p.bloodGroup,
-          p.status,
-          p.disease,
-          p.phone,
-          p.dateAdded,
-        ].join(",")
-      ),
-    ].join("\n");
+  const handleExportData = async () => {
+    try {
+      const exportRows = await Promise.all(
+        filteredPatients.map(async (patient) => {
+          try {
+            const diagnosis = await patientAPI.getDiagnosisResult(patient.id);
+            return {
+              ...patient,
+              disease: getTopDiseaseLabel(diagnosis, patient.status, patient.disease),
+            };
+          } catch {
+            return patient;
+          }
+        })
+      );
 
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "patients_export.csv";
-    a.click();
-    window.URL.revokeObjectURL(url);
-    toast.success("Data exported successfully");
+      downloadPatientsPdf("patients_export.pdf", "Patients List", exportRows);
+      toast.success("PDF exported successfully");
+    } catch (err) {
+      console.error("Failed to export PDF:", err);
+      toast.error("Failed to export PDF");
+    }
   };
 
   const getStatusColor = (status) => {
@@ -260,11 +246,16 @@ export default function LabTechPatientsView() {
     setIsDeleteConfirmOpen(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (deletePatientId) {
-      handleDeletePatient(deletePatientId);
-      setIsDeleteConfirmOpen(false);
-      setDeletePatientId(null);
+      try {
+        await handleDeletePatient(deletePatientId);
+        setIsDeleteConfirmOpen(false);
+        setDeletePatientId(null);
+      } catch (err) {
+        console.error("Failed to delete patient:", err);
+        toast.error("Failed to delete patient");
+      }
     }
   };
 
@@ -273,13 +264,19 @@ export default function LabTechPatientsView() {
     setDeletePatientId(null);
   };
 
-  const handlePatientUpdated = () => {
-    // Refresh patient list if needed
-    // This will be called after the patient is successfully updated
+  const handlePatientUpdated = async () => {
+    await fetchPatients();
   };
 
   return (
     <div className="flex-1 overflow-auto">
+      {loading && (
+        <div className="px-8 py-4 text-sm text-gray-500">Loading patients...</div>
+      )}
+      {error && !loading && (
+        <div className="px-8 py-4 text-sm text-red-600">{error}</div>
+      )}
+
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-8 py-4">
         <div className="flex items-center justify-between">
@@ -418,13 +415,20 @@ export default function LabTechPatientsView() {
                     <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
                       Actions
                     </th>
-                    {/* <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
-                        Comments
-                      </th> */}
+                    <th className="px-6 py-4 text-center text-sm font-semibold text-gray-700">
+                      {/* Lab Actions */}
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredPatients.map((patient) => (
+                  {filteredPatients.map((patient) => {
+                    const isCleared = clearedPatientIds.includes(patient.id);
+                    const isDiagnosed = patient.status === "Diagnosed";
+                    const isInProgress = patient.status === "In Progress";
+                    const isDiagnosing =
+                      diagnosisStatus[patient.id] === "loading";
+
+                    return (
                     <tr
                       key={patient.id}
                       className="border-b border-gray-200 hover:bg-gray-50 transition-colors"
@@ -440,7 +444,7 @@ export default function LabTechPatientsView() {
                       </td>
                       <td className="px-6 py-4 text-sm">
                         <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                          className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
                             patient.status
                           )}`}
                         >
@@ -475,26 +479,67 @@ export default function LabTechPatientsView() {
                           </button>
                         </div>
                       </td>
-                      {/* Lab Tech */}
+                      {/* Lab Tech - Diagnose / View Results Button */}
                       <td className="px-6 py-4 text-center">
-                        <div className="flex justify-center gap-3">
+                        {isDiagnosed && isCleared ? (
+                          <button
+                            disabled
+                            className="px-6 py-2 bg-green-800 text-white rounded-lg text-sm font-medium cursor-default min-w-[130px]"
+                          >
+                            Cleared
+                          </button>
+                        ) : isDiagnosed ? (
                           <button
                             onClick={() => handleViewResults(patient.id)}
-                            className="px-4 py-2 bg-orange-700 text-white rounded-lg hover:opacity-90 transition-colors text-sm font-medium cursor-pointer whitespace-nowrap"
+                            className="px-6 py-2 bg-[#b91c1c] text-white rounded-lg hover:opacity-90 transition-colors text-sm font-medium cursor-pointer min-w-[130px]"
                           >
                             View Results
                           </button>
-
+                        ) : isInProgress ? (
+                          <button
+                            onClick={() => handleViewResults(patient.id)}
+                            className="px-6 py-2 bg-gray-500 text-white rounded-lg hover:opacity-90 transition-colors text-sm font-medium cursor-pointer min-w-[130px]"
+                          >
+                            Review
+                          </button>
+                        ) : isDiagnosing ? (
+                          <button
+                            disabled
+                            className="px-6 py-2 bg-[#f59e0b] text-white rounded-lg text-sm font-medium cursor-not-allowed min-w-[130px] flex items-center justify-center mx-auto"
+                          >
+                            <svg
+                              className="animate-spin h-5 w-5 text-white"
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                            >
+                              <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                              ></circle>
+                              <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                              ></path>
+                            </svg>
+                          </button>
+                        ) : (
                           <button
                             onClick={() => handleDiagnose(patient.id)}
-                            className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:opacity-90 transition-colors text-sm font-medium cursor-pointer whitespace-nowrap"
+                            className="px-6 py-2 bg-[#f59e0b] text-white rounded-lg hover:opacity-90 transition-colors text-sm font-medium cursor-pointer min-w-[130px]"
                           >
                             Diagnose
                           </button>
-                        </div>
+                        )}
                       </td>
                     </tr>
-                  ))}
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -529,6 +574,13 @@ export default function LabTechPatientsView() {
         isOpen={isViewPatientOpen}
         onClose={() => setIsViewPatientOpen(false)}
         patient={selectedPatient}
+      />
+
+      <CBCInputModal
+        isOpen={cbcModalOpen}
+        onClose={() => setCbcModalOpen(false)}
+        onSubmit={handleCBCSubmit}
+        patientId={cbcPatientId}
       />
     </div>
   );

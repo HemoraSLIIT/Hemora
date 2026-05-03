@@ -24,6 +24,7 @@ urlpatterns = [
     path('', RedirectView.as_view(url='/api-auth/login/', permanent=False), name='home'),
     path('admin/', admin.site.urls),
     path('api/', include('accounts.urls')),
+    path('api/', include('analysis.urls')),
     path('api-auth/', include('rest_framework.urls')),  # Login/logout for browsable API
 ]
 
